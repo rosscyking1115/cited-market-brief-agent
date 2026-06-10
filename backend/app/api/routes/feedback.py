@@ -9,10 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.api.deps import dev_user
 from app.db.base import get_db
-from app.db.models import Brief, Claim, Feedback, Organization, User
+from app.db.models import Brief, Claim, Feedback
 from app.services.audit import record_event
-from sqlalchemy import select
 
 router = APIRouter(tags=["feedback"])
 
@@ -24,21 +24,6 @@ class FeedbackIn(BaseModel):
     claim_id: uuid.UUID | None = None
     kind: str = Field(description="useful | not_useful | wrong | needs_source")
     note: str = Field(default="", max_length=2000)
-
-
-def _dev_user(db: Session) -> User:
-    """Single-user placeholder until OIDC lands (Phase 5)."""
-    user = db.scalar(select(User).where(User.email == "dev@ledgerbrief.local"))
-    if user is None:
-        org = db.scalar(select(Organization).where(Organization.name == "dev-org"))
-        if org is None:
-            org = Organization(name="dev-org")
-            db.add(org)
-            db.flush()
-        user = User(org_id=org.id, email="dev@ledgerbrief.local", display_name="Dev Analyst")
-        db.add(user)
-        db.commit()
-    return user
 
 
 @router.post("/feedback", status_code=201)
@@ -62,7 +47,7 @@ def create_feedback(payload: FeedbackIn, db: Session = Depends(get_db)) -> dict:
             raise HTTPException(status_code=404, detail="Brief not found")
         org_id = brief.org_id
 
-    user = _dev_user(db)
+    user = dev_user(db)
     fb = Feedback(
         org_id=org_id,
         claim_id=payload.claim_id,

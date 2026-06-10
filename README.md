@@ -2,7 +2,7 @@
 
 Audit-ready public-data brief engine for investment research teams. Every material claim in a generated brief is deterministically validated against a stored source span, and the proof ships as an exportable evidence ledger.
 
-**Status**: Phase 2 — evidence ledger UI (click a claim → exact source span, validator status, checksum), feedback capture, advice-boundary guardrails (cited recommendations still quarantine), and a CI eval gate (citation precision ≥0.95, recall ≥0.90, zero advice leaks, prompt-injection case). Phase 1 pipeline underneath: EDGAR/FRED ingestion → structure-aware parsing → hybrid retrieval (FTS + pgvector, RRF) → cited generation → deterministic claim→span validation → Markdown + JSON citation-manifest export, audit events end to end. See `docs/PRODUCTION_PLAN.md` (v2).
+**Status**: Phase 3 — change detection and analyst review. Filing diffs (risk-factor/MD&A paragraph diffs between same-form filings, blocks mapped to stored chunk spans so change claims stay citable), vintage-aware macro deltas with ALFRED-style revision detection, "since last brief" comparison, per-section accept/edit/reject/needs-source review with approval gating, and a schedule runner. Changed spans lead the evidence pack, so generated briefs literally answer "what changed". On top of Phase 2 (evidence ledger UI, feedback, guardrails, CI eval gate) and Phase 1 (cited generation pipeline with deterministic claim→span validation). See `docs/PRODUCTION_PLAN.md` (v2).
 
 ## Stack
 
@@ -47,6 +47,11 @@ brief (citation-perfect by construction); no OpenAI key → FTS-only retrieval (
 Or via API: `POST /watchlists` → `POST /watchlists/{id}/ingest` →
 `POST /watchlists/{id}/briefs` → `GET /briefs/{id}/evidence` (ledger payload) →
 `GET /briefs/{id}/markdown`. Feedback: `POST /feedback {claim_id, kind}`.
+
+Phase 3: `GET /watchlists/{id}/changes` (filing diffs, macro deltas, new sources) ·
+`PATCH /briefs/{id}/sections/{n} {action: accept|edit|reject|needs_source}` ·
+`POST /briefs/{id}/approve` (blocked until every section is resolved) ·
+`python scripts/run_scheduled.py` (cron-due watchlists; Hatchet takes over in Phase 5).
 
 With backend + frontend running, http://localhost:3000 shows the latest brief **LIVE**
 with the clickable evidence ledger; without the backend it renders demo data.

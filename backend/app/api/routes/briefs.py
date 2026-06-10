@@ -143,10 +143,12 @@ def get_brief_evidence(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> di
     return {
         "brief_id": str(brief.id),
         "watchlist": wl.name,
+        "watchlist_id": str(wl.id),
         "status": brief.status,
         "created_at": brief.created_at.isoformat(),
         "sections": draft.get("brief_sections", []),
         "open_questions": draft.get("open_questions", []),
+        "user_edits": brief.user_edits or {},
         "claims": [
             {
                 "claim_id": str(c.id),

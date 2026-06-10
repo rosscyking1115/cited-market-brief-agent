@@ -103,11 +103,17 @@ def generate_deterministic(watchlist_name: str, pack: list[EvidenceItem]) -> Gen
         first_sentences = " ".join(_SENTENCE_RE.split(item.text.strip())[:2])[:400].strip()
         if not first_sentences:
             continue
+        if "changed" in item.doc_label.lower():
+            claim_type = "filing_change"
+        elif "macro" in item.doc_label.lower():
+            claim_type = "macro_delta"
+        else:
+            claim_type = "factual_summary"
         idx = len(claims)
         claims.append(
             GeneratedClaim(
                 text=f"{item.doc_label}: {first_sentences}",
-                claim_type="macro_delta" if "macro" in item.doc_label.lower() else "factual_summary",
+                claim_type=claim_type,
                 citations=[item.span_id],
                 confidence="high",
                 evidence_quote=first_sentences,

@@ -43,14 +43,51 @@ def _doc_label(chunk: RetrievedChunk, publisher: str) -> str:
     return label
 
 
+def _priority_chunks(db: Session, watchlist: Watchlist, ids: list[str]) -> dict[str, RetrievedChunk]:
+    """Load change-detected chunks directly (they outrank retrieval — the brief is
+    'what changed', so changed spans lead the evidence pack)."""
+    from app.db.models import Chunk, Document
+
+    out: dict[str, RetrievedChunk] = {}
+    if not ids:
+        return out
+    uuids = []
+    for sid in ids:
+        try:
+            uuids.append(uuid.UUID(sid))
+        except ValueError:
+            continue
+    rows = db.execute(
+        select(Chunk, Document)
+        .join(Document, Document.id == Chunk.document_id)
+        .where(Chunk.id.in_(uuids), Chunk.org_id == watchlist.org_id)
+    ).all()
+    for chunk, document in rows:
+        out[str(chunk.id)] = RetrievedChunk(
+            chunk_id=chunk.id,
+            document_id=document.id,
+            text=chunk.text,
+            section=chunk.section,
+            span_start=chunk.span_start,
+            span_end=chunk.span_end,
+            doc_type=document.doc_type,
+            accession=document.filing_accession,
+            source_id=document.source_id,
+            score=1.0,
+        )
+    return out
+
+
 def build_evidence_pack(
-    db: Session, watchlist: Watchlist
+    db: Session, watchlist: Watchlist, priority_chunk_ids: list[str] | None = None
 ) -> tuple[list[EvidenceItem], dict[str, RetrievedChunk], dict[str, str]]:
-    """One retrieval per topic (ticker / macro series); dedupe into a capped pack."""
+    """Changed chunks first, then one retrieval per topic; dedupe into a capped pack."""
+    changed = _priority_chunks(db, watchlist, priority_chunk_ids or [])
+
     topics = [f"{t} latest filing risk factors results developments" for t in watchlist.tickers]
     topics += [f"{m} latest observations change" for m in watchlist.macro_series]
 
-    by_id: dict[str, RetrievedChunk] = {}
+    by_id: dict[str, RetrievedChunk] = dict(list(changed.items())[:_PACK_LIMIT])
     for topic in topics:
         for chunk in hybrid_search(db, watchlist.org_id, topic, k=4):
             by_id.setdefault(str(chunk.chunk_id), chunk)
@@ -70,6 +107,8 @@ def build_evidence_pack(
     labels: dict[str, str] = {}
     for span_id, chunk in by_id.items():
         label = _doc_label(chunk, publishers.get(chunk.source_id, ""))
+        if span_id in changed:
+            label += " (CHANGED vs prior filing)"
         labels[span_id] = label
         pack.append(
             EvidenceItem(span_id=span_id, doc_label=label, section=chunk.section, text=chunk.text)
@@ -78,7 +117,12 @@ def build_evidence_pack(
 
 
 def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
-    pack, chunks_by_id, span_labels = build_evidence_pack(db, watchlist)
+    from app.changes.service import changes_since_last_brief
+
+    changes = changes_since_last_brief(db, watchlist)
+    pack, chunks_by_id, span_labels = build_evidence_pack(
+        db, watchlist, priority_chunk_ids=changes.get("changed_chunk_ids", [])
+    )
     model_used = settings.generation_model if llm_available() else "deterministic/extractive-v1"
 
     generated = generate_brief_json(watchlist.name, pack)

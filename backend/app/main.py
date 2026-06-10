@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.routes import briefs, feedback, health, watchlists
+from app.api.routes import briefs, changes, feedback, health, watchlists
 from app.core.config import settings
 
 app = FastAPI(
@@ -32,3 +32,4 @@ app.include_router(health.router)
 app.include_router(watchlists.router)
 app.include_router(briefs.router)
 app.include_router(feedback.router)
+app.include_router(changes.router)

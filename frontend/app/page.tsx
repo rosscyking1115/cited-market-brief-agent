@@ -2,8 +2,16 @@
 // from the API; falls back to demo data when the backend isn't running so the
 // design system always renders. The evidence ledger is the only client island.
 
+import BriefCanvas from "@/app/components/BriefCanvas";
+import ChangesPanel from "@/app/components/ChangesPanel";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
-import { API_URL, getLatestEvidence, type EvidencePayload } from "@/lib/api";
+import {
+  API_URL,
+  getChanges,
+  getLatestEvidence,
+  type ChangesPayload,
+  type EvidencePayload,
+} from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -122,45 +130,66 @@ const DEMO: EvidencePayload = {
   ],
 };
 
-function SectionContent({
-  text,
-  claims,
-}: {
-  text: string;
-  claims: EvidencePayload["claims"];
-}) {
-  const parts = text.split(/(\[#\d+\])/g);
-  return (
-    <p className="mt-1.5 leading-relaxed text-neutral-50">
-      {parts.map((part, i) => {
-        const match = /^\[#(\d+)\]$/.exec(part);
-        if (!match) return <span key={i}>{part}</span>;
-        const idx = Number(match[1]);
-        const claim = claims.find((c) => c.index === idx);
-        const ok = claim?.support_status === "supported";
-        return (
-          <a
-            key={i}
-            href="#ledger"
-            className={`mx-0.5 inline-block rounded-(--radius-ctl) border px-1 py-px align-middle font-mono text-[10px] leading-none ${
-              ok
-                ? "border-elevated text-neutral-90 hover:border-action hover:text-neutral-30"
-                : "border-flag/60 text-flag"
-            }`}
-          >
-            C-{String(idx).padStart(3, "0")}
-            {!ok && " ⚑"}
-          </a>
-        );
-      })}
-    </p>
-  );
-}
+const DEMO_CHANGES: ChangesPayload = {
+  watchlist_id: "demo",
+  since: "2026-06-09T06:21:00+00:00",
+  previous_brief_id: "demo-prev",
+  new_documents: [
+    {
+      document_id: "demo-doc-1",
+      doc_type: "10-Q",
+      accession: "0001045810-26-000089",
+      publisher: "SEC EDGAR (NVDA)",
+      url: "https://www.sec.gov/Archives/edgar/data/1045810/…",
+      publication_date: "2026-06-09",
+    },
+  ],
+  filing_diffs: [
+    {
+      cik: "1045810",
+      form: "10-Q",
+      publisher: "SEC EDGAR (NVDA)",
+      accession_new: "0001045810-26-000089",
+      accession_old: "0001045810-26-000034",
+      sections: [{ section: "Item 1A", added: 2, removed: 0, modified: 1 }],
+      samples: [
+        {
+          kind: "added",
+          section: "Item 1A",
+          text: "We are subject to new export control licensing requirements for advanced accelerator products. These requirements could materially reduce revenue from affected regions.",
+          similarity: 0,
+        },
+        {
+          kind: "modified",
+          section: "Item 1A",
+          text: "Demand may fluctuate based on datacenter capital expenditure cycles and hyperscaler build plans.",
+          similarity: 0.82,
+        },
+      ],
+    },
+  ],
+  macro_deltas: [
+    {
+      series_id: "CPIAUCSL",
+      latest_date: "2026-05",
+      latest_value: 327.1,
+      prev_date: "2026-04",
+      prev_value: 326.6,
+      change: 0.5,
+      change_pct: 0.1531,
+      revisions: [{ date: "2026-03", old_value: 325.9, new_value: 325.8 }],
+      vintage: "2026-06-10T05:59:02+00:00",
+    },
+  ],
+};
 
 export default async function Page() {
   const live = await getLatestEvidence();
   const data = live ?? DEMO;
   const isLive = live !== null;
+  const liveChanges =
+    isLive && data.watchlist_id ? await getChanges(data.watchlist_id) : null;
+  const changesData = liveChanges ?? DEMO_CHANGES;
   const ts = data.created_at.slice(0, 16).replace("T", " ");
   const supported = data.claims.filter((c) => c.support_status === "supported").length;
   const flagged = data.claims.length - supported;
@@ -202,12 +231,15 @@ export default async function Page() {
             {flagged} flagged · status {data.status}
           </p>
 
-          {data.sections.map((section) => (
-            <section key={section.title} className="mt-5">
-              <h3 className="text-sm font-semibold text-neutral-30">{section.title}</h3>
-              <SectionContent text={section.content_markdown} claims={data.claims} />
-            </section>
-          ))}
+          <BriefCanvas
+            briefId={data.brief_id}
+            sections={data.sections}
+            claims={data.claims}
+            initialEdits={data.user_edits?.sections ?? {}}
+            initialStatus={data.status}
+            apiUrl={API_URL}
+            live={isLive}
+          />
 
           {data.open_questions.length > 0 && (
             <section className="mt-5 rounded-(--radius-ctl) border-l-2 border-action bg-page/60 px-4 py-3">
@@ -220,6 +252,8 @@ export default async function Page() {
             </section>
           )}
         </article>
+
+        <ChangesPanel changes={changesData} />
 
         <EvidenceLedger claims={data.claims} apiUrl={API_URL} live={isLive} />
 

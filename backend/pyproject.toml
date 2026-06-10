@@ -21,6 +21,7 @@ dependencies = [
     "edgartools>=4.0",
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
+    "croniter>=3.0",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,64 @@
+"""Schedule runner (Phase 3 lite): ingest + generate for every watchlist whose
+cron schedule is due. Run from cron/Task Scheduler every few minutes; Hatchet
+replaces this with durable workflows in Phase 5.
+
+    python scripts/run_scheduled.py            # run due watchlists
+    python scripts/run_scheduled.py --force    # run all scheduled watchlists now
+
+Due-ness: croniter computes the next fire time after the last brief's created_at;
+if that time is in the past, the watchlist is due.
+"""
+
+import asyncio
+import sys
+from datetime import datetime, timezone
+
+from sqlalchemy import select
+
+from app.briefs.service import generate_and_store_brief
+from app.db.base import get_sessionmaker
+from app.db.models import Brief, Watchlist
+from app.ingestion.pipeline import run_ingestion
+
+
+def _is_due(schedule_cron: str, last_run: datetime | None, now: datetime) -> bool:
+    try:
+        from croniter import croniter  # optional dep: pip install croniter
+    except ImportError:
+        print("croniter not installed — treating all scheduled watchlists as due")
+        return True
+    base = last_run or datetime(1970, 1, 1, tzinfo=timezone.utc)
+    next_fire = croniter(schedule_cron, base).get_next(datetime)
+    if next_fire.tzinfo is None:
+        next_fire = next_fire.replace(tzinfo=timezone.utc)
+    return next_fire <= now
+
+
+async def main(force: bool = False) -> None:
+    db = get_sessionmaker()()
+    now = datetime.now(timezone.utc)
+    try:
+        watchlists = list(
+            db.scalars(select(Watchlist).where(Watchlist.schedule_cron.is_not(None)))
+        )
+        for wl in watchlists:
+            last_brief = db.scalar(
+                select(Brief)
+                .where(Brief.watchlist_id == wl.id)
+                .order_by(Brief.created_at.desc())
+                .limit(1)
+            )
+            last_run = last_brief.created_at if last_brief else None
+            if not force and not _is_due(wl.schedule_cron, last_run, now):
+                print(f"skip {wl.name}: not due")
+                continue
+            print(f"run  {wl.name}: ingesting…")
+            counts = await run_ingestion(db, wl)
+            brief = generate_and_store_brief(db, wl)
+            print(f"     ingested {counts}, brief {brief.id}")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main(force="--force" in sys.argv))
