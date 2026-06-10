@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ledgerbrief-api"
+version = "0.1.0"
+description = "LedgerBrief API — audit-ready public-data brief engine"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.136",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.7",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.8.2",       # CVE-2026-3172 fixed in 0.8.2 — do not lower
+    "httpx>=0.28",
+    "litellm>=1.88.1",       # supply-chain incident in 1.82.7/1.82.8 — do not lower
+    "edgartools>=4.0",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.9",
+]
+parsing = [
+    "docling>=2.15",         # IR PDFs (Phase 1+); EDGAR uses edgartools
+]
+exports = [
+    "playwright>=1.50",      # PDF (sandboxed: JS + network disabled)
+    "python-pptx>=1.0",
+    "openpyxl>=3.1.5",
+]
+s3 = [
+    "boto3>=1.35",           # raw source store on S3/MinIO (dev default is local FS)
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S"]
+ignore = ["S101"]  # assert in tests
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

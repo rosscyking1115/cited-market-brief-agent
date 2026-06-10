@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/*
+  LedgerBrief design tokens — derived from Salt (JPMorgan Chase's open-source
+  design system, @salt-ds/theme). See docs/DESIGN_SYSTEM.md.
+*/
+@theme {
+  /* Brand / action (Salt JPM blue ramp) */
+  --color-navy-700: #00477b;
+  --color-navy-800: #273c4d;
+  --color-navy-900: #232f38;
+  --color-action: #2670a9;
+  --color-action-hover: #155c93;
+
+  /* Dark surfaces (app default) */
+  --color-page: #161616;
+  --color-bar: #242526;
+  --color-card: #2a2c2f;
+  --color-hairline: #2f3136;
+  --color-elevated: #3b3f46;
+
+  /* Light neutrals */
+  --color-neutral-30: #e0e4e9;
+  --color-neutral-40: #d9dde3;
+  --color-neutral-50: #ced2d9;
+  --color-neutral-70: #b4b7be;
+  --color-neutral-90: #84878e;
+
+  /* Semantic — always paired with glyphs/signs, never color alone (WCAG 1.4.1) */
+  --color-up: #309c5a;          /* dark-mode green-400, 5.2:1 on #161616 */
+  --color-up-light: #24874b;    /* light-mode green-500 */
+  --color-down: #ed412a;        /* dark-mode red-400, 4.6:1 on #161616 */
+  --color-down-light: #e32b16;  /* light-mode red-500 */
+  --color-flag: #ea7319;        /* amber — flagged claims, 6.0:1 on #161616 */
+  --color-flag-deep: #d65513;
+
+  /* Type */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
+
+  /* Shape — institutional = sharp */
+  --radius-ctl: 4px;   /* inputs, buttons, tags */
+  --radius-card: 8px;  /* cards, popovers */
+  --radius-modal: 12px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-neutral-30);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.3;
+  font-feature-settings: "cv05";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers in tables: tabular figures, mandatory */
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Sticky data-table header label style: 11px uppercase, letter-spaced, muted */
+.th-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-90);
+}
+
+/* Visible 2px focus ring (WCAG 2.2) — amber on dark */
+:focus-visible {
+  outline: 2px solid var(--color-flag);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
