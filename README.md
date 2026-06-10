@@ -2,7 +2,7 @@
 
 Audit-ready public-data brief engine for investment research teams. Every material claim in a generated brief is deterministically validated against a stored source span, and the proof ships as an exportable evidence ledger.
 
-**Status**: Phase 3 — change detection and analyst review. Filing diffs (risk-factor/MD&A paragraph diffs between same-form filings, blocks mapped to stored chunk spans so change claims stay citable), vintage-aware macro deltas with ALFRED-style revision detection, "since last brief" comparison, per-section accept/edit/reject/needs-source review with approval gating, and a schedule runner. Changed spans lead the evidence pack, so generated briefs literally answer "what changed". On top of Phase 2 (evidence ledger UI, feedback, guardrails, CI eval gate) and Phase 1 (cited generation pipeline with deterministic claim→span validation). See `docs/PRODUCTION_PLAN.md` (v2).
+**Status**: Phase 4 — full export suite. PDF (self-contained escaped HTML rendered by sandboxed Playwright: JavaScript off, all network aborted), editable PPTX morning pack, XLSX workbook (brief/ledger/sources/macro-data tabs with formula-injection escaping), all review-state-aware: rejected sections excluded, analyst edits exported, watermark tied to approval, Art. 50 AI marking embedded in every format, and the manifest↔export consistency check is a tested invariant. Phase 3 underneath — change detection and analyst review. Filing diffs (risk-factor/MD&A paragraph diffs between same-form filings, blocks mapped to stored chunk spans so change claims stay citable), vintage-aware macro deltas with ALFRED-style revision detection, "since last brief" comparison, per-section accept/edit/reject/needs-source review with approval gating, and a schedule runner. Changed spans lead the evidence pack, so generated briefs literally answer "what changed". On top of Phase 2 (evidence ledger UI, feedback, guardrails, CI eval gate) and Phase 1 (cited generation pipeline with deterministic claim→span validation). See `docs/PRODUCTION_PLAN.md` (v2).
 
 ## Stack
 
@@ -52,6 +52,11 @@ Phase 3: `GET /watchlists/{id}/changes` (filing diffs, macro deltas, new sources
 `PATCH /briefs/{id}/sections/{n} {action: accept|edit|reject|needs_source}` ·
 `POST /briefs/{id}/approve` (blocked until every section is resolved) ·
 `python scripts/run_scheduled.py` (cron-due watchlists; Hatchet takes over in Phase 5).
+
+Phase 4: `GET /briefs/{id}/export/{pdf|pptx|xlsx}` — review-state-aware downloads
+(rejected sections excluded, edits applied, approval watermark, Art. 50 marking).
+PDF needs `pip install -e ".[exports]" && playwright install chromium`; PPTX/XLSX
+work out of the box.
 
 With backend + frontend running, http://localhost:3000 shows the latest brief **LIVE**
 with the clickable evidence ledger; without the backend it renders demo data.

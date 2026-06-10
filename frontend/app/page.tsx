@@ -253,6 +253,32 @@ export default async function Page() {
           )}
         </article>
 
+        <div className="flex items-center gap-2 px-1">
+          <span className="th-label">Export</span>
+          {[
+            { fmt: "markdown", href: `${API_URL}/briefs/${data.brief_id}/markdown`, label: "MD" },
+            { fmt: "pdf", href: `${API_URL}/briefs/${data.brief_id}/export/pdf`, label: "PDF" },
+            { fmt: "pptx", href: `${API_URL}/briefs/${data.brief_id}/export/pptx`, label: "PPTX" },
+            { fmt: "xlsx", href: `${API_URL}/briefs/${data.brief_id}/export/xlsx`, label: "XLSX" },
+          ].map(({ fmt, href, label }) => (
+            <a
+              key={fmt}
+              href={isLive ? href : undefined}
+              aria-disabled={!isLive}
+              className={`rounded-(--radius-ctl) border px-2.5 py-1 font-mono text-[11px] ${
+                isLive
+                  ? "border-elevated text-neutral-50 hover:border-action hover:text-neutral-30"
+                  : "pointer-events-none border-hairline text-neutral-90 opacity-50"
+              }`}
+            >
+              ↓ {label}
+            </a>
+          ))}
+          <span className="font-mono text-[10px] text-neutral-90">
+            every export carries the watermark, evidence ledger, and AI marking
+          </span>
+        </div>
+
         <ChangesPanel changes={changesData} />
 
         <EvidenceLedger claims={data.claims} apiUrl={API_URL} live={isLive} />
