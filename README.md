@@ -2,7 +2,7 @@
 
 Audit-ready public-data brief engine for investment research teams. Every material claim in a generated brief is deterministically validated against a stored source span, and the proof ships as an exportable evidence ledger.
 
-**Status**: Phase 1 vertical slice implemented — EDGAR/FRED ingestion → structure-aware parsing → hybrid retrieval (FTS + pgvector, RRF) → cited brief generation → deterministic citation validation → Markdown + JSON citation-manifest export, with audit events end to end. See `docs/PRODUCTION_PLAN.md` (v2) and `docs/EVALUATION_REPORT.md`.
+**Status**: Phase 2 — evidence ledger UI (click a claim → exact source span, validator status, checksum), feedback capture, advice-boundary guardrails (cited recommendations still quarantine), and a CI eval gate (citation precision ≥0.95, recall ≥0.90, zero advice leaks, prompt-injection case). Phase 1 pipeline underneath: EDGAR/FRED ingestion → structure-aware parsing → hybrid retrieval (FTS + pgvector, RRF) → cited generation → deterministic claim→span validation → Markdown + JSON citation-manifest export, audit events end to end. See `docs/PRODUCTION_PLAN.md` (v2).
 
 ## Stack
 
@@ -45,7 +45,21 @@ Graceful degradation: no FRED key → filings only; no LLM key → deterministic
 brief (citation-perfect by construction); no OpenAI key → FTS-only retrieval (no vectors).
 
 Or via API: `POST /watchlists` → `POST /watchlists/{id}/ingest` →
-`POST /watchlists/{id}/briefs` → `GET /briefs/{id}/markdown`.
+`POST /watchlists/{id}/briefs` → `GET /briefs/{id}/evidence` (ledger payload) →
+`GET /briefs/{id}/markdown`. Feedback: `POST /feedback {claim_id, kind}`.
+
+With backend + frontend running, http://localhost:3000 shows the latest brief **LIVE**
+with the clickable evidence ledger; without the backend it renders demo data.
+
+### Eval gate
+
+```bash
+cd backend && python scripts/run_evals.py     # runs in CI on every push
+```
+
+Gates: citation precision ≥0.95 · citation recall ≥0.90 · zero advice-boundary leaks.
+Cases include a prompt-injection filing whose embedded "recommend buying / price target /
+guaranteed return" text must be quarantined even when perfectly cited.
 
 ## Layout
 
