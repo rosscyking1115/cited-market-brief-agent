@@ -11,6 +11,7 @@ query-side filters alone. See docs/PRODUCTION_PLAN.md §9.
 
 from collections.abc import Generator
 
+from fastapi import Request
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -41,10 +42,19 @@ def get_sessionmaker() -> sessionmaker[Session]:
     return _session_factory
 
 
-def get_db() -> Generator[Session, None, None]:
-    """FastAPI dependency yielding a request-scoped session."""
+def get_db(request: Request) -> Generator[Session, None, None]:
+    """FastAPI dependency yielding a request-scoped session.
+
+    When auth resolved a tenant (require_auth sets request.state.org_id), the RLS
+    GUC is set on this session BEFORE any query — Postgres policies then scope
+    every read/write, including vector and FTS queries, to the tenant."""
     db = get_sessionmaker()()
     try:
+        org_id = getattr(request.state, "org_id", None)
+        if org_id is not None:
+            from app.db.rls import set_org_context  # local import avoids cycle
+
+            set_org_context(db, org_id)
         yield db
     finally:
         db.close()

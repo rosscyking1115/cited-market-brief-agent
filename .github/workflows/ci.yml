@@ -43,5 +43,26 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run build
 
-  # Phase 2+: eval gate (citation precision/recall, injection suite) blocks prompt/model promotion.
-  # Phase 5+: dependency scan, SBOM (CycloneDX), image signing (cosign), cross-tenant leakage test.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Dependency vulnerability scans (launch gate: no high/critical findings)
+      - run: pip install -e "./backend[dev]" pip-audit cyclonedx-bom
+      - run: pip-audit --strict || (echo "::warning::pip-audit findings — triage before release" && exit 1)
+      - run: cd frontend && npm ci && npm audit --audit-level=high
+      # SBOM per release (CycloneDX) — supply-chain control from the evaluation report
+      - run: cyclonedx-py environment -o sbom-backend.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom-backend.cdx.json
+
+  # Remaining Phase 5+ CI hardening: SHA-pin all actions, cosign image signing,
+  # cross-tenant leakage test against a live Postgres service container.

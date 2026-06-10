@@ -5,12 +5,14 @@ no portfolio advice, no performance presentation. Advice-boundary guardrails wra
 all generation endpoints (Phase 2).
 """
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api.routes import briefs, changes, exports, feedback, health, watchlists
 from app.core.config import settings
+from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
+from app.core.security import require_auth
 
 app = FastAPI(
     title="LedgerBrief API",
@@ -18,6 +20,9 @@ app = FastAPI(
     description="Audit-ready public-data brief engine. Internal research drafts only; "
     "not investment advice.",
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 if settings.environment == "development":
     app.add_middleware(
@@ -28,9 +33,11 @@ if settings.environment == "development":
         allow_headers=["*"],
     )
 
-app.include_router(health.router)
-app.include_router(watchlists.router)
-app.include_router(briefs.router)
-app.include_router(feedback.router)
-app.include_router(changes.router)
-app.include_router(exports.router)
+_authed = [Depends(require_auth)]
+
+app.include_router(health.router)  # liveness stays public
+app.include_router(watchlists.router, dependencies=_authed)
+app.include_router(briefs.router, dependencies=_authed)
+app.include_router(feedback.router, dependencies=_authed)
+app.include_router(changes.router, dependencies=_authed)
+app.include_router(exports.router, dependencies=_authed)

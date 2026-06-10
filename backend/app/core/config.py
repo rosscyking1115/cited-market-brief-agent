@@ -11,6 +11,16 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
 
+    # AuthN (plan §9): OIDC + PKCE at the IdP; API validates Bearer JWTs via JWKS.
+    # auth_required MUST be true in any multi-tenant/production deployment.
+    auth_required: bool = False
+    oidc_issuer: str = ""
+    oidc_audience: str = ""
+    oidc_jwks_url: str = ""
+
+    # Rate limiting (per client, per minute)
+    rate_limit_per_minute: int = 120
+
     # Database
     database_url: str = "postgresql+psycopg://ledgerbrief:ledgerbrief@localhost:5432/ledgerbrief"
 

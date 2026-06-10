@@ -33,6 +33,16 @@ ADVICE_PATTERNS: dict[str, re.Pattern[str]] = {
         r"|\brisk[-\s]free\s+(?:return|profit)\b",
         re.IGNORECASE,
     ),
+    # Red-team additions (Phase 5): indirect prompt-injection artifacts surviving
+    # into claim text are policy violations regardless of citation status.
+    "prompt_manipulation": re.compile(
+        r"ignore\s+(?:all\s+)?(?:previous|prior)\s+instructions"
+        r"|\bsystem\s+prompt\b|\bdeveloper\s+mode\b|\byou\s+must\s+tell\s+the\s+analyst\b",
+        re.IGNORECASE,
+    ),
+    # Markdown-image/link exfiltration and raw URLs in claim prose (claims cite via
+    # the ledger, never inline URLs — an embedded URL is an exfil channel)
+    "embedded_url": re.compile(r"!\[[^\]]*\]\(\s*https?://|https?://[^\s)\"']+", re.IGNORECASE),
 }
 
 

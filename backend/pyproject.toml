@@ -24,6 +24,7 @@ dependencies = [
     "croniter>=3.0",
     "python-pptx>=1.0",      # core exports (PPTX); flagged low-maintenance but stable
     "openpyxl>=3.1.5",       # core exports (XLSX) with formula-injection escaping
+    "pyjwt[crypto]>=2.10",   # OIDC bearer-token validation via JWKS
 ]
 
 [project.optional-dependencies]
