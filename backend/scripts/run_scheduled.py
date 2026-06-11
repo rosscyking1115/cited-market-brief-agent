@@ -41,6 +41,7 @@ async def main(force: bool = False) -> None:
         watchlists = list(
             db.scalars(select(Watchlist).where(Watchlist.schedule_cron.is_not(None)))
         )
+        failures = 0
         for wl in watchlists:
             last_brief = db.scalar(
                 select(Brief)
@@ -52,10 +53,31 @@ async def main(force: bool = False) -> None:
             if not force and not _is_due(wl.schedule_cron, last_run, now):
                 print(f"skip {wl.name}: not due")
                 continue
-            print(f"run  {wl.name}: ingesting…")
-            counts = await run_ingestion(db, wl)
-            brief = generate_and_store_brief(db, wl)
-            print(f"     ingested {counts}, brief {brief.id}")
+            # Pilot resilience: one watchlist failing must not block the others,
+            # and every failure lands in the audit log for the error-review ritual
+            # (pilot/PILOT_RUNBOOK.md).
+            try:
+                print(f"run  {wl.name}: ingesting…")
+                counts = await run_ingestion(db, wl)
+                brief = generate_and_store_brief(db, wl)
+                print(f"     ingested {counts}, brief {brief.id}")
+            except Exception as exc:
+                failures += 1
+                db.rollback()
+                from app.services.audit import record_event
+
+                record_event(
+                    db,
+                    org_id=wl.org_id,
+                    action="pilot.run_failed",
+                    object_type="watchlist",
+                    object_id=str(wl.id),
+                    detail={"error": f"{type(exc).__name__}: {exc}"[:500]},
+                )
+                print(f"FAIL {wl.name}: {type(exc).__name__}: {exc}")
+        if failures:
+            print(f"\n{failures} watchlist run(s) failed — triage in pilot/ERROR_LOG.md")
+            sys.exit(1)
     finally:
         db.close()
 
