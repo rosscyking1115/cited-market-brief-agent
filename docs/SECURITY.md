@@ -1,4 +1,4 @@
-# LedgerBrief Security Posture
+# Cited Market Brief Agent Security Posture
 
 Engineering reference for the controls in `docs/PRODUCTION_PLAN.md` §9. Status legend: ✅ implemented · 🔶 implemented, needs production wiring · ⏳ pending.
 

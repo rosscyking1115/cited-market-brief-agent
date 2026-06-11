@@ -1,4 +1,4 @@
-# LedgerBrief — Production Development Plan (v2)
+# Cited Market Brief Agent — Production Development Plan (v2)
 
 Current as of 2026-06-10. Supersedes `PRODUCTION_DEVELOPMENT_PLAN.md` (2026-06-05); revisions driven by `EVALUATION_REPORT.md`.
 
@@ -10,7 +10,7 @@ Build what none of them sell:
 
 > An audit-ready public-data brief engine — deterministic claim→span validation, an exportable evidence ledger, FINRA-aligned audit trails, and change detection with data-vintage awareness.
 
-LedgerBrief turns public filings, macro releases, and IR material into a cited, reviewable morning brief whose every material claim is validated in the application layer against a stored source span, and ships the proof as an artifact (JSON citation manifest) alongside the brief. The wedge is verifiability you can hand to a compliance reviewer, not chat.
+Cited Market Brief Agent turns public filings, macro releases, and IR material into a cited, reviewable morning brief whose every material claim is validated in the application layer against a stored source span, and ships the proof as an artifact (JSON citation manifest) alongside the brief. The wedge is verifiability you can hand to a compliance reviewer, not chat.
 
 ## 2. Target User and First Workflow
 
@@ -166,7 +166,7 @@ Fixed eval suites (run in CI before prompt/model promotion): 10-K risk-factor ch
 - **Phase 3 — Change detection + analyst UX (2 wks)**: filing diffs, macro vintage deltas, risk-factor diff view, editable canvas, schedules, run comparison. *Exit: "what changed since last brief" works; per-section accept/edit/reject.* ✅ (diff blocks map to chunk spans → change claims stay citable; needs_source blocks approval)
 - **Phase 4 — Exports + review (2 wks)**: PDF/PPTX/XLSX/manifest, approval states, watermark, Art. 50 marking. *Exit: approved brief exports consistently; manifest matches claims; audit trail complete.* ✅ (manifest↔ledger consistency is a tested invariant; PDF renderer sandboxed JS+network off; XLSX formula-escaped)
 - **Phase 5 — Hardening (2–3 wks)**: OIDC+PKCE auth, RLS tenant isolation, secrets, rate limits, OTel + Langfuse, CI gates (tests/lint/dep scan/evals/SBOM), staging deploy, backup/restore test, IR draft, pen test + red team. *Exit: no launch-blocking security gaps; eval thresholds met.* 🔶 code-side complete (RLS + CI coverage guard, JWT/JWKS auth enforcement, rate limit, headers/CSP, red-team guardrails, dep scan + SBOM, IR draft, restore drill — see docs/SECURITY.md status table); operational items pending: staging deploy, live leakage test, IdP config, OTel/Langfuse wiring, external pen test
-- **Phase 6 — Pilot (2 wks)**: 2–3 real watchlist templates, daily pilot, feedback capture, error log, demo deck. *Exit: a recurring brief a domain user calls genuinely useful; failure modes documented.* 🔶 pilot kit complete (templates, runbook, error taxonomy, metrics scorecard, demo deck `docs/LedgerBrief_Demo.pptx`); the two-week run with a domain user is the remaining exit criterion
+- **Phase 6 — Pilot (2 wks)**: 2–3 real watchlist templates, daily pilot, feedback capture, error log, demo deck. *Exit: a recurring brief a domain user calls genuinely useful; failure modes documented.* 🔶 pilot kit complete (templates, runbook, error taxonomy, metrics scorecard, demo deck `docs/Cited_Market_Brief_Agent_Demo.pptx`); the two-week run with a domain user is the remaining exit criterion
 
 ## 13. Agent Workstreams
 
@@ -186,4 +186,4 @@ Design: saltdesignsystem.com · web.dev/articles/vitals · w3.org/TR/WCAG22/
 
 ## 16. Decision Summary
 
-LedgerBrief is not an AI terminal and not another cited-AI chat. It is a verifiable research workflow: every material claim deterministically validated against a stored source span, with the proof exported as an artifact that survives an analyst, a compliance reviewer, and an engineer. Incumbents ship agentic AI; none ship an audit artifact. That is the product.
+Cited Market Brief Agent is not an AI terminal and not another cited-AI chat. It is a verifiable research workflow: every material claim deterministically validated against a stored source span, with the proof exported as an artifact that survives an analyst, a compliance reviewer, and an engineer. Incumbents ship agentic AI; none ship an audit artifact. That is the product.

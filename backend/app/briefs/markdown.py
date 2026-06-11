@@ -122,7 +122,7 @@ def build_citation_manifest(
 ) -> str:
     """The audit artifact: machine-readable claim -> span -> source mapping."""
     manifest = {
-        "format": "ledgerbrief.citation-manifest/v1",
+        "format": "cited-market-brief-agent.citation-manifest/v1",
         "ai_generated": True,  # EU AI Act Art. 50 machine-readable marking
         "brief_id": brief_id,
         "watchlist": watchlist_name,

@@ -1,3 +1,3 @@
-"""LedgerBrief API — audit-ready public-data brief engine."""
+"""Cited Market Brief Agent API - audit-ready public-data brief engine."""
 
 __version__ = "0.1.0"

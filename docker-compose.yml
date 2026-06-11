@@ -1,18 +1,18 @@
-name: ledgerbrief
+name: cited-market-brief-agent
 
 services:
   db:
     image: pgvector/pgvector:pg18
     environment:
-      POSTGRES_USER: ledgerbrief
-      POSTGRES_PASSWORD: ledgerbrief
-      POSTGRES_DB: ledgerbrief
+      POSTGRES_USER: cited_market_brief_agent
+      POSTGRES_PASSWORD: cited_market_brief_agent
+      POSTGRES_DB: cited_market_brief_agent
     ports:
       - "5432:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ledgerbrief"]
+      test: ["CMD-SHELL", "pg_isready -U cited_market_brief_agent"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -26,8 +26,8 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ledgerbrief
-      MINIO_ROOT_PASSWORD: ledgerbrief-dev-only
+      MINIO_ROOT_USER: cited_market_brief_agent
+      MINIO_ROOT_PASSWORD: cited-market-brief-agent-dev-only
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -38,7 +38,7 @@ services:
     build: ./backend
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+psycopg://ledgerbrief:ledgerbrief@db:5432/ledgerbrief
+      DATABASE_URL: postgresql+psycopg://cited_market_brief_agent:cited_market_brief_agent@db:5432/cited_market_brief_agent
       VALKEY_URL: redis://valkey:6379/0
       S3_ENDPOINT_URL: http://minio:9000
     ports:

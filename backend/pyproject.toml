@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ledgerbrief-api"
+name = "cited-market-brief-agent-api"
 version = "0.1.0"
-description = "LedgerBrief API — audit-ready public-data brief engine"
+description = "Cited Market Brief Agent API - audit-ready public-data brief engine"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.136",
@@ -15,7 +15,7 @@ dependencies = [
     "sqlalchemy>=2.0.36",
     "alembic>=1.14",
     "psycopg[binary]>=3.2",
-    "pgvector>=0.8.2",       # CVE-2026-3172 fixed in 0.8.2 — do not lower
+    "pgvector>=0.4.2,<0.5",  # Python adapter; DB extension stays pinned at pgvector >=0.8.2
     "httpx>=0.28",
     "litellm>=1.88.1",       # supply-chain incident in 1.82.7/1.82.8 — do not lower
     "edgartools>=4.0",

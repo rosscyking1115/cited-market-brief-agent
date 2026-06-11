@@ -1,4 +1,4 @@
-// LedgerBrief dashboard — RSC-first. Fetches the latest brief's evidence payload
+// Cited Market Brief Agent dashboard — RSC-first. Fetches the latest brief's evidence payload
 // from the API; falls back to demo data when the backend isn't running so the
 // design system always renders. The evidence ledger is the only client island.
 
@@ -201,7 +201,7 @@ export default async function Page() {
           <div className="flex items-center gap-3">
             <span className="block h-5 w-1.5 bg-navy-700" aria-hidden />
             <span className="font-serif text-[17px] font-semibold tracking-tight text-neutral-30">
-              LedgerBrief
+              Cited Market Brief Agent
             </span>
             <span className="th-label mt-px">Evidence ledger · Morning brief</span>
           </div>

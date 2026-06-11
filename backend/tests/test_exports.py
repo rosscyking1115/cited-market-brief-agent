@@ -59,7 +59,7 @@ def _bundle(status: str = "draft", user_edits: dict | None = None):
         model="deterministic/extractive-v1",
         prompt_version="p1.0",
         status=status,
-        approved_by="dev@ledgerbrief.local" if status == "approved" else None,
+        approved_by="dev@cited-market-brief-agent.local" if status == "approved" else None,
         approved_at=datetime(2026, 6, 10, 7, 0, tzinfo=timezone.utc)
         if status == "approved"
         else None,
@@ -92,7 +92,7 @@ def test_watermark_reflects_approval() -> None:
     assert "NOT APPROVED" in draft.watermark
     approved, _, _ = _bundle("approved")
     assert approved.watermark.startswith("APPROVED")
-    assert "dev@ledgerbrief.local" in (approved.approval_line or "")
+    assert "dev@cited-market-brief-agent.local" in (approved.approval_line or "")
 
 
 def test_html_report_escapes_llm_text() -> None:

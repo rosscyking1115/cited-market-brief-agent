@@ -23,7 +23,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LedgerBrief — Audit-ready market briefs",
+  title: "Cited Market Brief Agent — Audit-ready market briefs",
   description:
     "Cited, reviewable morning briefs from public data. Every claim validated against a stored source span.",
 };

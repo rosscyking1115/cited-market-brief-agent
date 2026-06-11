@@ -1,4 +1,4 @@
-# Case Study — LedgerBrief Pilot (template)
+# Case Study — Cited Market Brief Agent Pilot (template)
 
 Public data only. No employer-internal information, no broker research, no client data. Fill during the weekly reviews; this becomes the demo-credibility artifact for fintech / asset-management / market-intelligence / RAG roles.
 

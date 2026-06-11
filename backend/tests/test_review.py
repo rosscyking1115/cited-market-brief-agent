@@ -14,7 +14,7 @@ def _apply(edits: dict, index: int, action: str, content: str | None = None) -> 
         section_count=3,
         action=action,
         content=content,
-        actor="dev@ledgerbrief.local",
+        actor="dev@cited-market-brief-agent.local",
     )
 
 
@@ -22,7 +22,7 @@ def test_accept_records_action_and_actor() -> None:
     edits = _apply({}, 0, "accept")
     entry = edits["sections"]["0"]
     assert entry["action"] == "accept"
-    assert entry["by"] == "dev@ledgerbrief.local"
+    assert entry["by"] == "dev@cited-market-brief-agent.local"
     assert entry["content"] is None
 
 

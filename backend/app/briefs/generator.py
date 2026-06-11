@@ -21,7 +21,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are LedgerBrief, an audit-ready research brief generator for \
+SYSTEM_PROMPT = """You are Cited Market Brief Agent, an audit-ready research brief generator for \
 investment research analysts.
 
 Hard rules:

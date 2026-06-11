@@ -1,4 +1,4 @@
-# LedgerBrief Design System
+# Cited Market Brief Agent Design System
 
 Derived from Salt — JPMorgan Chase's open-source design system (saltdesignsystem.com) — using token values from the published `@salt-ds/theme` package, adapted for a data-dense research product. Implemented in `frontend/app/globals.css` (Tailwind v4 `@theme`).
 

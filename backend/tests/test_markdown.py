@@ -61,7 +61,7 @@ def test_manifest_is_valid_json_with_art50_marking() -> None:
         )
     )
     assert manifest["ai_generated"] is True
-    assert manifest["format"].startswith("ledgerbrief.citation-manifest/")
+    assert manifest["format"].startswith("cited-market-brief-agent.citation-manifest/")
     c0 = manifest["claims"][0]
     assert c0["support_status"] == "supported"
     assert c0["citations"][0]["validator"] == "pass"

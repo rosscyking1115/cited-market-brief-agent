@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 120
 
     # Database
-    database_url: str = "postgresql+psycopg://ledgerbrief:ledgerbrief@localhost:5432/ledgerbrief"
+    database_url: str = "postgresql+psycopg://cited_market_brief_agent:cited_market_brief_agent@localhost:5432/cited_market_brief_agent"
 
     # Cache / queue
     valkey_url: str = "redis://localhost:6379/0"
@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     s3_endpoint_url: str = "http://localhost:9000"
     s3_access_key: str = ""
     s3_secret_key: str = ""
-    s3_bucket_raw: str = "ledgerbrief-raw-sources"
+    s3_bucket_raw: str = "cited-market-brief-agent-raw-sources"
 
     # SEC EDGAR fair access: declared UA is REQUIRED; hard ceiling 10 req/s.
     # https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data

@@ -137,7 +137,9 @@ def build_xlsx(bundle: ExportBundle, time_series: list[dict] | None = None) -> b
     ws.append(["Disclosure"])
     style_header(ws, 1)
     ws.append([_safe_cell(bundle.disclaimer)])
-    ws.append([f"ai_generated=true; brief_id={bundle.brief_id}; format=ledgerbrief.xlsx/v1"])
+    ws.append(
+        [f"ai_generated=true; brief_id={bundle.brief_id}; format=cited-market-brief-agent.xlsx/v1"]
+    )
     autosize(ws, [140])
 
     wb.properties.description = (

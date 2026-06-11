@@ -49,7 +49,17 @@ def build_pptx(bundle: ExportBundle) -> bytes:
     bar.fill.solid()
     bar.fill.fore_color.rgb = RGBColor(*NAVY)
     bar.line.fill.background()
-    add_text(slide, 0.8, 0.65, 8, 0.6, "LedgerBrief", size=24, bold=True, color=NAVY)
+    add_text(
+        slide,
+        0.8,
+        0.65,
+        8,
+        0.6,
+        "Cited Market Brief Agent",
+        size=24,
+        bold=True,
+        color=NAVY,
+    )
     add_text(slide, 0.8, 1.7, 11.5, 1.0, "What changed since yesterday?", size=34, bold=True)
     add_text(
         slide, 0.8, 2.8, 11.5, 0.5,
@@ -120,7 +130,7 @@ def build_pptx(bundle: ExportBundle) -> bytes:
     # Art. 50 machine-readable marking + provenance in document properties
     prs.core_properties.comments = (
         f"ai_generated=true; brief_id={bundle.brief_id}; model={bundle.model}; "
-        f"prompt={bundle.prompt_version}; format=ledgerbrief.pptx/v1"
+        f"prompt={bundle.prompt_version}; format=cited-market-brief-agent.pptx/v1"
     )
     prs.core_properties.created = datetime.now(timezone.utc).replace(tzinfo=None)
 

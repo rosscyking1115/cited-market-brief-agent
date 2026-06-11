@@ -46,10 +46,10 @@ def build_report_html(bundle: ExportBundle) -> str:
     e = escape
     parts: list[str] = [
         "<!DOCTYPE html><html><head><meta charset='utf-8'>",
-        f"<title>{e(bundle.watchlist)} — LedgerBrief</title>",
+        f"<title>{e(bundle.watchlist)} — Cited Market Brief Agent</title>",
         f"<style>{_CSS}</style></head><body>",
         "<header>",
-        "<div class='brand sans'>LedgerBrief</div>",
+        "<div class='brand sans'>Cited Market Brief Agent</div>",
         f"<div class='meta sans'>Watchlist: {e(bundle.watchlist)} · generated "
         f"{bundle.generated_at.strftime('%Y-%m-%d %H:%M UTC')} · model {e(bundle.model)} · "
         f"prompt {e(bundle.prompt_version)} · {len(bundle.supported_claims)} validated claims</div>",

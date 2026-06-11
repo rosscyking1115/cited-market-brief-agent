@@ -1,4 +1,4 @@
-# LedgerBrief — Plan Evaluation Report
+# Cited Market Brief Agent — Plan Evaluation Report
 
 Evaluation of `PRODUCTION_DEVELOPMENT_PLAN.md` (dated 2026-06-05), performed 2026-06-10 by four parallel review agents: currency/credibility, tech stack, security/compliance, and design/performance. This report drove the revisions in `PRODUCTION_PLAN.md` (v2).
 

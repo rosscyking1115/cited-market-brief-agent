@@ -1,4 +1,4 @@
-"""LedgerBrief API entrypoint.
+"""Cited Market Brief Agent API entrypoint.
 
 Compliance posture (plan §9): factual, cited, non-personalized. No buy/sell/hold,
 no portfolio advice, no performance presentation. Advice-boundary guardrails wrap
@@ -15,7 +15,7 @@ from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import require_auth
 
 app = FastAPI(
-    title="LedgerBrief API",
+    title="Cited Market Brief Agent API",
     version=__version__,
     description="Audit-ready public-data brief engine. Internal research drafts only; "
     "not investment advice.",

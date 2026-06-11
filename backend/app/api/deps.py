@@ -12,14 +12,18 @@ from app.db.models import Organization, User
 
 
 def dev_user(db: Session) -> User:
-    user = db.scalar(select(User).where(User.email == "dev@ledgerbrief.local"))
+    user = db.scalar(select(User).where(User.email == "dev@cited-market-brief-agent.local"))
     if user is None:
         org = db.scalar(select(Organization).where(Organization.name == "dev-org"))
         if org is None:
             org = Organization(name="dev-org")
             db.add(org)
             db.flush()
-        user = User(org_id=org.id, email="dev@ledgerbrief.local", display_name="Dev Analyst")
+        user = User(
+            org_id=org.id,
+            email="dev@cited-market-brief-agent.local",
+            display_name="Dev Analyst",
+        )
         db.add(user)
         db.commit()
     return user

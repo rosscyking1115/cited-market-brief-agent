@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Backup + restore drill (plan Phase 5 exit criterion).
 # Dumps the app database, restores into a scratch DB, compares table row counts.
-# Usage: DATABASE_URL=postgres://user:pass@host:5432/ledgerbrief bash scripts/backup_restore_test.sh
+# Usage: DATABASE_URL=postgres://user:pass@host:5432/cited_market_brief_agent bash scripts/backup_restore_test.sh
 set -euo pipefail
 
-DB_URL="${DATABASE_URL:-postgresql://ledgerbrief:ledgerbrief@localhost:5432/ledgerbrief}"
+DB_URL="${DATABASE_URL:-postgresql://cited_market_brief_agent:cited_market_brief_agent@localhost:5432/cited_market_brief_agent}"
 DB_URL="${DB_URL/postgresql+psycopg/postgresql}"
-SCRATCH="ledgerbrief_restore_test"
-DUMP="/tmp/ledgerbrief_$(date +%Y%m%d_%H%M%S).dump"
+SCRATCH="cited_market_brief_agent_restore_test"
+DUMP="/tmp/cited_market_brief_agent_$(date +%Y%m%d_%H%M%S).dump"
 
 echo "==> dumping ${DB_URL%%\?*}"
 pg_dump --format=custom --file="$DUMP" "$DB_URL"
