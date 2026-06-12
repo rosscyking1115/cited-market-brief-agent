@@ -77,5 +77,7 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
         request_timeout=25,
     )
     raw = response["choices"][0]["message"]["content"]
-    translated = BriefTranslation.model_validate_json(_json_payload(raw))
-    return translated.model_copy(update={"locale": locale, "label": label})
+    translated_payload = json.loads(_json_payload(raw))
+    translated_payload["locale"] = locale
+    translated_payload["label"] = label
+    return BriefTranslation.model_validate(translated_payload)
