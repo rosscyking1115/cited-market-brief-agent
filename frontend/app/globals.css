@@ -47,6 +47,12 @@
 
 :root {
   color-scheme: dark;
+  --reader-body-size: 13px;
+  --reader-body-line: 1.55;
+  --reader-heading-size: 16px;
+  --reader-prose-size: 15px;
+  --reader-prose-line: 1.7;
+  --reader-meta-size: 11px;
 }
 
 :root[data-theme="light"] {
@@ -77,6 +83,18 @@ body {
   line-height: 1.45;
   font-feature-settings: "cv05";
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+html,
+body {
+  max-width: 100%;
+}
+
+main,
+article,
+section {
+  min-width: 0;
 }
 
 /* Numbers in tables: tabular figures, mandatory */
@@ -92,12 +110,31 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-neutral-90);
+  overflow-wrap: anywhere;
 }
 
 .brief-prose {
   color: var(--color-neutral-50);
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: var(--reader-prose-size);
+  line-height: var(--reader-prose-line);
+  overflow-wrap: anywhere;
+}
+
+.reader-body {
+  font-size: var(--reader-body-size);
+  line-height: var(--reader-body-line);
+  overflow-wrap: anywhere;
+}
+
+.reader-heading {
+  font-size: var(--reader-heading-size);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.reader-meta {
+  font-size: var(--reader-meta-size);
+  overflow-wrap: anywhere;
 }
 
 .brief-prose p + p {
@@ -121,8 +158,40 @@ body {
 }
 
 .reader-translation .brief-prose {
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: var(--reader-prose-size);
+  line-height: calc(var(--reader-prose-line) + 0.1);
+}
+
+[data-text-size="large"] {
+  --reader-body-size: 15px;
+  --reader-body-line: 1.7;
+  --reader-heading-size: 18px;
+  --reader-prose-size: 18px;
+  --reader-prose-line: 1.75;
+  --reader-meta-size: 12px;
+}
+
+[data-text-size="xl"] {
+  --reader-body-size: 17px;
+  --reader-body-line: 1.8;
+  --reader-heading-size: 20px;
+  --reader-prose-size: 21px;
+  --reader-prose-line: 1.85;
+  --reader-meta-size: 13px;
+}
+
+@media (max-width: 640px) {
+  [data-text-size="large"] {
+    --reader-body-size: 16px;
+    --reader-heading-size: 19px;
+    --reader-prose-size: 19px;
+  }
+
+  [data-text-size="xl"] {
+    --reader-body-size: 18px;
+    --reader-heading-size: 22px;
+    --reader-prose-size: 23px;
+  }
 }
 
 /* Visible 2px focus ring (WCAG 2.2) — amber on dark */

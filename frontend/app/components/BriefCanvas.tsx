@@ -225,15 +225,15 @@ export default function BriefCanvas({
     <div>
       <ApprovalChecklist sectionsCount={sections.length} edits={edits} claims={claims} />
 
-      <div className="mt-5 rounded-(--radius-ctl) border border-hairline bg-page/60 px-4 py-3">
+      <div className="mt-5 rounded-(--radius-ctl) border border-hairline bg-page/60 px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="th-label">Reader language</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-neutral-70">
+            <p className="reader-body mt-1 text-[12px] leading-relaxed text-neutral-70">
               English stays visible as the accurate source; translations are reading aids.
             </p>
           </div>
-          <div className="flex items-center gap-1 rounded-(--radius-ctl) border border-elevated p-1">
+          <div className="grid w-full grid-cols-3 gap-1 rounded-(--radius-ctl) border border-elevated p-1 sm:w-auto sm:min-w-80">
             {LOCALES.map((item) => (
               <button
                 key={item.locale}
@@ -241,7 +241,7 @@ export default function BriefCanvas({
                 aria-pressed={locale === item.locale}
                 title={item.helper}
                 onClick={() => selectLocale(item.locale)}
-                className={`min-w-20 rounded-(--radius-ctl) px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                className={`min-h-8 rounded-(--radius-ctl) px-2 py-1 text-[12px] font-medium transition-colors sm:px-2.5 ${
                   locale === item.locale
                     ? "bg-action text-white"
                     : "text-neutral-70 hover:bg-card hover:text-neutral-30"
@@ -253,19 +253,19 @@ export default function BriefCanvas({
           </div>
         </div>
         {(translationBusy || translationError || activeTranslation) && (
-          <p className="mt-2 text-[12px] leading-relaxed text-neutral-90">
+          <p className="reader-body mt-2 text-[12px] leading-relaxed text-neutral-90">
             {translationBusy && `Translating ${LOCALES.find((item) => item.locale === translationBusy)?.label}...`}
             {translationError || activeTranslation?.disclaimer}
           </p>
         )}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
+      <div className="mt-5 flex flex-col gap-3 border-t border-hairline pt-4 sm:flex-row sm:items-center sm:justify-between">
         <span className="th-label">
           Review · status{" "}
           <span className={approved ? "text-up" : "text-neutral-50"}>{status}</span>
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!resolved && !approved && (
             <button
               type="button"
@@ -304,7 +304,7 @@ export default function BriefCanvas({
         return (
           <section
             key={section.title + i}
-            className={`mt-5 max-w-4xl rounded-(--radius-ctl) border-l-2 pl-5 ${
+            className={`mt-5 max-w-4xl rounded-(--radius-ctl) border-l-2 pl-3 sm:pl-5 ${
               edit?.action === "accept"
                 ? "border-up/70"
                 : edit?.action === "reject"
@@ -316,9 +316,9 @@ export default function BriefCanvas({
                       : "border-hairline"
             }`}
           >
-            <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-base font-semibold text-neutral-30">{section.title}</h3>
-              <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+              <h3 className="reader-heading text-base font-semibold text-neutral-30">{section.title}</h3>
+              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                 {edit && (
                   <span className="mr-1 font-mono text-[10px] text-neutral-90">
                     {edit.action} · {edit.at.slice(0, 16).replace("T", " ")}
@@ -339,7 +339,7 @@ export default function BriefCanvas({
                         }
                       }}
                       title={live ? undefined : "Connect the API to review"}
-                      className={`rounded-(--radius-ctl) border px-2 py-1 text-[11px] transition-opacity disabled:opacity-40 ${
+                      className={`min-h-8 rounded-(--radius-ctl) border px-2 py-1 text-[11px] transition-opacity disabled:opacity-40 ${
                         edit?.action === action ? cls : "border-elevated text-neutral-70 hover:text-neutral-30"
                       }`}
                     >
@@ -381,7 +381,7 @@ export default function BriefCanvas({
                   claims={claims}
                 />
                 {activeTranslation?.sections[i] && (
-                  <div className="reader-translation mt-3 rounded-(--radius-ctl) border border-hairline bg-page/70 px-4 py-3">
+                  <div className="reader-translation mt-3 rounded-(--radius-ctl) border border-hairline bg-page/70 px-3 py-3 sm:px-4">
                     <p className="th-label mb-1">
                       {activeTranslation.label} reading aid
                     </p>

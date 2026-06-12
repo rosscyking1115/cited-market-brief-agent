@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
@@ -26,6 +26,11 @@ export const metadata: Metadata = {
   title: "Cited Market Brief Agent — Audit-ready market briefs",
   description:
     "Cited, reviewable morning briefs from public data. Every claim validated against a stored source span.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

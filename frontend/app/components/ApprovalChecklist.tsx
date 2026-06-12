@@ -12,7 +12,7 @@ function CheckRow({
   detail: string;
 }) {
   return (
-    <li className="flex items-start gap-2 py-1.5 text-[13px]">
+    <li className="reader-body flex items-start gap-2 py-1.5 text-[13px]">
       <span
         className={`mt-0.5 font-mono text-[11px] ${ok ? "text-up" : "text-flag"}`}
         aria-hidden
@@ -21,7 +21,7 @@ function CheckRow({
       </span>
       <span>
         <span className="font-medium text-neutral-30">{label}</span>
-        <span className="ml-2 text-neutral-70">{detail}</span>
+        <span className="block text-neutral-70 sm:ml-2 sm:inline">{detail}</span>
       </span>
     </li>
   );

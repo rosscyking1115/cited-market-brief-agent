@@ -6,6 +6,7 @@ import BriefCanvas from "@/app/components/BriefCanvas";
 import ChangesPanel from "@/app/components/ChangesPanel";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
+import TextSizeToggle from "@/app/components/TextSizeToggle";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import {
   API_URL,
@@ -200,16 +201,17 @@ export default async function Page() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-hairline bg-bar">
-        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex min-h-12 max-w-7xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-6">
+          <div className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto sm:gap-3">
             <span className="block h-5 w-1.5 bg-navy-700" aria-hidden />
-            <span className="font-serif text-[17px] font-semibold tracking-tight text-neutral-30">
+            <span className="truncate font-serif text-[16px] font-semibold tracking-tight text-neutral-30 sm:text-[17px]">
               Cited Market Brief Agent
             </span>
-            <span className="th-label mt-px">Evidence ledger · Morning brief</span>
+            <span className="th-label mt-px hidden sm:inline">Evidence ledger · Morning brief</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 basis-full items-center justify-between gap-2 sm:basis-auto sm:justify-start sm:gap-3">
             <ThemeToggle />
+            <TextSizeToggle />
             <span
               className={`rounded-(--radius-ctl) border px-2 py-0.5 font-mono text-[10px] ${
                 isLive ? "border-up/60 text-up" : "border-elevated text-neutral-90"
@@ -217,42 +219,42 @@ export default async function Page() {
             >
               {isLive ? "● LIVE" : "○ DEMO DATA"}
             </span>
-            <span className="rounded-(--radius-ctl) border border-flag/60 px-2 py-0.5 text-[11px] font-medium text-flag">
+            <span className="hidden rounded-(--radius-ctl) border border-flag/60 px-2 py-0.5 text-[11px] font-medium text-flag sm:inline">
               INTERNAL RESEARCH DRAFT
             </span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
-        <article className="rounded-(--radius-card) border border-hairline bg-card px-6 py-5">
-          <p className="th-label mb-2">Morning brief · Watchlist: {data.watchlist}</p>
-          <h1 className="font-serif text-2xl font-semibold text-neutral-30">
+      <main className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
+        <article className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card px-4 py-4 sm:px-6 sm:py-5">
+          <p className="th-label mb-2 break-words">Morning brief · Watchlist: {data.watchlist}</p>
+          <h1 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
             What changed since yesterday?
           </h1>
-          <p className="mt-1 font-mono text-[11px] text-neutral-90">
+          <p className="reader-meta mt-2 break-words font-mono text-[11px] leading-relaxed text-neutral-90">
             generated {ts} UTC · {data.claims.length} claims · {supported} validated ·{" "}
             {flagged} flagged · status {data.status}
           </p>
 
           {attentionClaims.length > 0 && (
-            <section className="mt-5 rounded-(--radius-ctl) border border-flag/40 bg-page/70 px-4 py-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <section className="mt-5 min-w-0 rounded-(--radius-ctl) border border-flag/40 bg-page/70 px-3 py-3 sm:px-4">
+              <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-2">
                 <p className="th-label text-flag">Needs attention</p>
-                <span className="font-mono text-[10px] text-neutral-90">
+                <span className="min-w-0 break-words font-mono text-[10px] text-neutral-90">
                   {attentionClaims.length} claim{attentionClaims.length > 1 ? "s" : ""} blocked from clean approval
                 </span>
               </div>
               <ul className="mt-2 grid gap-2">
                 {attentionClaims.map((claim) => (
-                  <li key={claim.claim_id} className="flex items-start gap-2 text-[13px] leading-relaxed">
+                  <li key={claim.claim_id} className="reader-body grid min-w-0 gap-2 text-[13px] leading-relaxed sm:flex sm:items-start">
                     <a
                       href={`#claim-${String(claim.index).padStart(3, "0")}`}
-                      className="shrink-0 rounded-(--radius-ctl) border border-flag/60 px-1.5 py-0.5 font-mono text-[10px] text-flag hover:bg-flag hover:text-white"
+                      className="w-fit shrink-0 rounded-(--radius-ctl) border border-flag/60 px-1.5 py-0.5 font-mono text-[10px] text-flag hover:bg-flag hover:text-white"
                     >
                       C-{String(claim.index).padStart(3, "0")}
                     </a>
-                    <span className="text-neutral-50">{claim.text}</span>
+                    <span className="min-w-0 break-words text-neutral-50">{claim.text}</span>
                     <RepairClaimButton claimId={claim.claim_id} apiUrl={API_URL} live={isLive} />
                   </li>
                 ))}
@@ -273,7 +275,7 @@ export default async function Page() {
           {data.open_questions.length > 0 && (
             <section className="mt-5 rounded-(--radius-ctl) border-l-2 border-action bg-page/60 px-4 py-3">
               <p className="th-label">Analyst open questions</p>
-              <ul className="mt-1 list-inside list-disc text-[13px] text-neutral-50">
+              <ul className="reader-body mt-1 list-inside list-disc text-[13px] text-neutral-50">
                 {data.open_questions.map((q) => (
                   <li key={q}>{q}</li>
                 ))}
@@ -282,7 +284,7 @@ export default async function Page() {
           )}
         </article>
 
-        <div className="flex items-center gap-2 px-1">
+        <div className="flex flex-wrap items-center gap-2 px-1">
           <span className="th-label">Export</span>
           {[
             { fmt: "markdown", href: `${API_URL}/briefs/${data.brief_id}/markdown`, label: "MD" },
@@ -312,7 +314,7 @@ export default async function Page() {
 
         <EvidenceLedger claims={data.claims} apiUrl={API_URL} live={isLive} />
 
-        <footer className="px-1 pb-6 text-[11px] leading-relaxed text-neutral-90">
+        <footer className="reader-meta px-1 pb-6 text-[11px] leading-relaxed text-neutral-90">
           Internal research draft. Factual, cited, non-personalized. Not investment advice, not a
           recommendation, and not an offer to buy or sell any security. AI-assisted content —
           human review required before external use. Sources: SEC EDGAR, FRED (this product uses

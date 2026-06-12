@@ -48,7 +48,7 @@ function FeedbackBar({
   }
 
   return (
-    <div className="mt-3 flex items-center gap-2">
+    <div className="mt-3 flex flex-wrap items-center gap-2">
       <span className="th-label">Feedback</span>
       {FEEDBACK_KINDS.map(({ kind, label }) => (
         <button
@@ -56,7 +56,7 @@ function FeedbackBar({
           type="button"
           onClick={() => send(kind)}
           disabled={!live || sent !== null}
-          className={`rounded-(--radius-ctl) border px-2 py-1 text-[11px] transition-colors ${
+          className={`reader-meta rounded-(--radius-ctl) border px-2 py-1 text-[11px] transition-colors ${
             sent === kind
               ? "border-up text-up"
               : "border-elevated text-neutral-70 hover:border-action hover:text-neutral-30 disabled:opacity-40"
@@ -66,7 +66,7 @@ function FeedbackBar({
           {sent === kind ? `✓ ${label}` : label}
         </button>
       ))}
-      {error && <span className="text-[11px] text-down">▼ failed — retry later</span>}
+      {error && <span className="reader-meta text-[11px] text-down">▼ failed — retry later</span>}
     </div>
   );
 }
@@ -98,7 +98,7 @@ export default function EvidenceLedger({
 
   return (
     <section id="ledger" className="rounded-(--radius-card) border border-hairline bg-card">
-      <h2 className="th-label flex items-center justify-between border-b border-hairline px-4 py-2.5">
+      <h2 className="th-label flex flex-wrap items-center justify-between gap-1 border-b border-hairline px-4 py-2.5">
         <span>Evidence ledger — click a claim for the proof</span>
         <span>{claims.filter((c) => c.support_status === "supported").length}/{claims.length} validated</span>
       </h2>
@@ -115,30 +115,30 @@ export default function EvidenceLedger({
                 type="button"
                 aria-expanded={open}
                 onClick={() => setOpenId(open ? null : claim.claim_id)}
-                className="grid w-full grid-cols-[64px_1fr_120px_90px] items-start gap-2 px-4 py-2 text-left text-[13px] hover:bg-page/40"
+                className="reader-body grid w-full grid-cols-[52px_1fr] items-start gap-2 px-4 py-3 text-left text-[13px] hover:bg-page/40 sm:grid-cols-[64px_1fr_120px_90px] sm:py-2"
               >
                 <span className="font-mono text-[11px] text-neutral-90">
                   C-{String(claim.index).padStart(3, "0")}
                 </span>
-                <span className="text-neutral-50">{claim.text}</span>
-                <span className="font-mono text-[11px] text-neutral-70">{claim.type}</span>
-                <span className="text-right">
+                <span className="break-words text-neutral-50">{claim.text}</span>
+                <span className="col-start-2 font-mono text-[11px] text-neutral-70 sm:col-start-auto">{claim.type}</span>
+                <span className="col-start-2 text-left sm:col-start-auto sm:text-right">
                   <StatusBadge status={claim.support_status} />
                 </span>
               </button>
 
               {open && (
-                <div className="border-t border-hairline bg-page/60 px-6 py-4">
+                <div className="border-t border-hairline bg-page/60 px-4 py-4 sm:px-6">
                   {claim.support_status !== "supported" && (
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-(--radius-ctl) border border-flag/40 bg-card px-3 py-2">
-                      <span className="text-[12px] text-neutral-50">
+                      <span className="reader-body text-[12px] text-neutral-50">
                         This claim is flagged. Repair rewrites it from the stored evidence span.
                       </span>
                       <RepairClaimButton claimId={claim.claim_id} apiUrl={apiUrl} live={live} />
                     </div>
                   )}
                   {claim.citations.length === 0 && (
-                    <p className="text-[12px] text-flag">
+                    <p className="reader-body text-[12px] text-flag">
                       ⚑ No citations — this claim cannot export and needs analyst review.
                     </p>
                   )}
@@ -146,29 +146,29 @@ export default function EvidenceLedger({
                     <div key={cit.span_id} className="mb-4 last:mb-0">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         <StatusBadge status={cit.validator === "pass" ? "supported" : "flagged"} />
-                        <span className="font-mono text-[11px] text-neutral-30">
+                          <span className="reader-meta font-mono text-[11px] text-neutral-30">
                           {cit.publisher} {cit.doc_type} {cit.accession ?? ""}
                         </span>
                         {cit.section && (
-                          <span className="font-mono text-[11px] text-neutral-90">{cit.section}</span>
+                          <span className="reader-meta font-mono text-[11px] text-neutral-90">{cit.section}</span>
                         )}
                         {cit.span?.[0] != null && (
-                          <span className="font-mono text-[11px] text-neutral-90">
+                          <span className="reader-meta font-mono text-[11px] text-neutral-90">
                             chars {cit.span[0]}–{cit.span[1]}
                           </span>
                         )}
                       </div>
                       {cit.evidence_quote && (
-                        <blockquote className="mt-2 border-l-2 border-action pl-3 text-[12px] italic text-neutral-50">
+                        <blockquote className="reader-body mt-2 border-l-2 border-action pl-3 text-[12px] italic leading-relaxed text-neutral-50">
                           “{cit.evidence_quote}”
                         </blockquote>
                       )}
                       {cit.chunk_text && (
-                        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-(--radius-ctl) border border-hairline bg-card p-3 font-mono text-[11px] leading-relaxed text-neutral-70">
+                        <pre className="reader-meta mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-(--radius-ctl) border border-hairline bg-card p-3 font-mono text-[11px] leading-relaxed text-neutral-70">
                           {cit.chunk_text}
                         </pre>
                       )}
-                      <p className="mt-1.5 font-mono text-[10px] text-neutral-90">
+                      <p className="reader-meta mt-1.5 break-words font-mono text-[10px] text-neutral-90">
                         {cit.source_url && (
                           <a
                             href={cit.source_url}
