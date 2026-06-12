@@ -14,6 +14,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
       "font-src 'self'",
+      "manifest-src 'self'",
+      "worker-src 'self'",
       `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
