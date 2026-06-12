@@ -74,6 +74,7 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
         response_format={"type": "json_object"},
         temperature=0.1,
         max_tokens=5000,
+        request_timeout=25,
     )
     raw = response["choices"][0]["message"]["content"]
     translated = BriefTranslation.model_validate_json(_json_payload(raw))

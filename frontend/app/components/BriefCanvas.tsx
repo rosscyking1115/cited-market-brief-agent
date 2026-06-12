@@ -4,7 +4,7 @@
 // plus brief approval. Approval is blocked until every section is resolved
 // (needs_source blocks — that's the review discipline the audit trail sells).
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ApprovalChecklist from "@/app/components/ApprovalChecklist";
 import type { BriefLocale, BriefTranslation, ClaimRow, BriefSectionData, SectionEdit } from "@/lib/api";
 
@@ -93,8 +93,10 @@ export default function BriefCanvas({
   const [busy, setBusy] = useState(false);
   const [locale, setLocale] = useState<BriefLocale>("original");
   const [translations, setTranslations] = useState<Record<string, BriefTranslation>>({});
-  const [translationBusy, setTranslationBusy] = useState(false);
+  const [translationBusy, setTranslationBusy] = useState<BriefLocale | null>(null);
   const [translationError, setTranslationError] = useState("");
+  const translationAbortRef = useRef<AbortController | null>(null);
+  const translationRequestRef = useRef(0);
 
   const resolved = sections.every((_, i) => {
     const e = edits[String(i)];
@@ -110,21 +112,43 @@ export default function BriefCanvas({
   async function selectLocale(nextLocale: BriefLocale) {
     setLocale(nextLocale);
     setTranslationError("");
-    if (nextLocale === "original" || translations[nextLocale]) return;
+    if (nextLocale === "original" || translations[nextLocale]) {
+      translationRequestRef.current += 1;
+      translationAbortRef.current?.abort();
+      setTranslationBusy(null);
+      return;
+    }
     if (!live) {
       setTranslationError("Translation needs the live API connection.");
       return;
     }
-    setTranslationBusy(true);
+    translationAbortRef.current?.abort();
+    const requestId = translationRequestRef.current + 1;
+    translationRequestRef.current = requestId;
+    const controller = new AbortController();
+    translationAbortRef.current = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 30000);
+    setTranslationBusy(nextLocale);
     try {
-      const res = await fetch(`${apiUrl}/briefs/${briefId}/translations/${nextLocale}`);
+      const res = await fetch(`${apiUrl}/briefs/${briefId}/translations/${nextLocale}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) throw new Error("translation request failed");
       const payload = (await res.json()) as BriefTranslation;
+      if (translationRequestRef.current !== requestId) return;
       setTranslations((prev) => ({ ...prev, [nextLocale]: payload }));
-    } catch {
-      setTranslationError("Could not load this translation. Keep using Original for the audited text.");
+    } catch (error) {
+      if (translationRequestRef.current !== requestId) return;
+      setTranslationError(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Translation timed out. You can keep reading Original or try again."
+          : "Could not load this translation. Keep using Original for the audited text.",
+      );
     } finally {
-      setTranslationBusy(false);
+      window.clearTimeout(timeout);
+      if (translationRequestRef.current === requestId) {
+        setTranslationBusy(null);
+      }
     }
   }
 
@@ -215,8 +239,7 @@ export default function BriefCanvas({
                 aria-pressed={locale === item.locale}
                 title={item.helper}
                 onClick={() => selectLocale(item.locale)}
-                disabled={translationBusy && locale !== item.locale}
-                className={`min-w-20 rounded-(--radius-ctl) px-2.5 py-1 text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                className={`min-w-20 rounded-(--radius-ctl) px-2.5 py-1 text-[12px] font-medium transition-colors ${
                   locale === item.locale
                     ? "bg-action text-white"
                     : "text-neutral-70 hover:bg-card hover:text-neutral-30"
@@ -229,7 +252,7 @@ export default function BriefCanvas({
         </div>
         {(translationBusy || translationError || activeTranslation) && (
           <p className="mt-2 text-[12px] leading-relaxed text-neutral-90">
-            {translationBusy && "Translating the brief..."}
+            {translationBusy && `Translating ${LOCALES.find((item) => item.locale === translationBusy)?.label}...`}
             {translationError || activeTranslation?.disclaimer}
           </p>
         )}
