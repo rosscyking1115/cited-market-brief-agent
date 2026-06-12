@@ -4,8 +4,10 @@ WORKDIR /srv
 
 COPY pyproject.toml ./
 COPY app ./app
+COPY scripts ./scripts
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[exports]" \
+    && python -m playwright install --with-deps chromium
 
 EXPOSE 8000
 

@@ -2,6 +2,7 @@
 // failure so the dashboard falls back to demo data instead of erroring.
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const SERVER_API_URL = process.env.API_URL ?? API_URL;
 
 export type CitationDetail = {
   span_id: string;
@@ -97,7 +98,7 @@ export type ChangesPayload = {
 
 async function fetchJson<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${SERVER_API_URL}${path}`, {
       cache: "no-store",
       signal: AbortSignal.timeout(1500),
     });
