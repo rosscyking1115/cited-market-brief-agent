@@ -54,47 +54,30 @@ type HighlightMatch = {
   className: string;
 };
 
-function AnalystHighlightedText({ text, enabled }: { text: string; enabled: boolean }) {
-  if (!enabled || !text.trim()) return <span>{text}</span>;
-
-  const matches: HighlightMatch[] = [];
-  for (const category of HIGHLIGHT_CATEGORIES) {
-    category.pattern.lastIndex = 0;
-    for (const match of text.matchAll(category.pattern)) {
-      const start = match.index ?? 0;
-      matches.push({
-        start,
-        end: start + match[0].length,
+function sentenceHighlightRanges(text: string): HighlightMatch[] {
+  const ranges: HighlightMatch[] = [];
+  const sentencePattern = /[^.!?。！？]+(?:[.!?。！？]+|$)/g;
+  for (const sentence of text.matchAll(sentencePattern)) {
+    const value = sentence[0];
+    const start = sentence.index ?? 0;
+    const trimmedStartOffset = value.search(/\S/);
+    if (trimmedStartOffset === -1) continue;
+    const leading = start + trimmedStartOffset;
+    const trailing = start + value.length - (value.match(/\s*$/)?.[0].length ?? 0);
+    const normalized = value.trim();
+    const category = HIGHLIGHT_CATEGORIES.find((item) => {
+      item.pattern.lastIndex = 0;
+      return item.pattern.test(normalized);
+    });
+    if (category) {
+      ranges.push({
+        start: leading,
+        end: trailing,
         className: category.className,
       });
     }
   }
-
-  const selected: HighlightMatch[] = [];
-  for (const match of matches.sort((a, b) => a.start - b.start || b.end - a.end)) {
-    if (selected.some((existing) => match.start < existing.end && match.end > existing.start)) {
-      continue;
-    }
-    selected.push(match);
-  }
-
-  if (selected.length === 0) return <span>{text}</span>;
-
-  const nodes: ReactNode[] = [];
-  let cursor = 0;
-  selected.forEach((match, index) => {
-    if (match.start > cursor) {
-      nodes.push(<span key={`plain-${index}`}>{text.slice(cursor, match.start)}</span>);
-    }
-    nodes.push(
-      <mark key={`mark-${index}`} className={match.className}>
-        {text.slice(match.start, match.end)}
-      </mark>,
-    );
-    cursor = match.end;
-  });
-  if (cursor < text.length) nodes.push(<span key="plain-tail">{text.slice(cursor)}</span>);
-  return <>{nodes}</>;
+  return ranges;
 }
 
 function HighlightToggle({
@@ -171,20 +154,66 @@ function InlineMarkdown({
   claims: ClaimRow[];
   showHighlights: boolean;
 }) {
-  const parts = text.split(/(\[#\d+\]|\[C-\d+\]\(#evidence-ledger\)|\*\*[^*]+\*\*)/g);
+  const tokenPattern = /(\[#\d+\]|\[C-\d+\]\(#evidence-ledger\)|\*\*[^*]+\*\*)/g;
+  const parts: { text: string; start: number; strong: boolean }[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(tokenPattern)) {
+    const start = match.index ?? 0;
+    if (start > cursor) {
+      parts.push({ text: text.slice(cursor, start), start: cursor, strong: false });
+    }
+    const raw = match[0];
+    const strong = /^\*\*([^*]+)\*\*$/.exec(raw);
+    parts.push({
+      text: strong ? strong[1] : raw,
+      start: strong ? start + 2 : start,
+      strong: Boolean(strong),
+    });
+    cursor = start + raw.length;
+  }
+  if (cursor < text.length) {
+    parts.push({ text: text.slice(cursor), start: cursor, strong: false });
+  }
+
+  const ranges = showHighlights ? sentenceHighlightRanges(text) : [];
+
+  function renderTextSegment(part: { text: string; start: number; strong: boolean }, i: number) {
+    if (!showHighlights || !part.text.trim()) return <span key={i}>{part.text}</span>;
+    const segmentEnd = part.start + part.text.length;
+    const matches = ranges
+      .filter((range) => range.start < segmentEnd && range.end > part.start)
+      .map((range) => ({
+        start: Math.max(0, range.start - part.start),
+        end: Math.min(part.text.length, range.end - part.start),
+        className: range.className,
+      }));
+    if (matches.length === 0) return <span key={i}>{part.text}</span>;
+
+    const nodes: ReactNode[] = [];
+    let localCursor = 0;
+    matches.forEach((range, index) => {
+      if (range.start > localCursor) {
+        nodes.push(<span key={`plain-${index}`}>{part.text.slice(localCursor, range.start)}</span>);
+      }
+      nodes.push(
+        <mark key={`mark-${index}`} className={range.className}>
+          {part.text.slice(range.start, range.end)}
+        </mark>,
+      );
+      localCursor = range.end;
+    });
+    if (localCursor < part.text.length) {
+      nodes.push(<span key="plain-tail">{part.text.slice(localCursor)}</span>);
+    }
+    return <span key={i}>{nodes}</span>;
+  }
+
   return (
     <>
       {parts.map((part, i) => {
-        const match = /^\[#(\d+)\]$/.exec(part) ?? /^\[C-(\d+)\]\(#evidence-ledger\)$/.exec(part);
+        const match = /^\[#(\d+)\]$/.exec(part.text) ?? /^\[C-(\d+)\]\(#evidence-ledger\)$/.exec(part.text);
         if (!match) {
-          const strong = /^\*\*([^*]+)\*\*$/.exec(part);
-          return strong ? (
-            <strong key={i}>
-              <AnalystHighlightedText text={strong[1]} enabled={showHighlights} />
-            </strong>
-          ) : (
-            <AnalystHighlightedText key={i} text={part} enabled={showHighlights} />
-          );
+          return renderTextSegment(part, i);
         }
         const idx = Number(match[1]);
         const ok = claims.find((c) => c.index === idx)?.support_status === "supported";
