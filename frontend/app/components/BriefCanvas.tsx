@@ -24,28 +24,35 @@ const LOCALES: { locale: BriefLocale; label: string; helper: string }[] = [
 
 const TRANSLATION_TIMEOUT_MS = 95000;
 
-const HIGHLIGHT_CATEGORIES = [
-  {
-    id: "risk",
-    label: "Risk / pressure",
-    className: "analyst-highlight analyst-highlight-risk",
-    pattern:
-      /\b(risk|risks|warning|warnings|pressure|pressures|inflation|cost|costs|restriction|restrictions|regulation|regulations|control|controls|decline|declined|decelerated|loss|losses|competition|competitive|volatile|volatility|blocked|flagged|materially reduce|licensing requirements)\b/gi,
-  },
-  {
-    id: "driver",
-    label: "Drivers / upside",
-    className: "analyst-highlight analyst-highlight-driver",
-    pattern:
-      /\b(growth|grew|increase|increased|up|rose|higher|improvement|improved|demand|revenue|margin|guidance|opportunity|opportunities|leadership|AI|HPC|datacenter|hyperscaler|buildout|buildouts|accelerator|accelerators)\b/gi,
-  },
-  {
-    id: "evidence",
-    label: "Data / evidence",
-    className: "analyst-highlight analyst-highlight-evidence",
-    pattern:
-      /\b(10-Q|8-K|SEC|EDGAR|FRED|CPI|yield|Treasury|bps|basis points|vintage|filing|filings|disclosed|reported|print|quarter|May|June|January|2026|20\d{2}|[\d.]+%|C-\d{3})\b/gi,
-  },
+const HIGHLIGHT_PATTERNS = [
+  /\bexport-control risk factor[s]?\b/gi,
+  /\bexport control licensing requirements\b/gi,
+  /\blicensing requirements\b/gi,
+  /\bmaterially reduce revenue\b/gi,
+  /\binflationary pressure\b/gi,
+  /\bcompetitive pressure\b/gi,
+  /\brisk factor[s]?\b/gi,
+  /\bgovernmental regulations?\b/gi,
+  /\btrade restrictions?\b/gi,
+  /\brevenue guidance\b/gi,
+  /\bgross-margin change\b/gi,
+  /\bdatacenter segment leadership change\b/gi,
+  /\bdatacenter\b/gi,
+  /\bAI infrastructure buildouts?\b/gi,
+  /\bHPC mix\b/gi,
+  /\bhyperscaler build plans\b/gi,
+  /\baccelerator products?\b/gi,
+  /\bcustomer concentration\b/gi,
+  /\bcontinued inflationary pressure\b/gi,
+  /\bCPI print\b/gi,
+  /\b10-year U\.S\. Treasury yield\b/gi,
+  /\bTreasury yield\b/gi,
+  /\b10-Q risk factors?\b/gi,
+  /\b8-K discloses\b/gi,
+  /\bSEC EDGAR\b/g,
+  /\bFederal Reserve Bank of St\. Louis\b/gi,
+  /\b(?:rose|up|increased|decelerated|held near|remains elevated)\b/gi,
+  /\b\d+(?:\.\d+)?%\b/g,
 ] as const;
 
 type HighlightMatch = {
@@ -54,30 +61,28 @@ type HighlightMatch = {
   className: string;
 };
 
-function sentenceHighlightRanges(text: string): HighlightMatch[] {
-  const ranges: HighlightMatch[] = [];
-  const sentencePattern = /[^.!?。！？]+(?:[.!?。！？]+|$)/g;
-  for (const sentence of text.matchAll(sentencePattern)) {
-    const value = sentence[0];
-    const start = sentence.index ?? 0;
-    const trimmedStartOffset = value.search(/\S/);
-    if (trimmedStartOffset === -1) continue;
-    const leading = start + trimmedStartOffset;
-    const trailing = start + value.length - (value.match(/\s*$/)?.[0].length ?? 0);
-    const normalized = value.trim();
-    const category = HIGHLIGHT_CATEGORIES.find((item) => {
-      item.pattern.lastIndex = 0;
-      return item.pattern.test(normalized);
-    });
-    if (category) {
-      ranges.push({
-        start: leading,
-        end: trailing,
-        className: category.className,
+function phraseHighlightRanges(text: string): HighlightMatch[] {
+  const matches: HighlightMatch[] = [];
+  for (const pattern of HIGHLIGHT_PATTERNS) {
+    pattern.lastIndex = 0;
+    for (const match of text.matchAll(pattern)) {
+      const start = match.index ?? 0;
+      matches.push({
+        start,
+        end: start + match[0].length,
+        className: "analyst-highlight",
       });
     }
   }
-  return ranges;
+
+  const selected: HighlightMatch[] = [];
+  for (const match of matches.sort((a, b) => a.start - b.start || b.end - a.end)) {
+    if (selected.some((existing) => match.start < existing.end && match.end > existing.start)) {
+      continue;
+    }
+    selected.push(match);
+  }
+  return selected;
 }
 
 function HighlightToggle({
@@ -92,16 +97,9 @@ function HighlightToggle({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="th-label">Analyst highlights</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {HIGHLIGHT_CATEGORIES.map((category) => (
-              <span key={category.id} className="inline-flex items-center gap-1.5 text-[12px] text-neutral-70">
-                <span className={category.className} aria-hidden>
-                  Aa
-                </span>
-                {category.label}
-              </span>
-            ))}
-          </div>
+          <p className="reader-body mt-1 text-[12px] text-neutral-70">
+            Highlights key phrases only; the audited wording stays unchanged.
+          </p>
         </div>
         <button
           type="button"
@@ -175,7 +173,7 @@ function InlineMarkdown({
     parts.push({ text: text.slice(cursor), start: cursor, strong: false });
   }
 
-  const ranges = showHighlights ? sentenceHighlightRanges(text) : [];
+  const ranges = showHighlights ? phraseHighlightRanges(text) : [];
 
   function renderTextSegment(part: { text: string; start: number; strong: boolean }, i: number) {
     if (!showHighlights || !part.text.trim()) return <span key={i}>{part.text}</span>;
@@ -213,7 +211,11 @@ function InlineMarkdown({
       {parts.map((part, i) => {
         const match = /^\[#(\d+)\]$/.exec(part.text) ?? /^\[C-(\d+)\]\(#evidence-ledger\)$/.exec(part.text);
         if (!match) {
-          return renderTextSegment(part, i);
+          return part.strong ? (
+            <strong key={i}>{renderTextSegment(part, i)}</strong>
+          ) : (
+            renderTextSegment(part, i)
+          );
         }
         const idx = Number(match[1]);
         const ok = claims.find((c) => c.index === idx)?.support_status === "supported";
