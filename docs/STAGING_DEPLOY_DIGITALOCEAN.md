@@ -1,5 +1,8 @@
 # Staging Deploy: DigitalOcean Singapore VM
 
+Fallback path. The preferred Stage A path is now AWS Lightsail Singapore because
+we want to learn AWS before the later ECS/RDS/S3 production deploy.
+
 Goal: a password-protected staging URL for the family/domain-user pilot, balanced
 for UK and Taiwan users. The app runs on one DigitalOcean Droplet in Singapore
 with Docker Compose, Caddy TLS, Postgres/pgvector, and the 07:00 Taiwan scheduler.
