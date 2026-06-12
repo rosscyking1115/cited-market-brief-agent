@@ -9,9 +9,10 @@ executed or rendered unsanitized; downstream prompts must spotlight/delimit it.
 """
 
 import re
+import warnings
 from dataclasses import dataclass, field
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 
 # "Item 1A." / "ITEM 7." style headings used in 10-K/10-Q/8-K
 _ITEM_RE = re.compile(r"^item\s+(\d{1,2}[a-z]?)\s*[.:—-]", re.IGNORECASE)
@@ -39,7 +40,9 @@ class ParsedDocument:
 
 def normalize_html(html: str) -> str:
     """HTML -> plain text with stable offsets: one paragraph per line, collapsed whitespace."""
-    soup = BeautifulSoup(html, "lxml")
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+        soup = BeautifulSoup(html, "lxml")
     for tag in soup(["script", "style", "noscript"]):
         tag.decompose()
     # Hidden inline-XBRL blocks carry no analyst-readable content

@@ -168,7 +168,7 @@ class TimeSeries(Base):
     provider: Mapped[str] = mapped_column(String(50), default="fred")
     series_id: Mapped[str] = mapped_column(String(120), index=True)
     units: Mapped[str] = mapped_column(String(120), default="")
-    frequency: Mapped[str] = mapped_column(String(20), default="")
+    frequency: Mapped[str] = mapped_column(String(120), default="")
     vintage: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # ALFRED awareness
     observations: Mapped[dict] = mapped_column(JSON, default=dict)
 

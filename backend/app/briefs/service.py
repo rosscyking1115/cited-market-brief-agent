@@ -164,13 +164,15 @@ def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
 
         for cit in validation.citations:
             chunk = chunks_by_id.get(cit.span_id)
+            if chunk is None:
+                continue
             db.add(
                 Citation(
                     org_id=watchlist.org_id,
                     claim_id=claim.id,
-                    chunk_id=chunk.chunk_id if chunk else uuid.UUID(int=0),
-                    span_start=chunk.span_start if chunk else None,
-                    span_end=chunk.span_end if chunk else None,
+                    chunk_id=chunk.chunk_id,
+                    span_start=chunk.span_start,
+                    span_end=chunk.span_end,
                     source_url="",
                     evidence_quote=gen_claim.evidence_quote,
                     validator_status=cit.status,
