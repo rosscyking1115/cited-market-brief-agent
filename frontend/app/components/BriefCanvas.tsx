@@ -5,6 +5,7 @@
 // (needs_source blocks — that's the review discipline the audit trail sells).
 
 import { useRef, useState } from "react";
+import type { ReactNode } from "react";
 import ApprovalChecklist from "@/app/components/ApprovalChecklist";
 import type { BriefLocale, BriefTranslation, ClaimRow, BriefSectionData, SectionEdit } from "@/lib/api";
 
@@ -23,7 +24,128 @@ const LOCALES: { locale: BriefLocale; label: string; helper: string }[] = [
 
 const TRANSLATION_TIMEOUT_MS = 95000;
 
-function ClaimChips({ text, claims }: { text: string; claims: ClaimRow[] }) {
+const HIGHLIGHT_CATEGORIES = [
+  {
+    id: "risk",
+    label: "Risk / pressure",
+    className: "analyst-highlight analyst-highlight-risk",
+    pattern:
+      /\b(risk|risks|warning|warnings|pressure|pressures|inflation|cost|costs|restriction|restrictions|regulation|regulations|control|controls|decline|declined|decelerated|loss|losses|competition|competitive|volatile|volatility|blocked|flagged|materially reduce|licensing requirements)\b/gi,
+  },
+  {
+    id: "driver",
+    label: "Drivers / upside",
+    className: "analyst-highlight analyst-highlight-driver",
+    pattern:
+      /\b(growth|grew|increase|increased|up|rose|higher|improvement|improved|demand|revenue|margin|guidance|opportunity|opportunities|leadership|AI|HPC|datacenter|hyperscaler|buildout|buildouts|accelerator|accelerators)\b/gi,
+  },
+  {
+    id: "evidence",
+    label: "Data / evidence",
+    className: "analyst-highlight analyst-highlight-evidence",
+    pattern:
+      /\b(10-Q|8-K|SEC|EDGAR|FRED|CPI|yield|Treasury|bps|basis points|vintage|filing|filings|disclosed|reported|print|quarter|May|June|January|2026|20\d{2}|[\d.]+%|C-\d{3})\b/gi,
+  },
+] as const;
+
+type HighlightMatch = {
+  start: number;
+  end: number;
+  className: string;
+};
+
+function AnalystHighlightedText({ text, enabled }: { text: string; enabled: boolean }) {
+  if (!enabled || !text.trim()) return <span>{text}</span>;
+
+  const matches: HighlightMatch[] = [];
+  for (const category of HIGHLIGHT_CATEGORIES) {
+    category.pattern.lastIndex = 0;
+    for (const match of text.matchAll(category.pattern)) {
+      const start = match.index ?? 0;
+      matches.push({
+        start,
+        end: start + match[0].length,
+        className: category.className,
+      });
+    }
+  }
+
+  const selected: HighlightMatch[] = [];
+  for (const match of matches.sort((a, b) => a.start - b.start || b.end - a.end)) {
+    if (selected.some((existing) => match.start < existing.end && match.end > existing.start)) {
+      continue;
+    }
+    selected.push(match);
+  }
+
+  if (selected.length === 0) return <span>{text}</span>;
+
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+  selected.forEach((match, index) => {
+    if (match.start > cursor) {
+      nodes.push(<span key={`plain-${index}`}>{text.slice(cursor, match.start)}</span>);
+    }
+    nodes.push(
+      <mark key={`mark-${index}`} className={match.className}>
+        {text.slice(match.start, match.end)}
+      </mark>,
+    );
+    cursor = match.end;
+  });
+  if (cursor < text.length) nodes.push(<span key="plain-tail">{text.slice(cursor)}</span>);
+  return <>{nodes}</>;
+}
+
+function HighlightToggle({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="mt-5 rounded-(--radius-ctl) border border-hairline bg-page/60 px-3 py-3 sm:px-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="th-label">Analyst highlights</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {HIGHLIGHT_CATEGORIES.map((category) => (
+              <span key={category.id} className="inline-flex items-center gap-1.5 text-[12px] text-neutral-70">
+                <span className={category.className} aria-hidden>
+                  Aa
+                </span>
+                {category.label}
+              </span>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-pressed={enabled}
+          className={`min-h-9 rounded-(--radius-ctl) border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+            enabled
+              ? "border-action bg-action text-white"
+              : "border-elevated text-neutral-70 hover:border-action hover:text-neutral-30"
+          }`}
+        >
+          {enabled ? "Hide highlights" : "Show highlights"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ClaimChips({
+  text,
+  claims,
+  showHighlights,
+}: {
+  text: string;
+  claims: ClaimRow[];
+  showHighlights: boolean;
+}) {
   const paragraphs = text
     .split(/\n{2,}/)
     .map((part) => part.trim())
@@ -33,14 +155,22 @@ function ClaimChips({ text, claims }: { text: string; claims: ClaimRow[] }) {
     <div className="brief-prose mt-2">
       {paragraphs.map((paragraph, i) => (
         <p key={`${paragraph.slice(0, 24)}-${i}`}>
-          <InlineMarkdown text={paragraph} claims={claims} />
+          <InlineMarkdown text={paragraph} claims={claims} showHighlights={showHighlights} />
         </p>
       ))}
     </div>
   );
 }
 
-function InlineMarkdown({ text, claims }: { text: string; claims: ClaimRow[] }) {
+function InlineMarkdown({
+  text,
+  claims,
+  showHighlights,
+}: {
+  text: string;
+  claims: ClaimRow[];
+  showHighlights: boolean;
+}) {
   const parts = text.split(/(\[#\d+\]|\[C-\d+\]\(#evidence-ledger\)|\*\*[^*]+\*\*)/g);
   return (
     <>
@@ -48,7 +178,13 @@ function InlineMarkdown({ text, claims }: { text: string; claims: ClaimRow[] }) 
         const match = /^\[#(\d+)\]$/.exec(part) ?? /^\[C-(\d+)\]\(#evidence-ledger\)$/.exec(part);
         if (!match) {
           const strong = /^\*\*([^*]+)\*\*$/.exec(part);
-          return strong ? <strong key={i}>{strong[1]}</strong> : <span key={i}>{part}</span>;
+          return strong ? (
+            <strong key={i}>
+              <AnalystHighlightedText text={strong[1]} enabled={showHighlights} />
+            </strong>
+          ) : (
+            <AnalystHighlightedText key={i} text={part} enabled={showHighlights} />
+          );
         }
         const idx = Number(match[1]);
         const ok = claims.find((c) => c.index === idx)?.support_status === "supported";
@@ -97,6 +233,7 @@ export default function BriefCanvas({
   const [translations, setTranslations] = useState<Record<string, BriefTranslation>>({});
   const [translationBusy, setTranslationBusy] = useState<BriefLocale | null>(null);
   const [translationError, setTranslationError] = useState("");
+  const [showHighlights, setShowHighlights] = useState(false);
   const translationAbortRef = useRef<AbortController | null>(null);
   const translationRequestRef = useRef(0);
 
@@ -224,6 +361,11 @@ export default function BriefCanvas({
   return (
     <div>
       <ApprovalChecklist sectionsCount={sections.length} edits={edits} claims={claims} />
+
+      <HighlightToggle
+        enabled={showHighlights}
+        onToggle={() => setShowHighlights((current) => !current)}
+      />
 
       <div className="mt-5 rounded-(--radius-ctl) border border-hairline bg-page/60 px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -379,6 +521,7 @@ export default function BriefCanvas({
                 <ClaimChips
                   text={edit?.action === "edit" && edit.content ? edit.content : section.content_markdown}
                   claims={claims}
+                  showHighlights={showHighlights}
                 />
                 {activeTranslation?.sections[i] && (
                   <div className="reader-translation mt-3 rounded-(--radius-ctl) border border-hairline bg-page/70 px-3 py-3 sm:px-4">
@@ -391,6 +534,7 @@ export default function BriefCanvas({
                     <ClaimChips
                       text={activeTranslation.sections[i].content_markdown}
                       claims={claims}
+                      showHighlights={showHighlights}
                     />
                   </div>
                 )}
