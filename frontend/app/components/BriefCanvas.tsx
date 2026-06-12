@@ -21,6 +21,8 @@ const LOCALES: { locale: BriefLocale; label: string; helper: string }[] = [
   { locale: "ko", label: "한국어", helper: "Korean reading aid" },
 ];
 
+const TRANSLATION_TIMEOUT_MS = 95000;
+
 function ClaimChips({ text, claims }: { text: string; claims: ClaimRow[] }) {
   const paragraphs = text
     .split(/\n{2,}/)
@@ -127,7 +129,7 @@ export default function BriefCanvas({
     translationRequestRef.current = requestId;
     const controller = new AbortController();
     translationAbortRef.current = controller;
-    const timeout = window.setTimeout(() => controller.abort(), 30000);
+    const timeout = window.setTimeout(() => controller.abort(), TRANSLATION_TIMEOUT_MS);
     setTranslationBusy(nextLocale);
     try {
       const res = await fetch(`${apiUrl}/briefs/${briefId}/translations/${nextLocale}`, {

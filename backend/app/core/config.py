@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     generation_model: str = "anthropic/claude-sonnet-4-6"
     embedding_model: str = "openai/text-embedding-3-small"
     prompt_version: str = "p1.0"
+    translation_request_timeout_seconds: int = 90
 
     # Embeddings
     embedding_dimensions: int = 1536

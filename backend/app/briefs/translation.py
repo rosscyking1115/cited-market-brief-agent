@@ -88,7 +88,7 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
         response_format={"type": "json_object"},
         temperature=0.1,
         max_tokens=5000,
-        request_timeout=25,
+        request_timeout=settings.translation_request_timeout_seconds,
     )
     raw = response["choices"][0]["message"]["content"]
     translated_payload = _loads_translation_payload(raw)
