@@ -86,3 +86,45 @@ def test_translate_brief_payload_normalizes_model_locale(monkeypatch) -> None:
     assert translated.locale == "ko"
     assert translated.label == "Korean"
     assert "[#0]" in translated.sections[0].content_markdown
+
+
+def test_translate_brief_payload_accepts_prose_wrapped_json(monkeypatch) -> None:
+    def fake_completion(**_kwargs):
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": """아래는 번역 JSON입니다.
+                        {
+                          "locale": "ko",
+                          "label": "한국어",
+                          "disclaimer": "영어 원문이 정확한 기준입니다.",
+                          "sections": [
+                            {
+                              "title": "공시 변화",
+                              "content_markdown": "NVIDIA는 수출 통제 위험을 추가했습니다 [#0]."
+                            }
+                          ],
+                          "open_questions": []
+                        }"""
+                    }
+                }
+            ]
+        }
+
+    monkeypatch.setitem(sys.modules, "litellm", SimpleNamespace(completion=fake_completion))
+    translated = translate_brief_payload(
+        "ko",
+        {
+            "brief_sections": [
+                {
+                    "title": "Filing changes",
+                    "content_markdown": "NVIDIA added an export-control risk [#0].",
+                }
+            ],
+            "open_questions": [],
+        },
+    )
+
+    assert translated.locale == "ko"
+    assert translated.sections[0].title == "공시 변화"

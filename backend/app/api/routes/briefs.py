@@ -5,6 +5,7 @@ functions are already shaped for that hand-off.
 """
 
 import uuid
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
@@ -20,6 +21,7 @@ from app.ingestion.pipeline import run_ingestion
 from app.services.audit import record_event
 
 router = APIRouter(tags=["briefs"])
+logger = logging.getLogger(__name__)
 
 
 def _get_watchlist(db: Session, watchlist_id: uuid.UUID) -> Watchlist:
@@ -118,6 +120,7 @@ def get_brief_translation(brief_id: uuid.UUID, locale: str, db: Session = Depend
     try:
         translation = translate_brief_payload(locale, draft).model_dump()
     except Exception as exc:  # pragma: no cover - provider/network failure path
+        logger.exception("Translation failed for brief %s locale %s", brief_id, locale)
         raise HTTPException(status_code=502, detail=f"Translation failed: {exc}") from exc
 
     translations = {**draft.get("_translations", {}), locale: translation}

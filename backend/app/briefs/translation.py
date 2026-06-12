@@ -46,6 +46,20 @@ Rules:
 - Output ONLY valid JSON matching the requested schema."""
 
 
+def _loads_translation_payload(raw: str) -> dict:
+    text = _json_payload(raw)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        if start < 0:
+            raise
+        payload, _ = json.JSONDecoder().raw_decode(text[start:])
+        if not isinstance(payload, dict):
+            raise
+        return payload
+
+
 def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
     import litellm  # noqa: PLC0415
 
@@ -77,7 +91,7 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
         request_timeout=25,
     )
     raw = response["choices"][0]["message"]["content"]
-    translated_payload = json.loads(_json_payload(raw))
+    translated_payload = _loads_translation_payload(raw)
     translated_payload["locale"] = locale
     translated_payload["label"] = label
     return BriefTranslation.model_validate(translated_payload)
