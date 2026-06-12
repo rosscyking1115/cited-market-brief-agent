@@ -4,17 +4,19 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import dev_user
 from app.briefs.review import (
     ReviewError,
     all_sections_resolved,
+    approval_readiness,
     apply_section_action,
 )
 from app.changes.service import changes_since_last_brief
 from app.db.base import get_db
-from app.db.models import Brief, Watchlist
+from app.db.models import Brief, Claim, Watchlist
 from app.services.audit import record_event
 
 router = APIRouter(tags=["changes", "review"])
@@ -89,11 +91,12 @@ def approve_brief(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         return {"brief_id": str(brief.id), "status": "approved"}
 
     sections = brief.generated_draft.get("brief_sections", [])
-    if not all_sections_resolved(brief.user_edits or {}, len(sections)):
+    claims = list(db.scalars(select(Claim).where(Claim.brief_id == brief.id)))
+    readiness = approval_readiness(brief.user_edits or {}, len(sections), claims)
+    if not readiness["ready"]:
         raise HTTPException(
             status_code=409,
-            detail="All sections must be accepted/edited/rejected before approval "
-            "(needs_source blocks approval)",
+            detail=readiness,
         )
 
     from datetime import datetime, timezone
@@ -110,6 +113,6 @@ def approve_brief(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
         action="brief.approved",
         object_type="brief",
         object_id=str(brief.id),
-        detail={"sections": len(sections)},
+        detail={"sections": len(sections), "claims": len(claims)},
     )
     return {"brief_id": str(brief.id), "status": "approved"}

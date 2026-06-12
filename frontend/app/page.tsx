@@ -5,6 +5,8 @@
 import BriefCanvas from "@/app/components/BriefCanvas";
 import ChangesPanel from "@/app/components/ChangesPanel";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
+import RepairClaimButton from "@/app/components/RepairClaimButton";
+import ThemeToggle from "@/app/components/ThemeToggle";
 import {
   API_URL,
   getChanges,
@@ -193,6 +195,7 @@ export default async function Page() {
   const ts = data.created_at.slice(0, 16).replace("T", " ");
   const supported = data.claims.filter((c) => c.support_status === "supported").length;
   const flagged = data.claims.length - supported;
+  const attentionClaims = data.claims.filter((c) => c.support_status !== "supported");
 
   return (
     <div className="min-h-screen">
@@ -206,6 +209,7 @@ export default async function Page() {
             <span className="th-label mt-px">Evidence ledger · Morning brief</span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span
               className={`rounded-(--radius-ctl) border px-2 py-0.5 font-mono text-[10px] ${
                 isLive ? "border-up/60 text-up" : "border-elevated text-neutral-90"
@@ -220,7 +224,7 @@ export default async function Page() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl space-y-4 px-6 py-5">
+      <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
         <article className="rounded-(--radius-card) border border-hairline bg-card px-6 py-5">
           <p className="th-label mb-2">Morning brief · Watchlist: {data.watchlist}</p>
           <h1 className="font-serif text-2xl font-semibold text-neutral-30">
@@ -230,6 +234,31 @@ export default async function Page() {
             generated {ts} UTC · {data.claims.length} claims · {supported} validated ·{" "}
             {flagged} flagged · status {data.status}
           </p>
+
+          {attentionClaims.length > 0 && (
+            <section className="mt-5 rounded-(--radius-ctl) border border-flag/40 bg-page/70 px-4 py-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="th-label text-flag">Needs attention</p>
+                <span className="font-mono text-[10px] text-neutral-90">
+                  {attentionClaims.length} claim{attentionClaims.length > 1 ? "s" : ""} blocked from clean approval
+                </span>
+              </div>
+              <ul className="mt-2 grid gap-2">
+                {attentionClaims.map((claim) => (
+                  <li key={claim.claim_id} className="flex items-start gap-2 text-[13px] leading-relaxed">
+                    <a
+                      href={`#claim-${String(claim.index).padStart(3, "0")}`}
+                      className="shrink-0 rounded-(--radius-ctl) border border-flag/60 px-1.5 py-0.5 font-mono text-[10px] text-flag hover:bg-flag hover:text-white"
+                    >
+                      C-{String(claim.index).padStart(3, "0")}
+                    </a>
+                    <span className="text-neutral-50">{claim.text}</span>
+                    <RepairClaimButton claimId={claim.claim_id} apiUrl={API_URL} live={isLive} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <BriefCanvas
             briefId={data.brief_id}

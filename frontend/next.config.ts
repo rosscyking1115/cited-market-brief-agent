@@ -3,12 +3,14 @@ import type { NextConfig } from "next";
 // CSP note (docs/SECURITY.md): 'unsafe-inline' for script-src is required by the
 // Next.js runtime without nonce plumbing; the Phase 5 follow-up moves to
 // nonce-based CSP via proxy.ts (Next 16's middleware) before external launch.
+const isDev = process.env.NODE_ENV !== "production";
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
       "font-src 'self'",

@@ -9,6 +9,7 @@ Usage (from backend/):
 """
 
 import asyncio
+import sys
 
 from sqlalchemy import select
 
@@ -22,6 +23,9 @@ MACRO = ["CPIAUCSL", "DGS10"]
 
 
 async def main() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     db = get_sessionmaker()()
     try:
         org = db.scalar(select(Organization).where(Organization.name == "dev-org"))

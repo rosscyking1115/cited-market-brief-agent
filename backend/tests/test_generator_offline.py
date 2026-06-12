@@ -1,4 +1,4 @@
-from app.briefs.generator import generate_deterministic
+from app.briefs.generator import _json_payload, generate_deterministic
 from app.briefs.schemas import EvidenceItem
 from app.briefs.validator import validate_claims
 
@@ -30,3 +30,11 @@ def test_offline_brief_sections_reference_claims() -> None:
     brief = generate_deterministic("demo", PACK)
     joined = "\n".join(s.content_markdown for s in brief.brief_sections)
     assert "[#0]" in joined
+
+
+def test_json_payload_accepts_fenced_provider_output() -> None:
+    assert _json_payload('```json\n{"brief_sections":[]}\n```') == '{"brief_sections":[]}'
+
+
+def test_json_payload_accepts_unclosed_fence() -> None:
+    assert _json_payload('```json\n{"brief_sections":[]}') == '{"brief_sections":[]}'

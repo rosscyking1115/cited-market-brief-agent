@@ -3,6 +3,7 @@ import pytest
 from app.briefs.review import (
     ReviewError,
     all_sections_resolved,
+    approval_readiness,
     apply_section_action,
 )
 
@@ -58,3 +59,27 @@ def test_all_sections_resolved_gate() -> None:
 
     edits = _apply(edits, 1, "edit", content="rewritten")
     assert all_sections_resolved(edits, 2)
+
+
+def test_approval_readiness_requires_sections_supported_claims_and_citations() -> None:
+    edits = _apply(_apply({}, 0, "accept"), 1, "edit", content="rewritten")
+    ready = approval_readiness(
+        edits,
+        2,
+        [{"support_status": "supported", "citations": ["span-1"]}],
+    )
+    assert ready["ready"]
+
+    blocked = approval_readiness(
+        edits,
+        2,
+        [
+            {"support_status": "supported", "citations": ["span-1"]},
+            {"support_status": "flagged", "citations": ["span-2"]},
+            {"support_status": "supported", "citations": []},
+        ],
+    )
+    assert not blocked["ready"]
+    assert blocked["flagged_claim_indexes"] == [1]
+    assert blocked["citationless_claim_indexes"] == [2]
+    assert "All claims must be supported" in blocked["blockers"]

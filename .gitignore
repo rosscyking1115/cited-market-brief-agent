@@ -27,6 +27,7 @@ Thumbs.db
 .vscode/
 
 # Data
+.data/
 *.sqlite3
 minio-data/
 pg-data/

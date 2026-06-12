@@ -32,6 +32,16 @@ export type ClaimRow = {
 
 export type BriefSectionData = { title: string; content_markdown: string };
 
+export type BriefLocale = "original" | "zh-Hant" | "ko";
+
+export type BriefTranslation = {
+  locale: Exclude<BriefLocale, "original">;
+  label: string;
+  disclaimer: string;
+  sections: BriefSectionData[];
+  open_questions: string[];
+};
+
 export type SectionEdit = {
   action: "accept" | "reject" | "edit" | "needs_source";
   content: string | null;

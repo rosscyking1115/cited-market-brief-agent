@@ -6,7 +6,7 @@ Two-week daily-brief pilot with a domain user (plan §12 Phase 6). Goal: a recur
 
 1. `docker compose up -d db valkey minio` · `python scripts/bootstrap_db.py` · `python scripts/apply_rls.py --apply`
 2. `.env`: `SEC_USER_AGENT` (required), `FRED_API_KEY`, one LLM key (`ANTHROPIC_API_KEY` recommended; without it the pilot runs in extractive mode — still citation-perfect, less synthesis).
-3. `python scripts/seed_watchlists.py` — seeds Semis / Megabanks / Energy templates, weekdays 10:30 UTC. Trim to the pilot user's actual coverage; 1–2 lists beat 3 neglected ones.
+3. `python scripts/seed_watchlists.py` — seeds Semis / Megabanks / Energy templates, daily 23:00 UTC / 07:00 Taiwan time. Trim to the pilot user's actual coverage; 1–2 lists beat 3 neglected ones.
 4. Schedule `python scripts/run_scheduled.py` every 15 min (cron / Task Scheduler). First run: `--force`.
 5. Verify the loop once end to end: dashboard shows **LIVE**, claims open to evidence, exports download.
 

@@ -1,7 +1,7 @@
 """Seed the pilot watchlist templates (plan Phase 6: 2-3 real templates).
 
-Idempotent — safe to re-run. Schedules fire weekdays 10:30 UTC (~06:30 ET),
-before US market open. Run the pilot with scripts/run_scheduled.py via cron.
+Idempotent — safe to re-run. Schedules fire daily at 23:00 UTC, which is
+07:00 Taiwan time. Run the pilot with scripts/run_scheduled.py via cron.
 
     python scripts/seed_watchlists.py
 """
@@ -11,7 +11,7 @@ from sqlalchemy import select
 from app.db.base import get_sessionmaker
 from app.db.models import Organization, Watchlist
 
-PILOT_CRON = "30 10 * * 1-5"
+PILOT_CRON = "0 23 * * *"
 
 TEMPLATES = [
     {

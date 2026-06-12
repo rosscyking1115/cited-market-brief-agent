@@ -66,6 +66,21 @@ def llm_available() -> bool:
     return bool(settings.anthropic_api_key.strip() or settings.openai_api_key.strip())
 
 
+def _json_payload(raw: str) -> str:
+    """Accept strict JSON plus the common fenced-json wrapper some providers return."""
+    text = raw.strip()
+    fenced = re.match(r"^```(?:json)?\s*(.*?)\s*```\s*$", text, flags=re.IGNORECASE | re.DOTALL)
+    if fenced:
+        return fenced.group(1).strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        body = lines[1:]
+        if body and body[-1].strip() == "```":
+            body = body[:-1]
+        return "\n".join(body).strip()
+    return text
+
+
 def generate_with_llm(watchlist_name: str, pack: list[EvidenceItem]) -> GeneratedBrief:
     import litellm  # noqa: PLC0415 — lazy import (library mode)
 
@@ -84,10 +99,10 @@ def generate_with_llm(watchlist_name: str, pack: list[EvidenceItem]) -> Generate
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
-        max_tokens=4000,
+        max_tokens=8000,
     )
     raw = response["choices"][0]["message"]["content"]
-    return GeneratedBrief.model_validate_json(raw)
+    return GeneratedBrief.model_validate_json(_json_payload(raw))
 
 
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")

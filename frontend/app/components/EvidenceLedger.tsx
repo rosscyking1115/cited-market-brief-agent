@@ -3,7 +3,8 @@
 // Evidence ledger — the "click a claim, see the proof" surface (plan §14).
 // Client island: row expansion + feedback posts. Everything else stays RSC.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import RepairClaimButton from "@/app/components/RepairClaimButton";
 import type { ClaimRow } from "@/lib/api";
 
 const FEEDBACK_KINDS = [
@@ -81,6 +82,20 @@ export default function EvidenceLedger({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
 
+  useEffect(() => {
+    function openFromHash() {
+      const match = /^#claim-(\d+)$/.exec(window.location.hash);
+      if (!match) return;
+      const index = Number(match[1]);
+      const claim = claims.find((row) => row.index === index);
+      if (claim) setOpenId(claim.claim_id);
+    }
+
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [claims]);
+
   return (
     <section id="ledger" className="rounded-(--radius-card) border border-hairline bg-card">
       <h2 className="th-label flex items-center justify-between border-b border-hairline px-4 py-2.5">
@@ -91,7 +106,11 @@ export default function EvidenceLedger({
         {claims.map((claim) => {
           const open = openId === claim.claim_id;
           return (
-            <li key={claim.claim_id} className="border-t border-hairline first:border-t-0">
+            <li
+              key={claim.claim_id}
+              id={`claim-${String(claim.index).padStart(3, "0")}`}
+              className="scroll-mt-16 border-t border-hairline first:border-t-0"
+            >
               <button
                 type="button"
                 aria-expanded={open}
@@ -110,6 +129,14 @@ export default function EvidenceLedger({
 
               {open && (
                 <div className="border-t border-hairline bg-page/60 px-6 py-4">
+                  {claim.support_status !== "supported" && (
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-(--radius-ctl) border border-flag/40 bg-card px-3 py-2">
+                      <span className="text-[12px] text-neutral-50">
+                        This claim is flagged. Repair rewrites it from the stored evidence span.
+                      </span>
+                      <RepairClaimButton claimId={claim.claim_id} apiUrl={apiUrl} live={live} />
+                    </div>
+                  )}
                   {claim.citations.length === 0 && (
                     <p className="text-[12px] text-flag">
                       ⚑ No citations — this claim cannot export and needs analyst review.
