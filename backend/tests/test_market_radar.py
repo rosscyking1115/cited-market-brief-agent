@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 
 from app.api.routes.market_radar import (
+    _ALPHA_FAILURE_CACHE,
     _ALPHA_VALUE_CACHE,
     _alpha_refresh_specs,
     _cached_alpha_values,
@@ -185,6 +186,7 @@ def test_alpha_provider_message_detects_rate_limit_payload() -> None:
 def test_alpha_cache_returns_existing_values_and_refreshes_missing_first() -> None:
     now = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
     _ALPHA_VALUE_CACHE.clear()
+    _ALPHA_FAILURE_CACHE.clear()
     _ALPHA_VALUE_CACHE["USD/TWD"] = _CachedAlphaValue(
         value=AlphaMarketValue(
             symbol="USD/TWD",
@@ -202,6 +204,20 @@ def test_alpha_cache_returns_existing_values_and_refreshes_missing_first() -> No
     assert values["USD/TWD"].value == 31.1234
     assert [spec.symbol for spec in specs[:2]] == ["USD/JPY", "USD/CNH"]
     _ALPHA_VALUE_CACHE.clear()
+    _ALPHA_FAILURE_CACHE.clear()
+
+
+def test_alpha_refresh_skips_recent_failures() -> None:
+    now = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
+    _ALPHA_VALUE_CACHE.clear()
+    _ALPHA_FAILURE_CACHE.clear()
+    _ALPHA_FAILURE_CACHE["USD/JPY"] = now
+    _ALPHA_FAILURE_CACHE["USD/CNH"] = now
+
+    specs = _alpha_refresh_specs(values={}, now=now)
+
+    assert [spec.symbol for spec in specs[:3]] == ["USD/TWD", "WTI", "US10Y"]
+    _ALPHA_FAILURE_CACHE.clear()
 
 
 def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:

@@ -32,6 +32,7 @@ class _CachedAlphaValue:
 
 
 _ALPHA_VALUE_CACHE: dict[str, _CachedAlphaValue] = {}
+_ALPHA_FAILURE_CACHE: dict[str, datetime] = {}
 
 
 @router.get("", response_model=MorningRadarOut)
@@ -162,12 +163,25 @@ def _alpha_refresh_specs(
     missing: list[_AlphaFetchSpec] = []
     stale: list[_AlphaFetchSpec] = []
     for spec in _alpha_fetch_plan():
+        if _alpha_recently_failed(spec.symbol, now=now):
+            continue
         cached = _ALPHA_VALUE_CACHE.get(spec.symbol)
         if spec.symbol not in values or cached is None:
             missing.append(spec)
         elif now - cached.fetched_at > ttl:
             stale.append(spec)
     return [*missing, *stale]
+
+
+def _alpha_recently_failed(symbol: str, *, now: datetime) -> bool:
+    failed_at = _ALPHA_FAILURE_CACHE.get(symbol)
+    if failed_at is None:
+        return False
+    cooldown = timedelta(seconds=max(settings.alpha_vantage_failure_cooldown_seconds, 0))
+    if now - failed_at <= cooldown:
+        return True
+    _ALPHA_FAILURE_CACHE.pop(symbol, None)
+    return False
 
 
 def _collect_alpha_value(
@@ -180,10 +194,13 @@ def _collect_alpha_value(
     try:
         value = fetch()
     except Exception as exc:
-        logger.info("Alpha Vantage %s fetch failed: %s", label, exc)
+        _ALPHA_FAILURE_CACHE[label] = fetched_at
+        logger.warning("Alpha Vantage %s fetch failed: %s", label, exc)
         return
     if value is None:
-        logger.info("Alpha Vantage %s returned no usable value", label)
+        _ALPHA_FAILURE_CACHE[label] = fetched_at
+        logger.warning("Alpha Vantage %s returned no usable value", label)
         return
     values[value.symbol] = value
+    _ALPHA_FAILURE_CACHE.pop(value.symbol, None)
     _ALPHA_VALUE_CACHE[value.symbol] = _CachedAlphaValue(value=value, fetched_at=fetched_at)

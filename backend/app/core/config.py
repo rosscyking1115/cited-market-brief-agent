@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     alpha_vantage_cache_ttl_seconds: int = 900
     alpha_vantage_cache_max_age_seconds: int = 43200
     alpha_vantage_max_refreshes_per_request: int = 2
+    alpha_vantage_failure_cooldown_seconds: int = 600
 
     # LLM providers (LiteLLM library mode; two providers at MVP)
     anthropic_api_key: str = ""
