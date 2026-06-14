@@ -64,29 +64,59 @@ function formatTaipei(value: string) {
   }).format(new Date(value));
 }
 
+function publishedText(value: string | null) {
+  if (!value) return null;
+  try {
+    return `${formatTaipei(value)} 台北`;
+  } catch {
+    return null;
+  }
+}
+
 function PopularNewsRail({ items }: { items: PopularNewsItem[] }) {
   const oneHour = items.filter((item) => item.window === "1h");
   const day = items.filter((item) => item.window === "24h");
+  const sourceCount = new Set(items.map((item) => item.source)).size;
+  const categories = Array.from(new Set(items.map((item) => item.category))).slice(0, 8);
+
   return (
     <section className="border-t border-hairline px-4 py-4 sm:px-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="th-label">熱門新聞雷達</p>
+          <p className="th-label">新聞雷達 · 多來源掃描</p>
           <h2 className="reader-heading mt-1 font-semibold text-neutral-30">
-            1 小時趨勢 + 24 小時最多報導
+            先看過去 1 小時，再看 24 小時被最多媒體報導的題目
           </h2>
         </div>
         <p className="reader-meta max-w-xl text-neutral-90">
-          BBC 先作「最新」來源；沒有官方人氣資料前，不標示為閱讀最多。
+          BBC 用作最新標題；GDELT 用作多來源趨勢/覆蓋度。沒有官方人氣資料前，不標示為閱讀最多。
         </p>
       </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className="rounded-(--radius-ctl) border border-action/50 bg-action/10 px-2 py-1 font-mono text-[10px] text-action">
+          {items.length} headlines
+        </span>
+        <span className="rounded-(--radius-ctl) border border-elevated px-2 py-1 font-mono text-[10px] text-neutral-90">
+          {sourceCount} sources
+        </span>
+        {categories.map((category) => (
+          <span key={category} className="rounded-(--radius-ctl) border border-elevated px-2 py-1 text-[11px] text-neutral-70">
+            {category}
+          </span>
+        ))}
+      </div>
+
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         {[
           ["1 小時", oneHour],
           ["24 小時", day],
         ].map(([label, group]) => (
           <div key={label as string} className="rounded-(--radius-ctl) border border-hairline bg-page/50">
-            <p className="th-label border-b border-hairline px-3 py-2">{label as string}</p>
+            <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2">
+              <p className="th-label">{label as string}</p>
+              <span className="font-mono text-[10px] text-neutral-90">{(group as PopularNewsItem[]).length} rows</span>
+            </div>
             <div className="divide-y divide-hairline">
               {(group as PopularNewsItem[]).map((item) => (
                 <article key={`${item.window}-${item.rank}-${item.source}`} className="grid grid-cols-[28px_1fr] gap-2 px-3 py-3">
@@ -103,9 +133,28 @@ function PopularNewsRail({ items }: { items: PopularNewsItem[] }) {
                         {item.source_status}
                       </span>
                     </div>
-                    <h3 className="reader-body mt-1 font-semibold text-neutral-40">{item.title_zh_hant}</h3>
+                    {item.url ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="reader-body mt-1 block font-semibold text-neutral-40 hover:text-action"
+                      >
+                        {item.title_zh_hant}
+                      </a>
+                    ) : (
+                      <h3 className="reader-body mt-1 font-semibold text-neutral-40">{item.title_zh_hant}</h3>
+                    )}
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="reader-meta text-neutral-90">{item.category}</span>
+                      {publishedText(item.published_at) && (
+                        <span className="reader-meta font-mono text-neutral-90">{publishedText(item.published_at)}</span>
+                      )}
+                    </div>
                     <p className="reader-meta mt-1 text-neutral-90">{item.why}</p>
-                    <p className="reader-meta mt-1 font-mono text-neutral-90">{item.rights_note}</p>
+                    <p className="reader-meta mt-1 font-mono text-neutral-90">
+                      link out only · {item.rights_note}
+                    </p>
                   </div>
                 </article>
               ))}
@@ -118,6 +167,9 @@ function PopularNewsRail({ items }: { items: PopularNewsItem[] }) {
 }
 
 export default function MorningMarketDashboard({ radar }: { radar: MorningRadarPayload }) {
+  const activeSnapshots = radar.snapshots.filter((item) => item.source_status !== "planned");
+  const plannedSnapshots = radar.snapshots.filter((item) => item.source_status === "planned");
+
   return (
     <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card">
       <div className="border-b border-hairline px-4 py-4 sm:px-5">
@@ -179,13 +231,13 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
 
         <div>
           <div className="border-b border-hairline px-4 py-3 sm:px-5">
-            <p className="th-label">市場快照</p>
+            <p className="th-label">目前可用的市場快照</p>
             <p className="reader-body mt-1 text-neutral-70">
-              指數會保留英文代碼，但先顯示中文名稱，讓非專業讀者也知道在看什麼。
+              先顯示已接入的匯率、油價、VIX、利率等資料；正式指數行情先藏到待授權區。
             </p>
           </div>
           <div className="grid grid-cols-1 divide-y divide-hairline sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-1 lg:divide-x-0 lg:divide-y">
-            {radar.snapshots.map((item) => (
+            {(activeSnapshots.length ? activeSnapshots : []).map((item) => (
               <div key={`${item.label}-${item.local_name}`} className="min-w-0 px-4 py-3 sm:px-5">
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="th-label">{item.local_name}</p>
@@ -209,15 +261,39 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
                 </div>
               </div>
             ))}
+            {activeSnapshots.length === 0 && (
+              <div className="px-4 py-3 sm:px-5">
+                <p className="reader-body font-semibold text-neutral-40">目前沒有可顯示的已授權快照</p>
+                <p className="reader-meta mt-1 text-neutral-90">請看下方 Overnight Risk；FRED/Alpha 有資料時會自動出現在這裡。</p>
+              </div>
+            )}
+            {plannedSnapshots.length > 0 && (
+              <details className="px-4 py-3 sm:px-5">
+                <summary className="cursor-pointer reader-body font-semibold text-neutral-40">
+                  待接授權行情 ({plannedSnapshots.length})
+                </summary>
+                <div className="mt-2 grid gap-2">
+                  {plannedSnapshots.map((item) => (
+                    <div key={`${item.label}-${item.local_name}`} className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-2 py-2">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="reader-body font-semibold text-neutral-40">{item.local_name}</p>
+                        <span className="font-mono text-[10px] text-neutral-90">{item.label}</span>
+                      </div>
+                      <p className="reader-meta mt-1 text-neutral-90">{item.change}</p>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         </div>
       </div>
 
       <PopularNewsRail items={radar.popular_news} />
 
-      <TopIndicesRail items={radar.top_indices} />
-
       <OvernightRiskRail items={radar.overnight_risk} />
+
+      <TopIndicesRail items={radar.top_indices} />
 
       <div className="grid gap-0 border-t border-hairline lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-b border-hairline px-4 py-4 sm:px-5 lg:border-b-0 lg:border-r">

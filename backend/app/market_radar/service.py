@@ -392,8 +392,8 @@ def popular_news_from_bbc(
     now: datetime | None = None,
 ) -> list[PopularNewsItem]:
     local_now = now or datetime.now(TAIPEI_TZ)
-    one_hour = _bbc_latest_rows(articles=articles, now=local_now, window="1h", limit=3)
-    day = _bbc_latest_rows(articles=articles, now=local_now, window="24h", limit=3)
+    one_hour = _bbc_latest_rows(articles=articles, now=local_now, window="1h", limit=6)
+    day = _bbc_latest_rows(articles=articles, now=local_now, window="24h", limit=8)
     return [*one_hour, *day]
 
 
@@ -416,13 +416,13 @@ def popular_news_from_gdelt(
             articles=last_hour,
             window="1h",
             rank_kind="trending",
-            limit=5,
+            limit=12,
         ),
         *_gdelt_news_rows(
             articles=last_day,
             window="24h",
             rank_kind="most_covered",
-            limit=5,
+            limit=24,
         ),
     ]
     return rows or _placeholder_popular_news()

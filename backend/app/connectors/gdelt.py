@@ -12,8 +12,10 @@ import httpx
 from app.core.config import settings
 
 MARKET_QUERY = (
-    '(market OR markets OR stocks OR "central bank" OR inflation OR oil OR gold '
-    'OR semiconductor OR tariff OR trade OR "earnings")'
+    '(market OR markets OR stocks OR equities OR futures OR "central bank" '
+    'OR inflation OR yield OR oil OR gold OR currency OR dollar OR yen '
+    'OR semiconductor OR chips OR AI OR tariff OR trade OR earnings '
+    'OR Taiwan OR Japan OR Korea OR China OR Europe OR "Wall Street")'
 )
 
 

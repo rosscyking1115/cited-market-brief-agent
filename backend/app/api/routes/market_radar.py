@@ -48,7 +48,7 @@ def get_market_radar() -> MorningRadarOut:
     if settings.bbc_rss_enabled:
         client = BbcRssClient()
         try:
-            popular_news.extend(popular_news_from_bbc(articles=client.latest(max_records=20)))
+            popular_news.extend(popular_news_from_bbc(articles=client.latest(max_records=40)))
         except Exception as exc:
             logger.info("BBC RSS latest-headline fetch failed: %s", exc)
         finally:
@@ -59,8 +59,8 @@ def get_market_radar() -> MorningRadarOut:
         try:
             popular_news.extend(
                 popular_news_from_gdelt(
-                    last_hour=client.article_list(timespan="1h", max_records=20),
-                    last_day=client.article_list(timespan="24h", max_records=30),
+                    last_hour=client.article_list(timespan="1h", max_records=40),
+                    last_day=client.article_list(timespan="24h", max_records=80),
                 ),
             )
         except Exception as exc:

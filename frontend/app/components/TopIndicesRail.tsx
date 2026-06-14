@@ -109,142 +109,170 @@ export default function TopIndicesRail({ items }: { items: TopIndexItem[] }) {
 
   return (
     <section className="border-t border-hairline px-4 py-4 sm:px-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="th-label">Top 20 指數</p>
-          <h2 className="reader-heading mt-1 font-semibold text-neutral-30">
-            先看現貨股市指數；把不需要的藏起來
-          </h2>
-          <p className="reader-meta mt-1 max-w-2xl text-neutral-90">
-            偏好設定只存在這台裝置。期貨、油金、匯率會放在另一條 Overnight Risk rail。
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {regions.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setRegion(item)}
-              aria-pressed={region === item}
-              className={`min-h-8 rounded-(--radius-ctl) border px-2.5 py-1 text-[12px] font-medium ${
-                region === item
-                  ? "border-action bg-action text-white"
-                  : "border-elevated text-neutral-70 hover:border-action hover:text-neutral-30"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setShowHidden((current) => !current)}
-            aria-pressed={showHidden}
-            title="Show or hide hidden indices"
-            className={`min-h-8 min-w-8 rounded-(--radius-ctl) border px-2 py-1 font-mono text-[12px] ${
-              showHidden
-                ? "border-flag bg-flag text-white"
-                : "border-elevated text-neutral-70 hover:border-flag hover:text-flag"
-            }`}
-          >
-            {showHidden ? "◉" : "○"}
-          </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="min-h-8 rounded-(--radius-ctl) border border-elevated px-2.5 py-1 text-[12px] font-medium text-neutral-70 hover:border-action hover:text-neutral-30"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
+      <details className="rounded-(--radius-ctl) border border-hairline bg-page/45">
+        <summary className="cursor-pointer list-none px-3 py-3 marker:hidden">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="th-label">暫藏 · Top 20 全球指數</p>
+              <h2 className="reader-heading mt-1 font-semibold text-neutral-30">
+                指數行情尚未接入，需付費/授權 API 才能穩定顯示
+              </h2>
+              <p className="reader-body mt-1 max-w-3xl text-neutral-70">
+                這裡先保留清單與中文名稱，方便之後接 Twelve Data、FMP、LSEG/Reuters 或交易所授權資料。現在首頁先以可用的新聞、匯率、VIX、油價與利率為主。
+              </p>
+            </div>
+            <span className="w-fit rounded-(--radius-ctl) border border-elevated px-2.5 py-1 font-mono text-[11px] text-neutral-90">
+              點開查看 {items.length} 個待接指數
+            </span>
+          </div>
+        </summary>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <span className="rounded-(--radius-ctl) border border-elevated px-2 py-1 font-mono text-[10px] text-neutral-90">
-          {visibleItems.length}/{items.length} visible
-        </span>
-        {preferences.pinned.length > 0 && (
-          <span className="rounded-(--radius-ctl) border border-action/60 px-2 py-1 font-mono text-[10px] text-action">
-            {preferences.pinned.length} pinned
-          </span>
-        )}
-        {hiddenCount > 0 && (
-          <span className="rounded-(--radius-ctl) border border-flag/60 px-2 py-1 font-mono text-[10px] text-flag">
-            {hiddenCount} hidden
-          </span>
-        )}
-      </div>
+        <div className="border-t border-hairline px-3 py-3">
+          <div className="rounded-(--radius-ctl) border border-flag/40 bg-flag/10 px-3 py-2">
+            <p className="reader-body font-semibold text-neutral-40">為什麼先藏起來？</p>
+            <p className="reader-body mt-1 text-neutral-70">
+              即時或延遲的全球指數、期貨與部分商品價格通常有顯示/再發布授權限制。為了未來能公開發布，這些數字在正式資料合約前不假裝已經完成。
+            </p>
+          </div>
 
-      <div className="mt-3 grid gap-3 xl:grid-cols-3">
-        {groupedRegions.map((groupRegion) => (
-          <div key={groupRegion} className="rounded-(--radius-ctl) border border-hairline bg-page/50">
-            <p className="th-label border-b border-hairline px-3 py-2">{groupRegion}</p>
-            <div className="divide-y divide-hairline">
-              {visibleItems
-                .filter((item) => item.region === groupRegion)
-                .map((item) => {
-                  const pinned = preferences.pinned.includes(item.symbol);
-                  const hidden = preferences.hidden.includes(item.symbol);
-                  return (
-                    <div
-                      key={item.symbol}
-                      className={`grid grid-cols-[28px_1fr_auto] gap-2 px-3 py-2 ${
-                        hidden ? "opacity-45" : ""
-                      }`}
-                    >
-                      <span className="font-mono text-[11px] text-neutral-90">{item.rank}</span>
-                      <div className="min-w-0">
-                        <div className="flex min-w-0 items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => togglePinned(item.symbol)}
-                            title={pinned ? "Unpin" : "Pin"}
-                            aria-pressed={pinned}
-                            className={`h-7 w-7 shrink-0 rounded-(--radius-ctl) border font-mono text-[13px] ${
-                              pinned
-                                ? "border-action bg-action text-white"
-                                : "border-elevated text-neutral-70 hover:border-action hover:text-action"
-                            }`}
-                          >
-                            {pinned ? "★" : "☆"}
-                          </button>
-                          <p className="reader-body min-w-0 truncate font-semibold text-neutral-40">
-                            {item.local_name}
-                          </p>
-                        </div>
-                        <p className="reader-meta mt-0.5 truncate font-mono text-neutral-90">
-                          {item.symbol} · {item.name}
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-2 text-right">
-                        <div>
-                          <p className={`font-mono text-[12px] font-semibold ${toneClass(item.tone)}`}>
-                            {item.value}
-                          </p>
-                          <p className={`reader-meta ${statusClass(item.source_status)}`}>
-                            {statusText(item.source_status)}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleHidden(item.symbol)}
-                          title={hidden ? "Show index" : "Hide index"}
-                          aria-pressed={hidden}
-                          className={`h-7 w-7 rounded-(--radius-ctl) border font-mono text-[12px] ${
-                            hidden
-                              ? "border-flag bg-flag text-white"
-                              : "border-elevated text-neutral-70 hover:border-flag hover:text-flag"
-                          }`}
-                        >
-                          {hidden ? "↺" : "×"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+          <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="th-label">待接行情清單</p>
+              <h2 className="reader-heading mt-1 font-semibold text-neutral-30">
+                先看現貨股市指數；把不需要的藏起來
+              </h2>
+              <p className="reader-meta mt-1 max-w-2xl text-neutral-90">
+                偏好設定只存在這台裝置。期貨、油金、匯率會放在另一條 Overnight Risk rail。
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {regions.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setRegion(item)}
+                  aria-pressed={region === item}
+                  className={`min-h-8 rounded-(--radius-ctl) border px-2.5 py-1 text-[12px] font-medium ${
+                    region === item
+                      ? "border-action bg-action text-white"
+                      : "border-elevated text-neutral-70 hover:border-action hover:text-neutral-30"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowHidden((current) => !current)}
+                aria-pressed={showHidden}
+                title="Show or hide hidden indices"
+                className={`min-h-8 min-w-8 rounded-(--radius-ctl) border px-2 py-1 font-mono text-[12px] ${
+                  showHidden
+                    ? "border-flag bg-flag text-white"
+                    : "border-elevated text-neutral-70 hover:border-flag hover:text-flag"
+                }`}
+              >
+                {showHidden ? "◉" : "○"}
+              </button>
+              <button
+                type="button"
+                onClick={reset}
+                className="min-h-8 rounded-(--radius-ctl) border border-elevated px-2.5 py-1 text-[12px] font-medium text-neutral-70 hover:border-action hover:text-neutral-30"
+              >
+                Reset
+              </button>
             </div>
           </div>
-        ))}
-      </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-(--radius-ctl) border border-elevated px-2 py-1 font-mono text-[10px] text-neutral-90">
+              {visibleItems.length}/{items.length} visible
+            </span>
+            {preferences.pinned.length > 0 && (
+              <span className="rounded-(--radius-ctl) border border-action/60 px-2 py-1 font-mono text-[10px] text-action">
+                {preferences.pinned.length} pinned
+              </span>
+            )}
+            {hiddenCount > 0 && (
+              <span className="rounded-(--radius-ctl) border border-flag/60 px-2 py-1 font-mono text-[10px] text-flag">
+                {hiddenCount} hidden
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 grid gap-3 xl:grid-cols-3">
+            {groupedRegions.map((groupRegion) => (
+              <div key={groupRegion} className="rounded-(--radius-ctl) border border-hairline bg-page/50">
+                <p className="th-label border-b border-hairline px-3 py-2">{groupRegion}</p>
+                <div className="divide-y divide-hairline">
+                  {visibleItems
+                    .filter((item) => item.region === groupRegion)
+                    .map((item) => {
+                      const pinned = preferences.pinned.includes(item.symbol);
+                      const hidden = preferences.hidden.includes(item.symbol);
+                      return (
+                        <div
+                          key={item.symbol}
+                          className={`grid grid-cols-[28px_1fr_auto] gap-2 px-3 py-2 ${
+                            hidden ? "opacity-45" : ""
+                          }`}
+                        >
+                          <span className="font-mono text-[11px] text-neutral-90">{item.rank}</span>
+                          <div className="min-w-0">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => togglePinned(item.symbol)}
+                                title={pinned ? "Unpin" : "Pin"}
+                                aria-pressed={pinned}
+                                className={`h-7 w-7 shrink-0 rounded-(--radius-ctl) border font-mono text-[13px] ${
+                                  pinned
+                                    ? "border-action bg-action text-white"
+                                    : "border-elevated text-neutral-70 hover:border-action hover:text-action"
+                                }`}
+                              >
+                                {pinned ? "★" : "☆"}
+                              </button>
+                              <p className="reader-body min-w-0 truncate font-semibold text-neutral-40">
+                                {item.local_name}
+                              </p>
+                            </div>
+                            <p className="reader-meta mt-0.5 truncate font-mono text-neutral-90">
+                              {item.symbol} · {item.name}
+                            </p>
+                          </div>
+                          <div className="flex items-start gap-2 text-right">
+                            <div>
+                              <p className={`font-mono text-[12px] font-semibold ${toneClass(item.tone)}`}>
+                                {item.value}
+                              </p>
+                              <p className={`reader-meta ${statusClass(item.source_status)}`}>
+                                {statusText(item.source_status)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleHidden(item.symbol)}
+                              title={hidden ? "Show index" : "Hide index"}
+                              aria-pressed={hidden}
+                              className={`h-7 w-7 rounded-(--radius-ctl) border font-mono text-[12px] ${
+                                hidden
+                                  ? "border-flag bg-flag text-white"
+                                  : "border-elevated text-neutral-70 hover:border-flag hover:text-flag"
+                              }`}
+                            >
+                              {hidden ? "↺" : "×"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
+          </div>
+                      </div>
+      </details>
     </section>
   );
 }
