@@ -1,6 +1,7 @@
 """Morning market radar endpoints."""
 
 import logging
+from collections.abc import Callable
 
 from fastapi import APIRouter
 
@@ -68,18 +69,36 @@ def _alpha_vantage_values() -> dict[str, AlphaMarketValue]:
     values: dict[str, AlphaMarketValue] = {}
     try:
         for from_currency, to_currency in (("USD", "TWD"), ("USD", "JPY"), ("USD", "CNH")):
-            value = client.exchange_rate(
-                from_currency=from_currency,
-                to_currency=to_currency,
+            _collect_alpha_value(
+                values,
+                label=f"{from_currency}/{to_currency}",
+                fetch=lambda from_currency=from_currency, to_currency=to_currency: (
+                    client.exchange_rate(
+                        from_currency=from_currency,
+                        to_currency=to_currency,
+                    )
+                ),
             )
-            if value is not None:
-                values[value.symbol] = value
 
-        for value in (client.wti(), client.treasury_yield_10y()):
-            if value is not None:
-                values[value.symbol] = value
-    except Exception as exc:
-        logger.info("Alpha Vantage market-data fetch failed: %s", exc)
+        _collect_alpha_value(values, label="WTI", fetch=client.wti)
+        _collect_alpha_value(values, label="US10Y", fetch=client.treasury_yield_10y)
     finally:
         client.close()
     return values
+
+
+def _collect_alpha_value(
+    values: dict[str, AlphaMarketValue],
+    *,
+    label: str,
+    fetch: Callable[[], AlphaMarketValue | None],
+) -> None:
+    try:
+        value = fetch()
+    except Exception as exc:
+        logger.info("Alpha Vantage %s fetch failed: %s", label, exc)
+        return
+    if value is None:
+        logger.info("Alpha Vantage %s returned no usable value", label)
+        return
+    values[value.symbol] = value

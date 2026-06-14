@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
-from app.connectors.alpha_vantage import AlphaMarketValue, alpha_series_latest
+from app.connectors.alpha_vantage import AlphaMarketValue, _provider_message, alpha_series_latest
 from app.connectors.bbc import BbcArticle, parse_bbc_rss
 from app.connectors.gdelt import GdeltArticle
 from app.main import app
@@ -168,6 +168,12 @@ def test_alpha_series_latest_uses_latest_and_previous_numeric_values() -> None:
     assert value.previous_value == 77.10
     assert round(value.change or 0, 2) == 1.15
     assert value.updated_at == "2026-06-12"
+
+
+def test_alpha_provider_message_detects_rate_limit_payload() -> None:
+    message = _provider_message({"Note": "standard API call frequency is 5 calls per minute"})
+
+    assert message == "standard API call frequency is 5 calls per minute"
 
 
 def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:

@@ -85,6 +85,9 @@ class AlphaVantageClient:
         payload = resp.json()
         if not isinstance(payload, dict):
             return {}
+        message = _provider_message(payload)
+        if message:
+            raise ValueError(message)
         return payload
 
     def _series_latest(
@@ -146,3 +149,11 @@ def _parse_float(value: object) -> float | None:
         return float(str(value).replace(",", ""))
     except ValueError:
         return None
+
+
+def _provider_message(payload: dict[str, object]) -> str | None:
+    for key in ("Error Message", "Information", "Note"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
