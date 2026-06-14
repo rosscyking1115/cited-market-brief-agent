@@ -1,9 +1,11 @@
 """Morning market radar endpoints."""
 
+import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import httpx
 from fastapi import APIRouter
@@ -34,6 +36,7 @@ class _CachedAlphaValue:
 
 _ALPHA_VALUE_CACHE: dict[str, _CachedAlphaValue] = {}
 _ALPHA_FAILURE_CACHE: dict[str, datetime] = {}
+_PERSISTED_CACHE_LOADED = False
 
 
 @router.get("", response_model=MorningRadarOut)
@@ -65,11 +68,10 @@ def get_market_radar() -> MorningRadarOut:
         finally:
             client.close()
 
-    if settings.alpha_vantage_enabled and settings.alpha_vantage_api_key.strip():
-        alpha_values = _alpha_vantage_values()
-        alpha_values.update(_fred_market_values())
-        snapshots = build_snapshots(alpha_values)
-        overnight_risk = build_overnight_risk(alpha_values)
+    market_values = _market_values()
+    if market_values:
+        snapshots = build_snapshots(market_values)
+        overnight_risk = build_overnight_risk(market_values)
 
     return build_morning_radar(
         popular_news=normalize_popular_news_ranks(popular_news) if popular_news else None,
@@ -78,9 +80,21 @@ def get_market_radar() -> MorningRadarOut:
     )
 
 
-def _alpha_vantage_values() -> dict[str, AlphaMarketValue]:
+def _market_values() -> dict[str, AlphaMarketValue]:
     now = datetime.now(UTC)
-    values = _cached_alpha_values(now=now)
+    values = _cached_market_values(now=now)
+    values.update(_fred_market_values(values=values, now=now))
+
+    if settings.alpha_vantage_enabled and settings.alpha_vantage_api_key.strip():
+        values.update(_alpha_vantage_values(values=values, now=now))
+    return values
+
+
+def _alpha_vantage_values(
+    *,
+    values: dict[str, AlphaMarketValue],
+    now: datetime,
+) -> dict[str, AlphaMarketValue]:
     refresh_specs = _alpha_refresh_specs(values=values, now=now)
     refresh_budget = max(settings.alpha_vantage_max_refreshes_per_request, 0)
     if not refresh_specs or refresh_budget == 0:
@@ -138,6 +152,22 @@ def _alpha_fetch_plan() -> list[_AlphaFetchSpec]:
 
 def _cached_alpha_values(*, now: datetime) -> dict[str, AlphaMarketValue]:
     max_age = timedelta(seconds=max(settings.alpha_vantage_cache_max_age_seconds, 0))
+    _load_persisted_market_cache()
+    values: dict[str, AlphaMarketValue] = {}
+    expired: list[str] = []
+    for symbol, cached in _ALPHA_VALUE_CACHE.items():
+        if now - cached.fetched_at <= max_age:
+            values[symbol] = cached.value
+        else:
+            expired.append(symbol)
+    for symbol in expired:
+        _ALPHA_VALUE_CACHE.pop(symbol, None)
+    return values
+
+
+def _cached_market_values(*, now: datetime) -> dict[str, AlphaMarketValue]:
+    _load_persisted_market_cache()
+    max_age = timedelta(seconds=max(settings.market_radar_value_cache_max_age_seconds, 0))
     values: dict[str, AlphaMarketValue] = {}
     expired: list[str] = []
     for symbol, cached in _ALPHA_VALUE_CACHE.items():
@@ -199,24 +229,69 @@ def _collect_alpha_value(
         return
     values[value.symbol] = value
     _ALPHA_FAILURE_CACHE.pop(value.symbol, None)
-    _ALPHA_VALUE_CACHE[value.symbol] = _CachedAlphaValue(value=value, fetched_at=fetched_at)
+    _remember_market_value(value=value, fetched_at=fetched_at)
 
 
-def _fred_market_values() -> dict[str, AlphaMarketValue]:
+@dataclass(frozen=True)
+class _FredFetchSpec:
+    symbol: str
+    series_id: str
+
+
+def _fred_fetch_plan() -> list[_FredFetchSpec]:
+    return [
+        _FredFetchSpec(symbol="WTI", series_id="DCOILWTICO"),
+        _FredFetchSpec(symbol="US10Y", series_id="DGS10"),
+        _FredFetchSpec(symbol="XAU", series_id="GOLDAMGBD228NLBM"),
+    ]
+
+
+def _fred_market_values(
+    *,
+    values: dict[str, AlphaMarketValue],
+    now: datetime,
+) -> dict[str, AlphaMarketValue]:
     if not settings.fred_api_key.strip():
         return {}
 
-    values: dict[str, AlphaMarketValue] = {}
+    refreshed: dict[str, AlphaMarketValue] = {}
+    refresh_specs = _fred_refresh_specs(values=values, now=now)
+    refresh_budget = max(settings.fred_market_max_refreshes_per_request, 0)
+    if not refresh_specs or refresh_budget == 0:
+        return refreshed
+
     with httpx.Client(timeout=8.0) as client:
-        for symbol, series_id in (("WTI", "DCOILWTICO"), ("US10Y", "DGS10")):
+        for spec in refresh_specs[:refresh_budget]:
             try:
-                value = _fred_latest_value(client=client, symbol=symbol, series_id=series_id)
+                value = _fred_latest_value(
+                    client=client,
+                    symbol=spec.symbol,
+                    series_id=spec.series_id,
+                )
             except Exception as exc:
-                logger.warning("FRED %s fetch failed: %s", symbol, exc)
+                logger.warning("FRED %s fetch failed: %s", spec.symbol, exc)
                 continue
             if value is not None:
-                values[symbol] = value
-    return values
+                refreshed[value.symbol] = value
+                _remember_market_value(value=value, fetched_at=now)
+    return refreshed
+
+
+def _fred_refresh_specs(
+    *,
+    values: dict[str, AlphaMarketValue],
+    now: datetime,
+) -> list[_FredFetchSpec]:
+    ttl = timedelta(seconds=max(settings.fred_market_cache_ttl_seconds, 0))
+    missing: list[_FredFetchSpec] = []
+    stale: list[_FredFetchSpec] = []
+    for spec in _fred_fetch_plan():
+        cached = _ALPHA_VALUE_CACHE.get(spec.symbol)
+        if spec.symbol not in values or cached is None:
+            missing.append(spec)
+        elif now - cached.fetched_at > ttl:
+            stale.append(spec)
+    return [*missing, *stale]
 
 
 def _fred_latest_value(
@@ -272,3 +347,86 @@ def _parse_float(value: object) -> float | None:
         return float(str(value).replace(",", ""))
     except ValueError:
         return None
+
+
+def _remember_market_value(*, value: AlphaMarketValue, fetched_at: datetime) -> None:
+    _ALPHA_VALUE_CACHE[value.symbol] = _CachedAlphaValue(value=value, fetched_at=fetched_at)
+    _persist_market_cache()
+
+
+def _load_persisted_market_cache() -> None:
+    global _PERSISTED_CACHE_LOADED
+    if _PERSISTED_CACHE_LOADED:
+        return
+    _PERSISTED_CACHE_LOADED = True
+    path = Path(settings.market_radar_value_cache_path)
+    if not path.exists():
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning("Market radar value cache read failed: %s", exc)
+        return
+    if not isinstance(payload, dict):
+        return
+    for symbol, raw in payload.items():
+        if not isinstance(raw, dict):
+            continue
+        value = _market_value_from_cache(symbol=str(symbol), raw=raw)
+        if value is None:
+            continue
+        _ALPHA_VALUE_CACHE[value.value.symbol] = value
+
+
+def _market_value_from_cache(
+    *,
+    symbol: str,
+    raw: dict[str, object],
+) -> _CachedAlphaValue | None:
+    value = _parse_float(raw.get("value"))
+    if value is None:
+        return None
+    fetched_at_raw = str(raw.get("fetched_at") or "").strip()
+    try:
+        fetched_at = datetime.fromisoformat(fetched_at_raw)
+    except ValueError:
+        return None
+    if fetched_at.tzinfo is None:
+        fetched_at = fetched_at.replace(tzinfo=UTC)
+    previous_value = _parse_float(raw.get("previous_value"))
+    source_status = str(raw.get("source_status") or "").strip()
+    if source_status not in {"delayed", "eod"}:
+        return None
+    return _CachedAlphaValue(
+        value=AlphaMarketValue(
+            symbol=symbol,
+            value=value,
+            previous_value=previous_value,
+            updated_at=str(raw.get("updated_at") or "").strip() or None,
+            source_status=source_status,  # type: ignore[arg-type]
+            source=str(raw.get("source") or "").strip() or "Cached market feed",
+        ),
+        fetched_at=fetched_at.astimezone(UTC),
+    )
+
+
+def _persist_market_cache() -> None:
+    path = Path(settings.market_radar_value_cache_path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            symbol: {
+                "value": cached.value.value,
+                "previous_value": cached.value.previous_value,
+                "updated_at": cached.value.updated_at,
+                "source_status": cached.value.source_status,
+                "source": cached.value.source,
+                "fetched_at": cached.fetched_at.astimezone(UTC).isoformat(),
+            }
+            for symbol, cached in sorted(_ALPHA_VALUE_CACHE.items())
+        }
+        temp_path = path.with_suffix(f"{path.suffix}.tmp")
+        temp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        temp_path.replace(path)
+    except OSError as exc:
+        logger.warning("Market radar value cache write failed: %s", exc)

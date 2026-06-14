@@ -1,8 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
+from app.api.routes import market_radar as market_radar_route
 from app.api.routes.market_radar import (
     _ALPHA_FAILURE_CACHE,
     _ALPHA_VALUE_CACHE,
@@ -219,6 +220,38 @@ def test_alpha_refresh_skips_recent_failures() -> None:
 
     assert [spec.symbol for spec in specs[:1]] == ["USD/TWD"]
     _ALPHA_FAILURE_CACHE.clear()
+
+
+def test_market_value_cache_persists_between_backend_restarts(tmp_path, monkeypatch) -> None:
+    now = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
+    cache_path = tmp_path / "market_radar_values.json"
+    monkeypatch.setattr(
+        market_radar_route.settings,
+        "market_radar_value_cache_path",
+        str(cache_path),
+    )
+    market_radar_route._ALPHA_VALUE_CACHE.clear()
+    market_radar_route._PERSISTED_CACHE_LOADED = False
+
+    market_radar_route._remember_market_value(
+        value=AlphaMarketValue(
+            symbol="USD/TWD",
+            value=31.1234,
+            previous_value=None,
+            updated_at="2026-06-14 16:00:00",
+            source_status="delayed",
+        ),
+        fetched_at=now,
+    )
+    market_radar_route._ALPHA_VALUE_CACHE.clear()
+    market_radar_route._PERSISTED_CACHE_LOADED = False
+
+    values = market_radar_route._cached_market_values(now=now + timedelta(minutes=5))
+
+    assert values["USD/TWD"].value == 31.1234
+    assert values["USD/TWD"].source == "Alpha Vantage"
+    market_radar_route._ALPHA_VALUE_CACHE.clear()
+    market_radar_route._PERSISTED_CACHE_LOADED = False
 
 
 def test_fred_latest_value_maps_observations_to_market_value() -> None:

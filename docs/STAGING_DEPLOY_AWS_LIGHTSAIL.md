@@ -122,6 +122,31 @@ ANTHROPIC_API_KEY=<your key>
 OPENAI_API_KEY=<your key>
 ```
 
+Optional market-radar feeds:
+
+```text
+BBC_RSS_ENABLED=true
+GDELT_ENABLED=true
+
+# Alpha Vantage free keys are tiny-volume pilot keys. Keep the refresh budget low.
+ALPHA_VANTAGE_ENABLED=true
+ALPHA_VANTAGE_API_KEY=<your key>
+ALPHA_VANTAGE_MAX_REFRESHES_PER_REQUEST=1
+ALPHA_VANTAGE_CACHE_TTL_SECONDS=21600
+ALPHA_VANTAGE_CACHE_MAX_AGE_SECONDS=604800
+
+# FRED carries EOD macro/oil/rates/gold-style values and is cached separately.
+FRED_MARKET_CACHE_TTL_SECONDS=3600
+FRED_MARKET_MAX_REFRESHES_PER_REQUEST=3
+MARKET_RADAR_VALUE_CACHE_PATH=/srv/.data/cache/market_radar_values.json
+MARKET_RADAR_VALUE_CACHE_MAX_AGE_SECONDS=604800
+```
+
+The radar intentionally does not scrape Yahoo/StockQ/LSEG Workspace-style pages.
+Free Alpha Vantage covers only a very small pilot volume; for production-grade
+index/futures quotes, use a licensed/delayed market-data provider with display
+rights.
+
 For the first family pilot, keep:
 
 ```text

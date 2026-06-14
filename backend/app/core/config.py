@@ -40,6 +40,8 @@ class Settings(BaseSettings):
 
     # FRED
     fred_api_key: str = ""
+    fred_market_cache_ttl_seconds: int = 3600
+    fred_market_max_refreshes_per_request: int = 3
 
     # GDELT news discovery. This is not readership data; use for trending/coverage only.
     gdelt_enabled: bool = False
@@ -60,6 +62,11 @@ class Settings(BaseSettings):
     alpha_vantage_cache_max_age_seconds: int = 43200
     alpha_vantage_max_refreshes_per_request: int = 2
     alpha_vantage_failure_cooldown_seconds: int = 600
+
+    # Persisted morning-radar market values. This prevents deploys/restarts from
+    # blanking the page when a free provider is temporarily rate-limited.
+    market_radar_value_cache_path: str = ".data/cache/market_radar_values.json"
+    market_radar_value_cache_max_age_seconds: int = 604800
 
     # LLM providers (LiteLLM library mode; two providers at MVP)
     anthropic_api_key: str = ""
