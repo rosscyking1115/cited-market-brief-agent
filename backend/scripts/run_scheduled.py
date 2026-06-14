@@ -11,11 +11,11 @@ if that time is in the past, the watchlist is due.
 
 import asyncio
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from app.briefs.service import generate_and_store_brief
+from app.briefs.service import generate_and_store_brief, prewarm_and_store_brief_translations
 from app.db.base import get_sessionmaker
 from app.db.models import Brief, Watchlist
 from app.ingestion.pipeline import run_ingestion
@@ -27,16 +27,16 @@ def _is_due(schedule_cron: str, last_run: datetime | None, now: datetime) -> boo
     except ImportError:
         print("croniter not installed — treating all scheduled watchlists as due")
         return True
-    base = last_run or datetime(1970, 1, 1, tzinfo=timezone.utc)
+    base = last_run or datetime(1970, 1, 1, tzinfo=UTC)
     next_fire = croniter(schedule_cron, base).get_next(datetime)
     if next_fire.tzinfo is None:
-        next_fire = next_fire.replace(tzinfo=timezone.utc)
+        next_fire = next_fire.replace(tzinfo=UTC)
     return next_fire <= now
 
 
 async def main(force: bool = False) -> None:
     db = get_sessionmaker()()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     try:
         watchlists = list(
             db.scalars(select(Watchlist).where(Watchlist.schedule_cron.is_not(None)))
@@ -60,6 +60,7 @@ async def main(force: bool = False) -> None:
                 print(f"run  {wl.name}: ingesting…")
                 counts = await run_ingestion(db, wl)
                 brief = generate_and_store_brief(db, wl)
+                prewarm_and_store_brief_translations(db, brief)
                 print(f"     ingested {counts}, brief {brief.id}")
             except Exception as exc:
                 failures += 1

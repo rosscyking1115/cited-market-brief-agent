@@ -276,6 +276,7 @@ export default async function Page() {
                 claims={data.claims}
                 initialEdits={data.user_edits?.sections ?? {}}
                 initialStatus={data.status}
+                initialTranslations={data.translations ?? {}}
                 apiUrl={API_URL}
                 live={isLive}
               />

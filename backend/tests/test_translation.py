@@ -1,7 +1,7 @@
 import sys
 from types import SimpleNamespace
 
-from app.briefs.translation import translate_brief_payload
+from app.briefs.translation import prewarm_brief_translations, translate_brief_payload
 
 
 def test_translate_brief_payload_preserves_citation_markers(monkeypatch) -> None:
@@ -128,3 +128,47 @@ def test_translate_brief_payload_accepts_prose_wrapped_json(monkeypatch) -> None
 
     assert translated.locale == "ko"
     assert translated.sections[0].title == "공시 변화"
+
+
+def test_prewarm_brief_translations_caches_both_locales(monkeypatch) -> None:
+    calls: list[str] = []
+
+    def fake_completion(**kwargs):
+        payload = kwargs["messages"][1]["content"]
+        locale = "zh-Hant" if '"locale": "zh-Hant"' in payload else "ko"
+        calls.append(locale)
+        if locale == "zh-Hant":
+            content = """{
+              "locale": "zh-Hant",
+              "label": "Traditional Chinese",
+              "disclaimer": "英文原文仍為準確來源。",
+              "sections": [{"title": "申報變化", "content_markdown": "NVIDIA 新增風險 [#0]。"}],
+              "open_questions": []
+            }"""
+        else:
+            content = """{
+              "locale": "ko",
+              "label": "Korean",
+              "disclaimer": "영어 원문이 정확한 기준입니다.",
+              "sections": [{"title": "공시 변화", "content_markdown": "NVIDIA는 위험을 추가했습니다 [#0]."}],
+              "open_questions": []
+            }"""
+        return {"choices": [{"message": {"content": content}}]}
+
+    monkeypatch.setitem(sys.modules, "litellm", SimpleNamespace(completion=fake_completion))
+    draft = {
+        "brief_sections": [
+            {
+                "title": "Filing changes",
+                "content_markdown": "NVIDIA added a risk [#0].",
+            }
+        ],
+        "open_questions": [],
+    }
+
+    warmed = prewarm_brief_translations(draft)
+    warmed_again = prewarm_brief_translations(warmed)
+
+    assert calls == ["zh-Hant", "ko"]
+    assert sorted(warmed["_translations"].keys()) == ["ko", "zh-Hant"]
+    assert warmed_again == warmed

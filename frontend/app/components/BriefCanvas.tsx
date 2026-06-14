@@ -4,7 +4,7 @@
 // plus brief approval. Approval is blocked until every section is resolved
 // (needs_source blocks — that's the review discipline the audit trail sells).
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import ApprovalChecklist from "@/app/components/ApprovalChecklist";
 import type { BriefLocale, BriefTranslation, ClaimRow, BriefSectionData, SectionEdit } from "@/lib/api";
@@ -244,6 +244,7 @@ export default function BriefCanvas({
   claims,
   initialEdits,
   initialStatus,
+  initialTranslations,
   apiUrl,
   live,
 }: {
@@ -252,6 +253,7 @@ export default function BriefCanvas({
   claims: ClaimRow[];
   initialEdits: Record<string, SectionEdit>;
   initialStatus: string;
+  initialTranslations?: Partial<Record<Exclude<BriefLocale, "original">, BriefTranslation>>;
   apiUrl: string;
   live: boolean;
 }) {
@@ -261,12 +263,19 @@ export default function BriefCanvas({
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [locale, setLocale] = useState<BriefLocale>("original");
-  const [translations, setTranslations] = useState<Record<string, BriefTranslation>>({});
+  const [translations, setTranslations] = useState<Record<string, BriefTranslation>>(() =>
+    Object.fromEntries(
+      Object.entries(initialTranslations ?? {}).filter(
+        (entry): entry is [string, BriefTranslation] => Boolean(entry[1]),
+      ),
+    ),
+  );
   const [translationBusy, setTranslationBusy] = useState<BriefLocale | null>(null);
   const [translationError, setTranslationError] = useState("");
   const [showHighlights, setShowHighlights] = useState(false);
   const translationAbortRef = useRef<AbortController | null>(null);
   const translationRequestRef = useRef(0);
+  const translationPrefetchStartedRef = useRef(false);
 
   const resolved = sections.every((_, i) => {
     const e = edits[String(i)];
@@ -278,6 +287,33 @@ export default function BriefCanvas({
   const approvable = resolved && claimsReady;
   const approved = status === "approved";
   const activeTranslation = locale === "original" ? null : translations[locale];
+
+  useEffect(() => {
+    if (!live || translationPrefetchStartedRef.current) return;
+    translationPrefetchStartedRef.current = true;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      for (const item of LOCALES) {
+        if (item.locale === "original" || cancelled || translations[item.locale]) continue;
+        try {
+          const res = await fetch(`${apiUrl}/briefs/${briefId}/translations/${item.locale}`);
+          if (!res.ok || cancelled) continue;
+          const payload = (await res.json()) as BriefTranslation;
+          setTranslations((prev) =>
+            prev[item.locale] ? prev : { ...prev, [item.locale]: payload },
+          );
+        } catch {
+          // Quiet prefetch: the visible language button still reports explicit failures.
+        }
+      }
+    }, 600);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [apiUrl, briefId, live, translations]);
 
   async function selectLocale(nextLocale: BriefLocale) {
     setLocale(nextLocale);

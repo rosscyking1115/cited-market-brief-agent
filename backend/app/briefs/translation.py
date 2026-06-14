@@ -5,6 +5,8 @@ the canonical cited artifact for audit, review, and exports.
 """
 
 import json
+import logging
+from collections.abc import Iterable
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -13,6 +15,7 @@ from app.briefs.generator import _json_payload
 from app.core.config import settings
 
 Locale = Literal["zh-Hant", "ko"]
+logger = logging.getLogger(__name__)
 
 LOCALE_NAMES: dict[str, str] = {
     "zh-Hant": "Traditional Chinese",
@@ -95,3 +98,36 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
     translated_payload["locale"] = locale
     translated_payload["label"] = label
     return BriefTranslation.model_validate(translated_payload)
+
+
+def cached_translation(draft: dict, locale: str) -> dict | None:
+    cached = draft.get("_translations", {}).get(locale)
+    return cached if isinstance(cached, dict) else None
+
+
+def with_cached_translation(draft: dict, locale: Locale) -> tuple[dict, dict]:
+    cached = cached_translation(draft, locale)
+    if cached:
+        return draft, cached
+
+    translation = translate_brief_payload(locale, draft).model_dump()
+    translations = {**draft.get("_translations", {}), locale: translation}
+    return {**draft, "_translations": translations}, translation
+
+
+def prewarm_brief_translations(
+    draft: dict,
+    locales: Iterable[Locale] = ("zh-Hant", "ko"),
+) -> dict:
+    """Best-effort sidecar translation cache for reader mode.
+
+    The English draft remains canonical. Translation failures should not block
+    brief creation; the API route can still retry a missing locale on demand.
+    """
+    next_draft = dict(draft)
+    for locale in locales:
+        try:
+            next_draft, _translation = with_cached_translation(next_draft, locale)
+        except Exception:
+            logger.exception("Failed to prewarm %s translation", locale)
+    return next_draft

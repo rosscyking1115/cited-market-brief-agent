@@ -4,8 +4,8 @@ Long-running work moves to Hatchet workflows when schedules land; the service
 functions are already shaped for that hand-off.
 """
 
-import uuid
 import logging
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.briefs.service import export_brief_markdown, generate_and_store_brief
-from app.briefs.translation import LOCALE_NAMES, translate_brief_payload
+from app.briefs.translation import LOCALE_NAMES, cached_translation, with_cached_translation
 from app.core.config import settings
 from app.db.base import get_db
 from app.db.models import Brief, Chunk, Citation, Claim, Document, Source, SupportStatus, Watchlist
@@ -113,18 +113,20 @@ def get_brief_translation(brief_id: uuid.UUID, locale: str, db: Session = Depend
         raise HTTPException(status_code=404, detail="Brief not found")
 
     draft = dict(brief.generated_draft or {})
-    cached = draft.get("_translations", {}).get(locale)
+    cached = cached_translation(draft, locale)
     if cached:
         return cached
 
     try:
-        translation = translate_brief_payload(locale, draft).model_dump()
+        draft, translation = with_cached_translation(draft, locale)
     except Exception as exc:  # pragma: no cover - provider/network failure path
         logger.exception("Translation failed for brief %s locale %s", brief_id, locale)
         raise HTTPException(status_code=502, detail=f"Translation failed: {exc}") from exc
 
-    translations = {**draft.get("_translations", {}), locale: translation}
-    brief.generated_draft = {**draft, "_translations": translations}
+    db.refresh(brief)
+    latest_draft = dict(brief.generated_draft or {})
+    translations = {**latest_draft.get("_translations", {}), locale: translation}
+    brief.generated_draft = {**latest_draft, "_translations": translations}
     record_event(
         db,
         org_id=brief.org_id,
@@ -212,6 +214,7 @@ def get_brief_evidence(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> di
         "created_at": brief.created_at.isoformat(),
         "sections": draft.get("brief_sections", []),
         "open_questions": draft.get("open_questions", []),
+        "translations": draft.get("_translations", {}),
         "user_edits": brief.user_edits or {},
         "claims": [
             {

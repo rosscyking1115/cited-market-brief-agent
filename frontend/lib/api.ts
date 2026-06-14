@@ -58,6 +58,7 @@ export type EvidencePayload = {
   created_at: string;
   sections: BriefSectionData[];
   open_questions: string[];
+  translations?: Partial<Record<Exclude<BriefLocale, "original">, BriefTranslation>>;
   claims: ClaimRow[];
   user_edits?: { sections?: Record<string, SectionEdit> };
 };
