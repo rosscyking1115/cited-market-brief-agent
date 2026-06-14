@@ -9,6 +9,7 @@ from app.api.routes.market_radar import (
     _alpha_refresh_specs,
     _cached_alpha_values,
     _CachedAlphaValue,
+    _fred_latest_value,
 )
 from app.connectors.alpha_vantage import AlphaMarketValue, _provider_message, alpha_series_latest
 from app.connectors.bbc import BbcArticle, parse_bbc_rss
@@ -216,8 +217,36 @@ def test_alpha_refresh_skips_recent_failures() -> None:
 
     specs = _alpha_refresh_specs(values={}, now=now)
 
-    assert [spec.symbol for spec in specs[:3]] == ["USD/TWD", "WTI", "US10Y"]
+    assert [spec.symbol for spec in specs[:1]] == ["USD/TWD"]
     _ALPHA_FAILURE_CACHE.clear()
+
+
+def test_fred_latest_value_maps_observations_to_market_value() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, list[dict[str, str]]]:
+            return {
+                "observations": [
+                    {"date": "2026-06-13", "value": "."},
+                    {"date": "2026-06-12", "value": "4.21"},
+                    {"date": "2026-06-11", "value": "4.18"},
+                ]
+            }
+
+    class FakeClient:
+        def get(self, *_args: object, **_kwargs: object) -> FakeResponse:
+            return FakeResponse()
+
+    value = _fred_latest_value(client=FakeClient(), symbol="US10Y", series_id="DGS10")
+
+    assert value is not None
+    assert value.symbol == "US10Y"
+    assert value.value == 4.21
+    assert value.previous_value == 4.18
+    assert value.updated_at == "2026-06-12"
+    assert value.source == "FRED"
 
 
 def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:

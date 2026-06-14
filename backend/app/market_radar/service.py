@@ -179,7 +179,7 @@ def hydrate_snapshots_with_alpha(
             "value": _format_market_value(value.symbol, value.value),
             "change": _format_market_change(value),
             "tone": _tone_for_change(value.change),
-            "source": "Alpha Vantage",
+            "source": value.source,
             "source_status": value.source_status,
         }
         if row.label == "Oil / Gold":
@@ -565,7 +565,6 @@ def hydrate_overnight_risk_with_alpha(
     rows: list[OvernightRiskItem],
     values: dict[str, AlphaMarketValue],
 ) -> list[OvernightRiskItem]:
-    source = "Alpha Vantage"
     hydrated: list[OvernightRiskItem] = []
     for row in rows:
         value = values.get(row.symbol)
@@ -578,10 +577,10 @@ def hydrate_overnight_risk_with_alpha(
                     "value": _format_market_value(row.symbol, value.value),
                     "change": _format_market_change(value),
                     "tone": _tone_for_change(value.change),
-                    "source": source,
+                    "source": value.source,
                     "source_status": value.source_status,
                     "rights_note": (
-                        "Alpha Vantage pilot feed; review plan/terms before public display."
+                        f"{value.source} pilot feed; review plan/terms before public display."
                     ),
                 }
             )

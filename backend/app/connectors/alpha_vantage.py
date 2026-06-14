@@ -22,6 +22,7 @@ class AlphaMarketValue:
     previous_value: float | None
     updated_at: str | None
     source_status: AlphaSourceStatus
+    source: str = "Alpha Vantage"
 
     @property
     def change(self) -> float | None:

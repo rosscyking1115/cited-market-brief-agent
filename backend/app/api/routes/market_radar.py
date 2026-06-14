@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+import httpx
 from fastapi import APIRouter
 
 from app.connectors.alpha_vantage import AlphaMarketValue, AlphaVantageClient
@@ -66,6 +67,7 @@ def get_market_radar() -> MorningRadarOut:
 
     if settings.alpha_vantage_enabled and settings.alpha_vantage_api_key.strip():
         alpha_values = _alpha_vantage_values()
+        alpha_values.update(_fred_market_values())
         snapshots = build_snapshots(alpha_values)
         overnight_risk = build_overnight_risk(alpha_values)
 
@@ -130,12 +132,6 @@ def _alpha_fetch_plan() -> list[_AlphaFetchSpec]:
                 from_currency="USD",
                 to_currency="CNH",
             ),
-        ),
-        _AlphaFetchSpec(symbol="WTI", label="WTI", fetch_factory=lambda client: client.wti),
-        _AlphaFetchSpec(
-            symbol="US10Y",
-            label="US10Y",
-            fetch_factory=lambda client: client.treasury_yield_10y,
         ),
     ]
 
@@ -204,3 +200,75 @@ def _collect_alpha_value(
     values[value.symbol] = value
     _ALPHA_FAILURE_CACHE.pop(value.symbol, None)
     _ALPHA_VALUE_CACHE[value.symbol] = _CachedAlphaValue(value=value, fetched_at=fetched_at)
+
+
+def _fred_market_values() -> dict[str, AlphaMarketValue]:
+    if not settings.fred_api_key.strip():
+        return {}
+
+    values: dict[str, AlphaMarketValue] = {}
+    with httpx.Client(timeout=8.0) as client:
+        for symbol, series_id in (("WTI", "DCOILWTICO"), ("US10Y", "DGS10")):
+            try:
+                value = _fred_latest_value(client=client, symbol=symbol, series_id=series_id)
+            except Exception as exc:
+                logger.warning("FRED %s fetch failed: %s", symbol, exc)
+                continue
+            if value is not None:
+                values[symbol] = value
+    return values
+
+
+def _fred_latest_value(
+    *,
+    client: httpx.Client,
+    symbol: str,
+    series_id: str,
+) -> AlphaMarketValue | None:
+    resp = client.get(
+        "https://api.stlouisfed.org/fred/series/observations",
+        params={
+            "api_key": settings.fred_api_key,
+            "file_type": "json",
+            "series_id": series_id,
+            "sort_order": "desc",
+            "limit": "8",
+        },
+    )
+    resp.raise_for_status()
+    observations = resp.json().get("observations", [])
+    if not isinstance(observations, list):
+        return None
+
+    values: list[tuple[str | None, float]] = []
+    for raw in observations:
+        if not isinstance(raw, dict):
+            continue
+        parsed = _parse_float(raw.get("value"))
+        if parsed is None:
+            continue
+        values.append((str(raw.get("date") or "").strip() or None, parsed))
+        if len(values) >= 2:
+            break
+    if not values:
+        return None
+
+    latest_date, latest_value = values[0]
+    previous_value = values[1][1] if len(values) > 1 else None
+    return AlphaMarketValue(
+        symbol=symbol,
+        value=latest_value,
+        previous_value=previous_value,
+        updated_at=latest_date,
+        source_status="eod",
+        source="FRED",
+    )
+
+
+def _parse_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(str(value).replace(",", ""))
+    except ValueError:
+        return None
