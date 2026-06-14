@@ -4,7 +4,9 @@
 
 import BriefCanvas from "@/app/components/BriefCanvas";
 import ChangesPanel from "@/app/components/ChangesPanel";
+import EvidenceRail from "@/app/components/EvidenceRail";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
+import MarketContextStrip from "@/app/components/MarketContextStrip";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
 import TextSizeToggle from "@/app/components/TextSizeToggle";
 import ThemeToggle from "@/app/components/ThemeToggle";
@@ -226,91 +228,101 @@ export default async function Page() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
-        <article className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card px-4 py-4 sm:px-6 sm:py-5">
-          <p className="th-label mb-2 break-words">Morning brief · Watchlist: {data.watchlist}</p>
-          <h1 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
-            What changed since yesterday?
-          </h1>
-          <p className="reader-meta mt-2 break-words font-mono text-[11px] leading-relaxed text-neutral-90">
-            generated {ts} UTC · {data.claims.length} claims · {supported} validated ·{" "}
-            {flagged} flagged · status {data.status}
-          </p>
+      <main className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
+        <MarketContextStrip changes={changesData} />
 
-          {attentionClaims.length > 0 && (
-            <section className="mt-5 min-w-0 rounded-(--radius-ctl) border border-flag/40 bg-page/70 px-3 py-3 sm:px-4">
-              <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-2">
-                <p className="th-label text-flag">Needs attention</p>
-                <span className="min-w-0 break-words font-mono text-[10px] text-neutral-90">
-                  {attentionClaims.length} claim{attentionClaims.length > 1 ? "s" : ""} blocked from clean approval
-                </span>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <div className="min-w-0 space-y-4 sm:space-y-5">
+            <article className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card px-4 py-4 sm:px-6 sm:py-5">
+              <div className="border-b border-hairline pb-4">
+                <p className="th-label mb-2 break-words">Morning brief · Watchlist: {data.watchlist}</p>
+                <h1 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
+                  What changed since yesterday?
+                </h1>
+                <p className="reader-meta mt-2 break-words font-mono text-[11px] leading-relaxed text-neutral-90">
+                  generated {ts} UTC · {data.claims.length} claims · {supported} validated ·{" "}
+                  {flagged} flagged · status {data.status}
+                </p>
               </div>
-              <ul className="mt-2 grid gap-2">
-                {attentionClaims.map((claim) => (
-                  <li key={claim.claim_id} className="reader-body grid min-w-0 gap-2 text-[13px] leading-relaxed sm:flex sm:items-start">
-                    <a
-                      href={`#claim-${String(claim.index).padStart(3, "0")}`}
-                      className="w-fit shrink-0 rounded-(--radius-ctl) border border-flag/60 px-1.5 py-0.5 font-mono text-[10px] text-flag hover:bg-flag hover:text-white"
-                    >
-                      C-{String(claim.index).padStart(3, "0")}
-                    </a>
-                    <span className="min-w-0 break-words text-neutral-50">{claim.text}</span>
-                    <RepairClaimButton claimId={claim.claim_id} apiUrl={API_URL} live={isLive} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
 
-          <BriefCanvas
-            briefId={data.brief_id}
-            sections={data.sections}
-            claims={data.claims}
-            initialEdits={data.user_edits?.sections ?? {}}
-            initialStatus={data.status}
-            apiUrl={API_URL}
-            live={isLive}
-          />
+              {attentionClaims.length > 0 && (
+                <section className="mt-5 min-w-0 rounded-(--radius-ctl) border border-flag/40 bg-page/70 px-3 py-3 sm:px-4">
+                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-2">
+                    <p className="th-label text-flag">Needs attention</p>
+                    <span className="min-w-0 break-words font-mono text-[10px] text-neutral-90">
+                      {attentionClaims.length} claim{attentionClaims.length > 1 ? "s" : ""} blocked from clean approval
+                    </span>
+                  </div>
+                  <ul className="mt-2 grid gap-2">
+                    {attentionClaims.map((claim) => (
+                      <li key={claim.claim_id} className="reader-body grid min-w-0 gap-2 text-[13px] leading-relaxed sm:flex sm:items-start">
+                        <a
+                          href={`#claim-${String(claim.index).padStart(3, "0")}`}
+                          className="w-fit shrink-0 rounded-(--radius-ctl) border border-flag/60 px-1.5 py-0.5 font-mono text-[10px] text-flag hover:bg-flag hover:text-white"
+                        >
+                          C-{String(claim.index).padStart(3, "0")}
+                        </a>
+                        <span className="min-w-0 break-words text-neutral-50">{claim.text}</span>
+                        <RepairClaimButton claimId={claim.claim_id} apiUrl={API_URL} live={isLive} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
-          {data.open_questions.length > 0 && (
-            <section className="mt-5 rounded-(--radius-ctl) border-l-2 border-action bg-page/60 px-4 py-3">
-              <p className="th-label">Analyst open questions</p>
-              <ul className="reader-body mt-1 list-inside list-disc text-[13px] text-neutral-50">
-                {data.open_questions.map((q) => (
-                  <li key={q}>{q}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </article>
+              <BriefCanvas
+                briefId={data.brief_id}
+                sections={data.sections}
+                claims={data.claims}
+                initialEdits={data.user_edits?.sections ?? {}}
+                initialStatus={data.status}
+                apiUrl={API_URL}
+                live={isLive}
+              />
 
-        <div className="flex flex-wrap items-center gap-2 px-1">
-          <span className="th-label">Export</span>
-          {[
-            { fmt: "markdown", href: `${API_URL}/briefs/${data.brief_id}/markdown`, label: "MD" },
-            { fmt: "pdf", href: `${API_URL}/briefs/${data.brief_id}/export/pdf`, label: "PDF" },
-            { fmt: "pptx", href: `${API_URL}/briefs/${data.brief_id}/export/pptx`, label: "PPTX" },
-            { fmt: "xlsx", href: `${API_URL}/briefs/${data.brief_id}/export/xlsx`, label: "XLSX" },
-          ].map(({ fmt, href, label }) => (
-            <a
-              key={fmt}
-              href={isLive ? href : undefined}
-              aria-disabled={!isLive}
-              className={`rounded-(--radius-ctl) border px-2.5 py-1 font-mono text-[11px] ${
-                isLive
-                  ? "border-elevated text-neutral-50 hover:border-action hover:text-neutral-30"
-                  : "pointer-events-none border-hairline text-neutral-90 opacity-50"
-              }`}
-            >
-              ↓ {label}
-            </a>
-          ))}
-          <span className="font-mono text-[10px] text-neutral-90">
-            every export carries the watermark, evidence ledger, and AI marking
-          </span>
+              {data.open_questions.length > 0 && (
+                <section className="mt-5 rounded-(--radius-ctl) border-l-2 border-action bg-page/60 px-4 py-3">
+                  <p className="th-label">Analyst open questions</p>
+                  <ul className="reader-body mt-1 list-inside list-disc text-[13px] text-neutral-50">
+                    {data.open_questions.map((q) => (
+                      <li key={q}>{q}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </article>
+
+            <div className="flex flex-wrap items-center gap-2 px-1">
+              <span className="th-label">Export</span>
+              {[
+                { fmt: "markdown", href: `${API_URL}/briefs/${data.brief_id}/markdown`, label: "MD" },
+                { fmt: "pdf", href: `${API_URL}/briefs/${data.brief_id}/export/pdf`, label: "PDF" },
+                { fmt: "pptx", href: `${API_URL}/briefs/${data.brief_id}/export/pptx`, label: "PPTX" },
+                { fmt: "xlsx", href: `${API_URL}/briefs/${data.brief_id}/export/xlsx`, label: "XLSX" },
+              ].map(({ fmt, href, label }) => (
+                <a
+                  key={fmt}
+                  href={isLive ? href : undefined}
+                  aria-disabled={!isLive}
+                  className={`rounded-(--radius-ctl) border px-2.5 py-1 font-mono text-[11px] ${
+                    isLive
+                      ? "border-elevated text-neutral-50 hover:border-action hover:text-neutral-30"
+                      : "pointer-events-none border-hairline text-neutral-90 opacity-50"
+                  }`}
+                >
+                  ↓ {label}
+                </a>
+              ))}
+              <span className="font-mono text-[10px] text-neutral-90">
+                every export carries the watermark, evidence ledger, and AI marking
+              </span>
+            </div>
+
+            <ChangesPanel changes={changesData} />
+          </div>
+
+          <EvidenceRail claims={data.claims} changes={changesData} />
         </div>
-
-        <ChangesPanel changes={changesData} />
 
         <EvidenceLedger claims={data.claims} apiUrl={API_URL} live={isLive} />
 
