@@ -1,8 +1,14 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
+from app.api.routes.market_radar import (
+    _ALPHA_VALUE_CACHE,
+    _alpha_refresh_specs,
+    _cached_alpha_values,
+    _CachedAlphaValue,
+)
 from app.connectors.alpha_vantage import AlphaMarketValue, _provider_message, alpha_series_latest
 from app.connectors.bbc import BbcArticle, parse_bbc_rss
 from app.connectors.gdelt import GdeltArticle
@@ -174,6 +180,28 @@ def test_alpha_provider_message_detects_rate_limit_payload() -> None:
     message = _provider_message({"Note": "standard API call frequency is 5 calls per minute"})
 
     assert message == "standard API call frequency is 5 calls per minute"
+
+
+def test_alpha_cache_returns_existing_values_and_refreshes_missing_first() -> None:
+    now = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
+    _ALPHA_VALUE_CACHE.clear()
+    _ALPHA_VALUE_CACHE["USD/TWD"] = _CachedAlphaValue(
+        value=AlphaMarketValue(
+            symbol="USD/TWD",
+            value=31.1234,
+            previous_value=None,
+            updated_at="2026-06-14 16:00:00",
+            source_status="delayed",
+        ),
+        fetched_at=now,
+    )
+
+    values = _cached_alpha_values(now=now)
+    specs = _alpha_refresh_specs(values=values, now=now)
+
+    assert values["USD/TWD"].value == 31.1234
+    assert [spec.symbol for spec in specs[:2]] == ["USD/JPY", "USD/CNH"]
+    _ALPHA_VALUE_CACHE.clear()
 
 
 def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:

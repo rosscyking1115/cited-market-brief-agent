@@ -2,6 +2,8 @@
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter
 
@@ -21,6 +23,15 @@ from app.market_radar.service import (
 
 router = APIRouter(prefix="/market-radar", tags=["market-radar"])
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class _CachedAlphaValue:
+    value: AlphaMarketValue
+    fetched_at: datetime
+
+
+_ALPHA_VALUE_CACHE: dict[str, _CachedAlphaValue] = {}
 
 
 @router.get("", response_model=MorningRadarOut)
@@ -65,26 +76,98 @@ def get_market_radar() -> MorningRadarOut:
 
 
 def _alpha_vantage_values() -> dict[str, AlphaMarketValue]:
+    now = datetime.now(UTC)
+    values = _cached_alpha_values(now=now)
+    refresh_specs = _alpha_refresh_specs(values=values, now=now)
+    refresh_budget = max(settings.alpha_vantage_max_refreshes_per_request, 0)
+    if not refresh_specs or refresh_budget == 0:
+        return values
+
     client = AlphaVantageClient()
-    values: dict[str, AlphaMarketValue] = {}
     try:
-        for from_currency, to_currency in (("USD", "TWD"), ("USD", "JPY"), ("USD", "CNH")):
+        for spec in refresh_specs[:refresh_budget]:
             _collect_alpha_value(
                 values,
-                label=f"{from_currency}/{to_currency}",
-                fetch=lambda from_currency=from_currency, to_currency=to_currency: (
-                    client.exchange_rate(
-                        from_currency=from_currency,
-                        to_currency=to_currency,
-                    )
-                ),
+                label=spec.label,
+                fetch=spec.fetch_factory(client),
+                fetched_at=now,
             )
-
-        _collect_alpha_value(values, label="WTI", fetch=client.wti)
-        _collect_alpha_value(values, label="US10Y", fetch=client.treasury_yield_10y)
     finally:
         client.close()
     return values
+
+
+@dataclass(frozen=True)
+class _AlphaFetchSpec:
+    symbol: str
+    label: str
+    fetch_factory: Callable[[AlphaVantageClient], Callable[[], AlphaMarketValue | None]]
+
+
+def _alpha_fetch_plan() -> list[_AlphaFetchSpec]:
+    return [
+        _AlphaFetchSpec(
+            symbol="USD/TWD",
+            label="USD/TWD",
+            fetch_factory=lambda client: lambda: client.exchange_rate(
+                from_currency="USD",
+                to_currency="TWD",
+            ),
+        ),
+        _AlphaFetchSpec(
+            symbol="USD/JPY",
+            label="USD/JPY",
+            fetch_factory=lambda client: lambda: client.exchange_rate(
+                from_currency="USD",
+                to_currency="JPY",
+            ),
+        ),
+        _AlphaFetchSpec(
+            symbol="USD/CNH",
+            label="USD/CNH",
+            fetch_factory=lambda client: lambda: client.exchange_rate(
+                from_currency="USD",
+                to_currency="CNH",
+            ),
+        ),
+        _AlphaFetchSpec(symbol="WTI", label="WTI", fetch_factory=lambda client: client.wti),
+        _AlphaFetchSpec(
+            symbol="US10Y",
+            label="US10Y",
+            fetch_factory=lambda client: client.treasury_yield_10y,
+        ),
+    ]
+
+
+def _cached_alpha_values(*, now: datetime) -> dict[str, AlphaMarketValue]:
+    max_age = timedelta(seconds=max(settings.alpha_vantage_cache_max_age_seconds, 0))
+    values: dict[str, AlphaMarketValue] = {}
+    expired: list[str] = []
+    for symbol, cached in _ALPHA_VALUE_CACHE.items():
+        if now - cached.fetched_at <= max_age:
+            values[symbol] = cached.value
+        else:
+            expired.append(symbol)
+    for symbol in expired:
+        _ALPHA_VALUE_CACHE.pop(symbol, None)
+    return values
+
+
+def _alpha_refresh_specs(
+    *,
+    values: dict[str, AlphaMarketValue],
+    now: datetime,
+) -> list[_AlphaFetchSpec]:
+    ttl = timedelta(seconds=max(settings.alpha_vantage_cache_ttl_seconds, 0))
+    missing: list[_AlphaFetchSpec] = []
+    stale: list[_AlphaFetchSpec] = []
+    for spec in _alpha_fetch_plan():
+        cached = _ALPHA_VALUE_CACHE.get(spec.symbol)
+        if spec.symbol not in values or cached is None:
+            missing.append(spec)
+        elif now - cached.fetched_at > ttl:
+            stale.append(spec)
+    return [*missing, *stale]
 
 
 def _collect_alpha_value(
@@ -92,6 +175,7 @@ def _collect_alpha_value(
     *,
     label: str,
     fetch: Callable[[], AlphaMarketValue | None],
+    fetched_at: datetime,
 ) -> None:
     try:
         value = fetch()
@@ -102,3 +186,4 @@ def _collect_alpha_value(
         logger.info("Alpha Vantage %s returned no usable value", label)
         return
     values[value.symbol] = value
+    _ALPHA_VALUE_CACHE[value.symbol] = _CachedAlphaValue(value=value, fetched_at=fetched_at)

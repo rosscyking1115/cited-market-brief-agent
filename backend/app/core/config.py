@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     alpha_vantage_api_key: str = ""
     alpha_vantage_base_url: str = "https://www.alphavantage.co/query"
     alpha_vantage_request_timeout_seconds: float = 8.0
+    alpha_vantage_cache_ttl_seconds: int = 900
+    alpha_vantage_cache_max_age_seconds: int = 43200
+    alpha_vantage_max_refreshes_per_request: int = 2
 
     # LLM providers (LiteLLM library mode; two providers at MVP)
     anthropic_api_key: str = ""
