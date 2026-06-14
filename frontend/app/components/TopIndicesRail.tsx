@@ -18,6 +18,20 @@ function toneClass(tone: SnapshotTone) {
   return "text-neutral-70";
 }
 
+function statusText(status: TopIndexItem["source_status"]) {
+  if (status === "eod") return "每日資料";
+  if (status === "delayed") return "延遲行情";
+  if (status === "live") return "即時";
+  return "需授權";
+}
+
+function statusClass(status: TopIndexItem["source_status"]) {
+  if (status === "planned") return "text-neutral-90";
+  if (status === "eod") return "text-action";
+  if (status === "delayed") return "text-flag";
+  return "text-up";
+}
+
 function readPreferences(): Preferences {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -206,7 +220,9 @@ export default function TopIndicesRail({ items }: { items: TopIndexItem[] }) {
                           <p className={`font-mono text-[12px] font-semibold ${toneClass(item.tone)}`}>
                             {item.value}
                           </p>
-                          <p className="reader-meta text-neutral-90">{item.source_status}</p>
+                          <p className={`reader-meta ${statusClass(item.source_status)}`}>
+                            {statusText(item.source_status)}
+                          </p>
                         </div>
                         <button
                           type="button"

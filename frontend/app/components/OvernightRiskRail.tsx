@@ -20,6 +20,20 @@ function toneClass(tone: SnapshotTone) {
   return "text-neutral-70";
 }
 
+function statusText(status: OvernightRiskItem["source_status"]) {
+  if (status === "eod") return "每日資料";
+  if (status === "delayed") return "延遲行情";
+  if (status === "live") return "即時";
+  return "需授權";
+}
+
+function statusClass(status: OvernightRiskItem["source_status"]) {
+  if (status === "planned") return "border-elevated text-neutral-90";
+  if (status === "eod") return "border-action/50 bg-action/10 text-action";
+  if (status === "delayed") return "border-flag/50 bg-flag/10 text-flag";
+  return "border-up/50 bg-up/10 text-up";
+}
+
 export default function OvernightRiskRail({ items }: { items: OvernightRiskItem[] }) {
   const [group, setGroup] = useState<string>(ALL_GROUPS);
   const groups = useMemo(
@@ -76,11 +90,19 @@ export default function OvernightRiskRail({ items }: { items: OvernightRiskItem[
                 <p className={`font-mono text-[15px] font-semibold ${toneClass(item.tone)}`}>
                   {item.value}
                 </p>
-                <p className="reader-meta text-neutral-90">{item.source_status}</p>
+                <span
+                  className={`mt-1 inline-block rounded-(--radius-ctl) border px-1.5 py-0.5 font-mono text-[10px] ${statusClass(
+                    item.source_status,
+                  )}`}
+                >
+                  {statusText(item.source_status)}
+                </span>
               </div>
             </div>
             <p className="reader-meta mt-2 text-neutral-90">{item.why}</p>
-            <p className="reader-meta mt-2 font-mono text-neutral-90">{item.rights_note}</p>
+            <p className="reader-meta mt-2 font-mono text-neutral-90">
+              {item.source_status === "planned" ? "授權後顯示行情" : `source: ${item.source}`}
+            </p>
           </article>
         ))}
       </div>

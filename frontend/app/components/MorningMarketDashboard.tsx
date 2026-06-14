@@ -31,6 +31,20 @@ function toneClass(tone: SnapshotTone) {
   return "text-neutral-70";
 }
 
+function snapshotStatusText(status: MorningRadarPayload["snapshots"][number]["source_status"]) {
+  if (status === "eod") return "每日資料";
+  if (status === "delayed") return "延遲行情";
+  if (status === "live") return "即時";
+  return "需授權";
+}
+
+function snapshotStatusClass(status: MorningRadarPayload["snapshots"][number]["source_status"]) {
+  if (status === "planned") return "border-elevated text-neutral-90";
+  if (status === "eod") return "border-action/50 bg-action/10 text-action";
+  if (status === "delayed") return "border-flag/50 bg-flag/10 text-flag";
+  return "border-up/50 bg-up/10 text-up";
+}
+
 function rankKindText(kind: NewsRankKind) {
   if (kind === "most_read") return "閱讀最多";
   if (kind === "most_viewed") return "觀看最多";
@@ -181,7 +195,18 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
                   {item.value}
                 </p>
                 <p className="reader-meta mt-1 text-neutral-90">{item.change}</p>
-                <p className="reader-meta mt-1 font-mono text-neutral-90">source: {item.source}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={`rounded-(--radius-ctl) border px-1.5 py-0.5 font-mono text-[10px] ${snapshotStatusClass(
+                      item.source_status,
+                    )}`}
+                  >
+                    {snapshotStatusText(item.source_status)}
+                  </span>
+                  <span className="reader-meta font-mono text-neutral-90">
+                    {item.source_status === "planned" ? "授權後顯示行情" : `source: ${item.source}`}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
