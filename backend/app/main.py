@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.routes import briefs, changes, exports, feedback, health, watchlists
+from app.api.routes import briefs, changes, exports, feedback, health, market_radar, watchlists
 from app.core.config import settings
 from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import require_auth
@@ -40,4 +40,5 @@ app.include_router(watchlists.router, dependencies=_authed)
 app.include_router(briefs.router, dependencies=_authed)
 app.include_router(feedback.router, dependencies=_authed)
 app.include_router(changes.router, dependencies=_authed)
+app.include_router(market_radar.router, dependencies=_authed)
 app.include_router(exports.router, dependencies=_authed)

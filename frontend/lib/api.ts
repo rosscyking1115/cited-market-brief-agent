@@ -97,6 +97,101 @@ export type ChangesPayload = {
   }[];
 };
 
+export type MarketStatus = "not_open" | "open" | "lunch" | "closed" | "weekend";
+export type SnapshotTone = "up" | "down" | "flat" | "pending";
+export type NewsRankKind = "most_read" | "most_viewed" | "most_covered" | "trending" | "latest";
+export type NewsSourceStatus = "official_api" | "rss" | "licensed" | "planned" | "manual_reference";
+
+export type MarketClockItem = {
+  market: string;
+  label: string;
+  window: string;
+  status: MarketStatus;
+  note: string;
+};
+
+export type MarketSnapshotItem = {
+  label: string;
+  local_name: string;
+  value: string;
+  change: string;
+  tone: SnapshotTone;
+  source: string;
+  source_status: "live" | "delayed" | "eod" | "planned";
+};
+
+export type MarketStoryItem = {
+  title: string;
+  why: string;
+  tag: string;
+};
+
+export type PopularNewsItem = {
+  rank: number;
+  title: string;
+  title_zh_hant: string;
+  source: string;
+  url: string | null;
+  published_at: string | null;
+  window: "1h" | "24h";
+  rank_kind: NewsRankKind;
+  source_status: NewsSourceStatus;
+  category: string;
+  why: string;
+  rights_note: string;
+};
+
+export type TopIndexItem = {
+  rank: number;
+  symbol: string;
+  name: string;
+  local_name: string;
+  region: string;
+  value: string;
+  change: string;
+  tone: SnapshotTone;
+  source: string;
+  source_status: "live" | "delayed" | "eod" | "planned";
+  rights_note: string;
+};
+
+export type OvernightRiskItem = {
+  rank: number;
+  symbol: string;
+  name: string;
+  local_name: string;
+  group: "futures" | "volatility" | "fx" | "commodities" | "rates";
+  value: string;
+  change: string;
+  tone: SnapshotTone;
+  source: string;
+  source_status: "live" | "delayed" | "eod" | "planned";
+  why: string;
+  rights_note: string;
+};
+
+export type GlossaryItem = {
+  term: string;
+  english: string;
+  meaning: string;
+};
+
+export type MorningRadarPayload = {
+  generated_at: string;
+  timezone: string;
+  headline: string;
+  summary_points: [string, string, string];
+  current_focus: string;
+  market_clock: MarketClockItem[];
+  snapshots: MarketSnapshotItem[];
+  popular_news: PopularNewsItem[];
+  top_indices: TopIndexItem[];
+  overnight_risk: OvernightRiskItem[];
+  stories: MarketStoryItem[];
+  glossary: GlossaryItem[];
+  disclaimer: string;
+};
+
 async function fetchJson<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${SERVER_API_URL}${path}`, {
@@ -127,4 +222,9 @@ export async function getLatestEvidence(): Promise<EvidencePayload | null> {
     }
   }
   return null;
+}
+
+/** Taiwan-morning market radar payload, or null when the API/DB isn't reachable. */
+export async function getMorningRadar(): Promise<MorningRadarPayload | null> {
+  return fetchJson<MorningRadarPayload>("/market-radar");
 }

@@ -41,6 +41,22 @@ class Settings(BaseSettings):
     # FRED
     fred_api_key: str = ""
 
+    # GDELT news discovery. This is not readership data; use for trending/coverage only.
+    gdelt_enabled: bool = False
+    gdelt_base_url: str = "https://api.gdeltproject.org/api/v2/doc/doc"
+    gdelt_request_timeout_seconds: float = 8.0
+
+    # BBC RSS is latest-headline discovery only. BBC does not expose public read-rank data.
+    bbc_rss_enabled: bool = False
+    bbc_rss_url: str = "https://feeds.bbci.co.uk/news/rss.xml"
+    bbc_request_timeout_seconds: float = 8.0
+
+    # Alpha Vantage pilot feed for FX, commodities, and rates. Use only where terms permit.
+    alpha_vantage_enabled: bool = False
+    alpha_vantage_api_key: str = ""
+    alpha_vantage_base_url: str = "https://www.alphavantage.co/query"
+    alpha_vantage_request_timeout_seconds: float = 8.0
+
     # LLM providers (LiteLLM library mode; two providers at MVP)
     anthropic_api_key: str = ""
     openai_api_key: str = ""

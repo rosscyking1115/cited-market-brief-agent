@@ -7,6 +7,7 @@ import ChangesPanel from "@/app/components/ChangesPanel";
 import EvidenceRail from "@/app/components/EvidenceRail";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
 import MarketContextStrip from "@/app/components/MarketContextStrip";
+import MorningMarketDashboard from "@/app/components/MorningMarketDashboard";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
 import TextSizeToggle from "@/app/components/TextSizeToggle";
 import ThemeToggle from "@/app/components/ThemeToggle";
@@ -14,8 +15,10 @@ import {
   API_URL,
   getChanges,
   getLatestEvidence,
+  getMorningRadar,
   type ChangesPayload,
   type EvidencePayload,
+  type MorningRadarPayload,
 } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -188,6 +191,250 @@ const DEMO_CHANGES: ChangesPayload = {
   ],
 };
 
+const DEMO_RADAR: MorningRadarPayload = {
+  generated_at: "2026-06-14T07:30:00+08:00",
+  timezone: "Asia/Taipei",
+  headline: "今天先看全球市場，再看台股開盤",
+  summary_points: [
+    "美股與歐股收盤先決定隔夜基調。",
+    "08:00 先看日本、韓國；09:00 接台股。",
+    "油金、美元、利率用來判斷風險情緒，不作買賣建議。",
+  ],
+  current_focus: "台灣 · 未開盤",
+  market_clock: [
+    {
+      market: "日本",
+      label: "日經225 / TOPIX",
+      window: "08:00-10:30, 11:30-14:30",
+      status: "open",
+      note: "亞洲第一棒，先看科技與匯率。",
+    },
+    {
+      market: "韓國",
+      label: "KOSPI / KOSDAQ",
+      window: "08:00-14:30",
+      status: "open",
+      note: "記憶體、電池、出口股參考。",
+    },
+    {
+      market: "台灣",
+      label: "加權指數 / 台指期",
+      window: "09:00-13:30",
+      status: "not_open",
+      note: "開盤前先看台幣、台指期與半導體。",
+    },
+    {
+      market: "香港 / A股",
+      label: "恆生 / 上證 / 滬深300",
+      window: "09:30-12:00, 13:00-16:00",
+      status: "not_open",
+      note: "中國需求、政策與港股科技股。",
+    },
+    {
+      market: "歐洲",
+      label: "Stoxx 600 / DAX / FTSE 100",
+      window: "夏令約 15:00 後",
+      status: "not_open",
+      note: "下午接力觀察歐股與歐元。",
+    },
+    {
+      market: "美國",
+      label: "道瓊 / 標普500 / 那斯達克",
+      window: "夏令 21:30-04:00",
+      status: "closed",
+      note: "台灣早上主要看昨晚收盤與期貨。",
+    },
+  ],
+  snapshots: [
+    {
+      label: "US Close",
+      local_name: "美股三大指數",
+      value: "行情 API 待接入",
+      change: "道瓊 / 標普500 / 那斯達克",
+      tone: "pending",
+      source: "Twelve Data / Alpha Vantage next",
+      source_status: "planned",
+    },
+    {
+      label: "SOX",
+      local_name: "費城半導體",
+      value: "待接入",
+      change: "AI / 半導體族群溫度",
+      tone: "pending",
+      source: "market feed next",
+      source_status: "planned",
+    },
+    {
+      label: "Asia Futures",
+      local_name: "台指期 / 日韓早盤",
+      value: "待接入",
+      change: "日本 08:00、韓國 08:00、台灣 09:00",
+      tone: "pending",
+      source: "TWSE / TAIFEX next",
+      source_status: "planned",
+    },
+    {
+      label: "Oil / Gold",
+      local_name: "油價 / 黃金",
+      value: "待接入",
+      change: "用來觀察通膨與避險情緒",
+      tone: "pending",
+      source: "EIA / market feed next",
+      source_status: "planned",
+    },
+  ],
+  popular_news: [
+    {
+      rank: 1,
+      title: "BBC latest headlines connector pending",
+      title_zh_hant: "BBC 最新新聞接入待確認",
+      source: "BBC",
+      url: null,
+      published_at: null,
+      window: "1h",
+      rank_kind: "latest",
+      source_status: "rss",
+      category: "全球",
+      why: "BBC 公開 RSS 可作為最新新聞來源候選，但不能標示為閱讀最多，除非取得官方人氣資料或授權。",
+      rights_note: "Use as latest/RSS only after confirming BBC terms; do not scrape Most Read.",
+    },
+    {
+      rank: 2,
+      title: "GDELT trending cluster connector pending",
+      title_zh_hant: "GDELT 熱門/最多報導新聞群組待接入",
+      source: "GDELT",
+      url: null,
+      published_at: null,
+      window: "1h",
+      rank_kind: "trending",
+      source_status: "official_api",
+      category: "市場",
+      why: "可用來源數、來源多樣性與首頁位置推估熱門程度，但這不是實際閱讀量。",
+      rights_note: "Cite GDELT; link to publishers; do not republish article text.",
+    },
+    {
+      rank: 1,
+      title: "Most covered global market stories connector pending",
+      title_zh_hant: "24 小時全球市場最多報導新聞待接入",
+      source: "GDELT",
+      url: null,
+      published_at: null,
+      window: "24h",
+      rank_kind: "most_covered",
+      source_status: "official_api",
+      category: "全球市場",
+      why: "24 小時窗口適合整理跨媒體重複出現的重大新聞。",
+      rights_note: "Most covered is not most read; label must stay precise.",
+    },
+    {
+      rank: 2,
+      title: "NYT Most Popular can provide source-specific 24h popularity",
+      title_zh_hant: "NYT 可作為單一來源 24 小時熱門新聞候選",
+      source: "New York Times",
+      url: null,
+      published_at: null,
+      window: "24h",
+      rank_kind: "most_viewed",
+      source_status: "official_api",
+      category: "國際",
+      why: "NYT Most Popular 是乾淨的官方人氣 API 範例，但只代表 NYT，不代表全網。",
+      rights_note: "Requires NYT API key and compliance with NYT developer terms.",
+    },
+  ],
+  top_indices: [
+    ["SPX", "S&P 500", "標普500", "美國"],
+    ["NDX", "Nasdaq-100", "那斯達克100", "美國"],
+    ["DJI", "Dow Jones Industrial Average", "道瓊工業指數", "美國"],
+    ["RUT", "Russell 2000", "羅素2000", "美國"],
+    ["SOX", "PHLX Semiconductor Index", "費城半導體指數（費半）", "美國"],
+    ["SXXP", "STOXX Europe 600", "泛歐 STOXX 600", "歐洲"],
+    ["SX5E", "Euro Stoxx 50", "歐洲 STOXX 50", "歐洲"],
+    ["DAX", "DAX 40", "德國 DAX", "歐洲"],
+    ["UKX", "FTSE 100", "英國富時100", "歐洲"],
+    ["N225", "Nikkei 225", "日經225", "日本"],
+    ["TOPIX", "TOPIX", "東證股價指數", "日本"],
+    ["KOSPI", "KOSPI", "韓國 KOSPI", "韓國"],
+    ["KOSDAQ", "KOSDAQ", "韓國 KOSDAQ", "韓國"],
+    ["TAIEX", "TAIEX", "台股加權指數", "台灣"],
+    ["TW50", "FTSE TWSE Taiwan 50", "台灣50", "台灣"],
+    ["TPEX", "TPEx / Taiwan OTC Index", "櫃買指數", "台灣"],
+    ["HSI", "Hang Seng Index", "恆生指數", "香港/中國"],
+    ["HSTECH", "Hang Seng Tech", "恆生科技指數", "香港/中國"],
+    ["CSI300", "CSI 300", "滬深300", "中國"],
+    ["SHCOMP", "Shanghai Composite", "上證指數", "中國"],
+  ].map(([symbol, name, local_name, region], index) => ({
+    rank: index + 1,
+    symbol,
+    name,
+    local_name,
+    region,
+    value: "待接入",
+    change: "行情來源待確認",
+    tone: "pending",
+    source: "licensed market feed next",
+    source_status: "planned",
+    rights_note: "Show only after display/redistribution rights are confirmed.",
+  })),
+  overnight_risk: [
+    ["ES", "S&P 500 futures", "標普500期貨", "futures", "台灣早上用來觀察美股隔夜風險情緒。"],
+    ["NQ", "Nasdaq-100 futures", "那斯達克100期貨", "futures", "科技股與 AI 族群開盤前參考。"],
+    ["NK", "Nikkei futures", "日經期貨", "futures", "日本開盤前後的亞洲第一棒參考。"],
+    ["HSI-F", "Hang Seng futures", "恆生期貨", "futures", "香港與中國風險情緒參考。"],
+    ["TX", "TAIFEX TAIEX futures", "台指期", "futures", "台股開盤前最直接的本地期貨參考。"],
+    ["VIX", "CBOE Volatility Index", "VIX 波動率指數", "volatility", "避險與市場波動壓力參考。"],
+    ["USD/TWD", "US dollar / Taiwan dollar", "美元兌台幣", "fx", "影響台股電子與出口股情緒。"],
+    ["USD/JPY", "US dollar / Japanese yen", "美元兌日圓", "fx", "日本股市、出口股與亞洲匯率參考。"],
+    ["USD/CNH", "US dollar / offshore yuan", "美元兌離岸人民幣", "fx", "中國與香港市場風險情緒參考。"],
+    ["DXY", "US Dollar Index", "美元指數", "fx", "美元強弱會影響商品、亞洲匯率與資金流。"],
+    ["WTI", "WTI crude oil", "WTI 原油", "commodities", "油價影響通膨、能源股與市場風險情緒。"],
+    ["XAU", "Gold spot", "黃金", "commodities", "避險與實質利率情緒參考。"],
+    ["US10Y", "US 10-year Treasury yield", "美國 10 年債殖利率", "rates", "利率變化會影響科技股估值與美元。"],
+  ].map(([symbol, name, local_name, group, why], index) => ({
+    rank: index + 1,
+    symbol,
+    name,
+    local_name,
+    group: group as "futures" | "volatility" | "fx" | "commodities" | "rates",
+    value: "待接入",
+    change: "行情來源待確認",
+    tone: "pending",
+    source: "licensed market feed next",
+    source_status: "planned",
+    why,
+    rights_note: "Show only after display/redistribution rights are confirmed.",
+  })),
+  stories: [
+    {
+      title: "先看隔夜美股、歐股，再看亞洲開盤順序。",
+      why: "早上需要的是全球市場脈絡，不是只看單一公司或單一產業。",
+      tag: "新版主軸",
+    },
+    {
+      title: "油金、美元、利率放在同一排看。",
+      why: "商品、匯率與利率常一起影響風險情緒，但不直接代表可以買賣。",
+      tag: "市場背景",
+    },
+  ],
+  glossary: [
+    {
+      term: "費半",
+      english: "PHLX Semiconductor Index",
+      meaning: "美國主要半導體股票指數，常被用來觀察 AI 與晶片族群氣氛。",
+    },
+    {
+      term: "VIX",
+      english: "Volatility Index",
+      meaning: "市場恐慌與避險情緒指標，數字升高通常代表波動變大。",
+    },
+    {
+      term: "殖利率",
+      english: "Treasury yield",
+      meaning: "債券市場利率。美債殖利率上升時，成長股與科技股常會承壓。",
+    },
+  ],
+  disclaimer: "本頁提供市場資訊與教育內容，不構成個人化投資建議或買賣建議。",
+};
+
 export default async function Page() {
   const live = await getLatestEvidence();
   const data = live ?? DEMO;
@@ -195,6 +442,7 @@ export default async function Page() {
   const liveChanges =
     isLive && data.watchlist_id ? await getChanges(data.watchlist_id) : null;
   const changesData = liveChanges ?? DEMO_CHANGES;
+  const radarData = (await getMorningRadar()) ?? DEMO_RADAR;
   const ts = data.created_at.slice(0, 16).replace("T", " ");
   const supported = data.claims.filter((c) => c.support_status === "supported").length;
   const flagged = data.claims.length - supported;
@@ -207,9 +455,9 @@ export default async function Page() {
           <div className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto sm:gap-3">
             <span className="block h-5 w-1.5 bg-navy-700" aria-hidden />
             <span className="truncate font-serif text-[16px] font-semibold tracking-tight text-neutral-30 sm:text-[17px]">
-              Cited Market Brief Agent
+              Morning Market Radar
             </span>
-            <span className="th-label mt-px hidden sm:inline">Evidence ledger · Morning brief</span>
+            <span className="th-label mt-px hidden sm:inline">Taiwan morning · Evidence-backed</span>
           </div>
           <div className="flex min-w-0 basis-full items-center justify-between gap-2 sm:basis-auto sm:justify-start sm:gap-3">
             <ThemeToggle />
@@ -229,6 +477,8 @@ export default async function Page() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
+        <MorningMarketDashboard radar={radarData} />
+
         <MarketContextStrip changes={changesData} />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">

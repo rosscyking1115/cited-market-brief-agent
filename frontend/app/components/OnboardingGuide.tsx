@@ -6,24 +6,24 @@ const STORAGE_KEY = "cmb-onboarding-v1";
 
 const STEPS = [
   {
-    title: "Start with the morning context",
-    body: "The top strip shows the latest macro or filing signal. Use it as the quick scan before reading the full brief.",
+    title: "先看 3 句話早盤",
+    body: "最上方會用台北時間整理昨晚全球市場、今早亞洲開盤、以及今天先觀察什麼。",
   },
   {
-    title: "Read in your preferred language",
-    body: "Original English stays as the audited source. Traditional Chinese and Korean are reading aids, and the A controls make the brief larger.",
+    title: "跟著全球市場時鐘",
+    body: "日本、韓國先開，再到台灣、香港/A股、歐洲、美國。狀態會顯示未開盤、盤中、午休或已收盤。",
   },
   {
-    title: "Check the proof",
-    body: "Tap any claim code, such as C-000, to jump to the evidence ledger and inspect the source behind the sentence.",
+    title: "指數先看中文名稱",
+    body: "標普500、費半、日經225、KOSPI、加權指數都會保留英文代碼，但先用中文說明它代表什麼。",
   },
   {
-    title: "Use highlights when needed",
-    body: "Show highlights marks important phrases only when you want help scanning. It stays off by default for a clean read.",
+    title: "看不懂就打開小字典",
+    body: "殖利率、VIX、期貨、ADR 這類詞會用一兩句話解釋，目標是不用另外查。",
   },
   {
-    title: "Review before exporting",
-    body: "Accept, edit, reject, or request a source for each section. Exports stay blocked until the brief is review-ready.",
+    title: "需要時再看證據",
+    body: "下方仍保留原文與來源證據。任何重要句子都應該能回到資料來源，不只是一段 AI 摘要。",
   },
 ] as const;
 
