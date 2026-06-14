@@ -245,7 +245,6 @@ def _fred_fetch_plan() -> list[_FredFetchSpec]:
         _FredFetchSpec(symbol="USD-BROAD", series_id="DTWEXBGS"),
         _FredFetchSpec(symbol="VIX", series_id="VIXCLS"),
         _FredFetchSpec(symbol="WTI", series_id="DCOILWTICO"),
-        _FredFetchSpec(symbol="XAU", series_id="GOLDAMGBD228NLBM"),
         _FredFetchSpec(symbol="US10Y", series_id="DGS10"),
     ]
 

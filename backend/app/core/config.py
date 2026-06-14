@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # FRED
     fred_api_key: str = ""
     fred_market_cache_ttl_seconds: int = 3600
-    fred_market_max_refreshes_per_request: int = 7
+    fred_market_max_refreshes_per_request: int = 6
 
     # GDELT news discovery. This is not readership data; use for trending/coverage only.
     gdelt_enabled: bool = False
