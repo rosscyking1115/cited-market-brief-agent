@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Inter, Source_Serif_4 } from "next/font/google";
+import OnboardingGuide from "@/app/components/OnboardingGuide";
 import ServiceWorkerRegister from "@/app/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
     >
       <body>
         {children}
+        <OnboardingGuide />
         <ServiceWorkerRegister />
       </body>
     </html>

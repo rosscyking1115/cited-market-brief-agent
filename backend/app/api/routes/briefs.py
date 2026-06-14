@@ -13,7 +13,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.briefs.service import export_brief_markdown, generate_and_store_brief
-from app.briefs.translation import LOCALE_NAMES, cached_translation, with_cached_translation
+from app.briefs.translation import (
+    LOCALE_NAMES,
+    cached_translation,
+    translation_model,
+    with_cached_translation,
+)
 from app.core.config import settings
 from app.db.base import get_db
 from app.db.models import Brief, Chunk, Citation, Claim, Document, Source, SupportStatus, Watchlist
@@ -134,7 +139,7 @@ def get_brief_translation(brief_id: uuid.UUID, locale: str, db: Session = Depend
         object_type="brief",
         object_id=str(brief.id),
         model_provider="litellm",
-        model_version=settings.generation_model,
+        model_version=translation_model(),
         detail={"locale": locale, "mode": "reader_sidecar"},
     )
     db.commit()

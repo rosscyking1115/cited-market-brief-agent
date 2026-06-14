@@ -49,6 +49,15 @@ Rules:
 - Output ONLY valid JSON matching the requested schema."""
 
 
+def translation_model() -> str:
+    model = settings.translation_model.strip() or settings.generation_model
+    if model.startswith("openai/") and not settings.openai_api_key.strip():
+        return settings.generation_model
+    if model.startswith("anthropic/") and not settings.anthropic_api_key.strip():
+        return settings.generation_model
+    return model
+
+
 def _loads_translation_payload(raw: str) -> dict:
     text = _json_payload(raw)
     try:
@@ -74,7 +83,7 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
         "open_questions": draft.get("open_questions", []),
     }
     response = litellm.completion(
-        model=settings.generation_model,
+        model=translation_model(),
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {

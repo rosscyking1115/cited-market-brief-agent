@@ -24,6 +24,8 @@ const LOCALES: { locale: BriefLocale; label: string; helper: string }[] = [
 
 const TRANSLATION_TIMEOUT_MS = 95000;
 
+type TranslatableLocale = Exclude<BriefLocale, "original">;
+
 const HIGHLIGHT_PATTERNS = [
   /\bexport-control risk factor[s]?\b/gi,
   /\bexport control licensing requirements\b/gi,
@@ -141,6 +143,10 @@ function ClaimChips({
       ))}
     </div>
   );
+}
+
+function isTranslatableLocale(locale: BriefLocale): locale is TranslatableLocale {
+  return locale !== "original";
 }
 
 function InlineMarkdown({
@@ -276,6 +282,7 @@ export default function BriefCanvas({
   const translationAbortRef = useRef<AbortController | null>(null);
   const translationRequestRef = useRef(0);
   const translationPrefetchStartedRef = useRef(false);
+  const translationPromisesRef = useRef<Partial<Record<TranslatableLocale, Promise<BriefTranslation>>>>({});
 
   const resolved = sections.every((_, i) => {
     const e = edits[String(i)];
@@ -288,25 +295,53 @@ export default function BriefCanvas({
   const approved = status === "approved";
   const activeTranslation = locale === "original" ? null : translations[locale];
 
+  async function loadTranslation(
+    nextLocale: TranslatableLocale,
+    signal?: AbortSignal,
+  ): Promise<BriefTranslation> {
+    const cached = translations[nextLocale];
+    if (cached) return cached;
+
+    const existing = translationPromisesRef.current[nextLocale];
+    if (existing) return existing;
+
+    const promise = fetch(`${apiUrl}/briefs/${briefId}/translations/${nextLocale}`, {
+      signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("translation request failed");
+        return res.json() as Promise<BriefTranslation>;
+      })
+      .then((payload) => {
+        setTranslations((prev) =>
+          prev[nextLocale] ? prev : { ...prev, [nextLocale]: payload },
+        );
+        return payload;
+      })
+      .finally(() => {
+        delete translationPromisesRef.current[nextLocale];
+      });
+
+    translationPromisesRef.current[nextLocale] = promise;
+    return promise;
+  }
+
   useEffect(() => {
     if (!live || translationPrefetchStartedRef.current) return;
     translationPrefetchStartedRef.current = true;
 
     let cancelled = false;
     const timer = window.setTimeout(async () => {
-      for (const item of LOCALES) {
-        if (item.locale === "original" || cancelled || translations[item.locale]) continue;
-        try {
-          const res = await fetch(`${apiUrl}/briefs/${briefId}/translations/${item.locale}`);
-          if (!res.ok || cancelled) continue;
-          const payload = (await res.json()) as BriefTranslation;
-          setTranslations((prev) =>
-            prev[item.locale] ? prev : { ...prev, [item.locale]: payload },
-          );
-        } catch {
-          // Quiet prefetch: the visible language button still reports explicit failures.
-        }
-      }
+      const missingLocales = LOCALES.map((item) => item.locale).filter(
+        (itemLocale): itemLocale is TranslatableLocale =>
+          isTranslatableLocale(itemLocale) && !translations[itemLocale],
+      );
+      await Promise.allSettled(
+        missingLocales.map(async (itemLocale) => {
+          if (cancelled) return;
+          await loadTranslation(itemLocale);
+        }),
+      );
     }, 600);
 
     return () => {
@@ -336,11 +371,7 @@ export default function BriefCanvas({
     const timeout = window.setTimeout(() => controller.abort(), TRANSLATION_TIMEOUT_MS);
     setTranslationBusy(nextLocale);
     try {
-      const res = await fetch(`${apiUrl}/briefs/${briefId}/translations/${nextLocale}`, {
-        signal: controller.signal,
-      });
-      if (!res.ok) throw new Error("translation request failed");
-      const payload = (await res.json()) as BriefTranslation;
+      const payload = await loadTranslation(nextLocale, controller.signal);
       if (translationRequestRef.current !== requestId) return;
       setTranslations((prev) => ({ ...prev, [nextLocale]: payload }));
     } catch (error) {
@@ -456,7 +487,12 @@ export default function BriefCanvas({
                     : "text-neutral-70 hover:bg-card hover:text-neutral-30"
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {isTranslatableLocale(item.locale) && translations[item.locale] && (
+                  <span className="ml-1 font-mono text-[10px]" aria-label="ready">
+                    ✓
+                  </span>
+                )}
               </button>
             ))}
           </div>

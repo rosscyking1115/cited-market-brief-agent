@@ -47,6 +47,7 @@ class Settings(BaseSettings):
 
     # Models (LiteLLM identifiers) and prompt versioning (audit log requires both)
     generation_model: str = "anthropic/claude-sonnet-4-6"
+    translation_model: str = "openai/gpt-4o-mini"
     embedding_model: str = "openai/text-embedding-3-small"
     prompt_version: str = "p1.0"
     translation_request_timeout_seconds: int = 90

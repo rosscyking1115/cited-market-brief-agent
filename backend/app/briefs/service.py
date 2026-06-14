@@ -13,7 +13,7 @@ from app.briefs.generator import generate_brief_json, llm_available
 from app.briefs.guardrails import apply_guardrails
 from app.briefs.markdown import build_citation_manifest, render_markdown
 from app.briefs.schemas import EvidenceItem
-from app.briefs.translation import prewarm_brief_translations
+from app.briefs.translation import prewarm_brief_translations, translation_model
 from app.briefs.validator import validate_claims
 from app.core.config import settings
 from app.db.models import (
@@ -214,7 +214,7 @@ def prewarm_and_store_brief_translations(db: Session, brief: Brief) -> None:
         object_type="brief",
         object_id=str(brief.id),
         model_provider="litellm",
-        model_version=settings.generation_model,
+        model_version=translation_model(),
         detail={"locales": sorted(translated_draft.get("_translations", {}).keys())},
     )
     db.commit()
