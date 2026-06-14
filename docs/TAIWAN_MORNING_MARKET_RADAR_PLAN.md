@@ -143,8 +143,8 @@ Separate overnight-risk rail:
 - VIX
 - USD/TWD
 - USD/JPY
-- USD/CNH
-- DXY
+- USD/CNY via FRED where acceptable; CNH requires a market-data feed
+- Broad U.S. dollar index via FRED where acceptable; literal ICE DXY requires a market-data feed
 - WTI/Brent
 - Gold
 - US 10Y

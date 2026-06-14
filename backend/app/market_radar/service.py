@@ -184,7 +184,12 @@ def hydrate_snapshots_with_alpha(
         }
         if row.label == "Oil / Gold":
             updated["local_name"] = "WTI 原油 / 黃金"
-            updated["change"] = f"WTI {updated['change']}；黃金待接入"
+            updated["change"] = _snapshot_pair_change(
+                primary_label="WTI",
+                primary=value,
+                secondary_label="黃金",
+                secondary=values.get("XAU"),
+            )
         hydrated.append(row.model_copy(update=updated))
     return hydrated
 
@@ -207,6 +212,20 @@ def _alpha_value_for_snapshot(
         "USD/TWD": values.get("USD/TWD"),
         "US10Y": values.get("US10Y"),
     }.get(label)
+
+
+def _snapshot_pair_change(
+    *,
+    primary_label: str,
+    primary: AlphaMarketValue,
+    secondary_label: str,
+    secondary: AlphaMarketValue | None,
+) -> str:
+    if secondary:
+        secondary_text = f"{secondary_label} {_format_market_change(secondary)}"
+    else:
+        secondary_text = f"{secondary_label} 待接入"
+    return f"{primary_label} {_format_market_change(primary)}；{secondary_text}"
 
 
 def _stories() -> list[MarketStoryItem]:
@@ -508,18 +527,18 @@ def _overnight_risk() -> list[OvernightRiskItem]:
             "日本股市、出口股與亞洲匯率參考。",
         ),
         (
-            "USD/CNH",
-            "US dollar / offshore yuan",
-            "美元兌離岸人民幣",
+            "USD/CNY",
+            "US dollar / Chinese yuan",
+            "美元兌人民幣（CNY）",
             "fx",
-            "中國與香港市場風險情緒參考。",
+            "中國與香港市場風險情緒參考；FRED 提供 CNY，不是離岸 CNH。",
         ),
         (
-            "DXY",
-            "US Dollar Index",
-            "美元指數",
+            "USD-BROAD",
+            "Nominal Broad U.S. Dollar Index",
+            "廣義美元指數",
             "fx",
-            "美元強弱會影響商品、亞洲匯率與資金流。",
+            "美元強弱會影響商品、亞洲匯率與資金流；這是 FRED 廣義美元指數，不是 ICE DXY。",
         ),
         (
             "WTI",
@@ -602,7 +621,7 @@ def _format_market_value(symbol: str, value: float) -> str:
         return f"{value:.2f}%"
     if symbol in {"WTI", "XAU"}:
         return f"{value:.2f}"
-    if symbol in {"USD/JPY", "USD/TWD", "USD/CNH"}:
+    if symbol in {"USD/JPY", "USD/TWD", "USD/CNY"}:
         return f"{value:.4f}"
     return f"{value:.2f}"
 

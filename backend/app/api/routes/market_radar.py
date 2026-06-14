@@ -140,11 +140,11 @@ def _alpha_fetch_plan() -> list[_AlphaFetchSpec]:
             ),
         ),
         _AlphaFetchSpec(
-            symbol="USD/CNH",
-            label="USD/CNH",
+            symbol="USD/CNY",
+            label="USD/CNY",
             fetch_factory=lambda client: lambda: client.exchange_rate(
                 from_currency="USD",
-                to_currency="CNH",
+                to_currency="CNY",
             ),
         ),
     ]
@@ -240,9 +240,13 @@ class _FredFetchSpec:
 
 def _fred_fetch_plan() -> list[_FredFetchSpec]:
     return [
+        _FredFetchSpec(symbol="USD/JPY", series_id="DEXJPUS"),
+        _FredFetchSpec(symbol="USD/CNY", series_id="DEXCHUS"),
+        _FredFetchSpec(symbol="USD-BROAD", series_id="DTWEXBGS"),
+        _FredFetchSpec(symbol="VIX", series_id="VIXCLS"),
         _FredFetchSpec(symbol="WTI", series_id="DCOILWTICO"),
-        _FredFetchSpec(symbol="US10Y", series_id="DGS10"),
         _FredFetchSpec(symbol="XAU", series_id="GOLDAMGBD228NLBM"),
+        _FredFetchSpec(symbol="US10Y", series_id="DGS10"),
     ]
 
 

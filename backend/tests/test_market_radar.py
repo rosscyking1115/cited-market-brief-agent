@@ -152,7 +152,9 @@ def test_overnight_risk_is_separate_from_cash_indices() -> None:
     risk_symbols = {item["symbol"] for item in body["overnight_risk"]}
     cash_symbols = {item["symbol"] for item in body["top_indices"]}
 
-    assert {"ES", "NQ", "WTI", "XAU", "US10Y"}.issubset(risk_symbols)
+    assert {"ES", "NQ", "WTI", "XAU", "US10Y", "USD/CNY", "USD-BROAD"}.issubset(
+        risk_symbols
+    )
     assert risk_symbols.isdisjoint(cash_symbols)
     assert all(item["source_status"] == "planned" for item in body["overnight_risk"])
 
@@ -204,7 +206,7 @@ def test_alpha_cache_returns_existing_values_and_refreshes_missing_first() -> No
     specs = _alpha_refresh_specs(values=values, now=now)
 
     assert values["USD/TWD"].value == 31.1234
-    assert [spec.symbol for spec in specs[:2]] == ["USD/JPY", "USD/CNH"]
+    assert [spec.symbol for spec in specs[:2]] == ["USD/JPY", "USD/CNY"]
     _ALPHA_VALUE_CACHE.clear()
     _ALPHA_FAILURE_CACHE.clear()
 
@@ -214,7 +216,7 @@ def test_alpha_refresh_skips_recent_failures() -> None:
     _ALPHA_VALUE_CACHE.clear()
     _ALPHA_FAILURE_CACHE.clear()
     _ALPHA_FAILURE_CACHE["USD/JPY"] = now
-    _ALPHA_FAILURE_CACHE["USD/CNH"] = now
+    _ALPHA_FAILURE_CACHE["USD/CNY"] = now
 
     specs = _alpha_refresh_specs(values={}, now=now)
 
@@ -337,6 +339,13 @@ def test_alpha_hydration_updates_market_snapshot_cards() -> None:
                 updated_at="2026-06-12",
                 source_status="eod",
             ),
+            "XAU": AlphaMarketValue(
+                symbol="XAU",
+                value=3400.50,
+                previous_value=3375.50,
+                updated_at="2026-06-12",
+                source_status="eod",
+            ),
             "US10Y": AlphaMarketValue(
                 symbol="US10Y",
                 value=4.21,
@@ -355,5 +364,6 @@ def test_alpha_hydration_updates_market_snapshot_cards() -> None:
     assert fx.source_status == "delayed"
     assert oil.local_name == "WTI 原油 / 黃金"
     assert oil.value == "78.25"
+    assert "黃金 +25.00" in oil.change
     assert oil.source_status == "eod"
     assert us_close.source_status == "planned"
