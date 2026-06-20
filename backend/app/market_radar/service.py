@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
@@ -20,6 +21,53 @@ from app.sources.policy import source_policy
 
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
 type RiskGroup = Literal["futures", "volatility", "fx", "commodities", "rates"]
+
+BUSINESS_CATEGORIES = {"business", "economy", "money"}
+MARKET_TOKENS = {
+    "ai",
+    "bank",
+    "banks",
+    "brent",
+    "chip",
+    "chips",
+    "copper",
+    "crude",
+    "currency",
+    "dollar",
+    "earnings",
+    "economy",
+    "equities",
+    "fed",
+    "gold",
+    "inflation",
+    "market",
+    "markets",
+    "nvidia",
+    "oil",
+    "profit",
+    "profits",
+    "rate",
+    "rates",
+    "revenue",
+    "semiconductor",
+    "semiconductors",
+    "stocks",
+    "tariff",
+    "tariffs",
+    "trade",
+    "tsmc",
+    "wti",
+    "yen",
+    "yield",
+    "yields",
+}
+MARKET_PHRASES = {
+    "central bank",
+    "federal reserve",
+    "interest rate",
+    "strait of hormuz",
+    "wall street",
+}
 
 
 def _status_for(
@@ -286,17 +334,49 @@ def _placeholder_popular_news() -> list[PopularNewsItem]:
     ]
 
 
+def _tokens(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]+", text.lower()))
+
+
+def _has_phrase(text: str, phrases: set[str]) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in phrases)
+
+
 def _market_category(title: str) -> str:
-    text = title.lower()
-    if any(token in text for token in ["oil", "gold", "brent", "wti", "copper"]):
+    tokens = _tokens(title)
+    if tokens & {"oil", "gold", "brent", "wti", "copper", "crude"} or _has_phrase(
+        title, {"strait of hormuz"}
+    ):
         return "商品"
-    if any(token in text for token in ["semiconductor", "chip", "ai", "nvidia", "tsmc"]):
+    if tokens & {"ai", "semiconductor", "semiconductors", "chip", "chips", "nvidia", "tsmc"}:
         return "半導體"
-    if any(token in text for token in ["inflation", "central bank", "fed", "rate", "yield"]):
+    if tokens & {
+        "inflation",
+        "fed",
+        "rate",
+        "rates",
+        "yield",
+        "yields",
+        "tariff",
+        "tariffs",
+        "trade",
+        "dollar",
+        "yen",
+        "currency",
+    } or _has_phrase(title, {"central bank", "federal reserve", "interest rate"}):
         return "宏觀"
-    if any(token in text for token in ["earnings", "revenue", "profit"]):
+    if tokens & {"earnings", "revenue", "profit", "profits"}:
         return "公司"
     return "市場"
+
+
+def _is_market_relevant_bbc(article: BbcArticle) -> bool:
+    category = (article.category or "").strip().lower()
+    if category in BUSINESS_CATEGORIES:
+        return True
+    tokens = _tokens(article.title)
+    return bool(tokens & MARKET_TOKENS) or _has_phrase(article.title, MARKET_PHRASES)
 
 
 def _gdelt_news_rows(
@@ -342,6 +422,8 @@ def _bbc_latest_rows(
     for article in articles:
         if article.published_at is None:
             continue
+        if not _is_market_relevant_bbc(article):
+            continue
         published = article.published_at.astimezone(TAIPEI_TZ)
         if published < cutoff:
             continue
@@ -356,7 +438,7 @@ def _bbc_latest_rows(
                 window=window,
                 rank_kind="latest",
                 source_status=policy.source_status,
-                category=article.category or _market_category(article.title),
+                category=_market_category(article.title),
                 why="BBC RSS 在此時間窗內發布的最新新聞；這不是閱讀量排名。",
                 rights_note=policy.rights_note,
             )

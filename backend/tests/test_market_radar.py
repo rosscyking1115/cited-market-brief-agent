@@ -17,6 +17,7 @@ from app.connectors.bbc import BbcArticle, parse_bbc_rss
 from app.connectors.gdelt import GdeltArticle
 from app.main import app
 from app.market_radar.service import (
+    _market_category,
     build_morning_radar,
     build_overnight_risk,
     build_snapshots,
@@ -136,6 +137,50 @@ def test_bbc_news_rows_are_latest_and_time_filtered() -> None:
     assert all(row.rank_kind == "latest" for row in rows)
     assert all("Most Read" in row.rights_note for row in rows)
     assert all(row.url != "https://www.bbc.com/news/old" for row in rows)
+
+
+def test_bbc_news_rows_filter_non_market_headlines() -> None:
+    now = datetime(2026, 6, 21, 8, 30, tzinfo=ZoneInfo("Asia/Taipei"))
+    rows = popular_news_from_bbc(
+        now=now,
+        articles=[
+            BbcArticle(
+                title="Nine people in critical condition after train crash",
+                url="https://www.bbc.com/news/train",
+                published_at=datetime(2026, 6, 20, 23, 30, tzinfo=ZoneInfo("UTC")),
+                category="UK",
+            ),
+            BbcArticle(
+                title="Why Harry Kane is different at this tournament",
+                url="https://www.bbc.com/sport/football",
+                published_at=datetime(2026, 6, 20, 23, 45, tzinfo=ZoneInfo("UTC")),
+                category="Sport",
+            ),
+            BbcArticle(
+                title="Oil prices rise as Strait of Hormuz tensions grow",
+                url="https://www.bbc.com/news/oil",
+                published_at=datetime(2026, 6, 20, 23, 50, tzinfo=ZoneInfo("UTC")),
+                category="World",
+            ),
+            BbcArticle(
+                title="Chip earnings lift Asian markets",
+                url="https://www.bbc.com/news/chips",
+                published_at=datetime(2026, 6, 20, 23, 55, tzinfo=ZoneInfo("UTC")),
+                category="Business",
+            ),
+        ],
+    )
+
+    urls = {row.url for row in rows}
+    assert "https://www.bbc.com/news/train" not in urls
+    assert "https://www.bbc.com/sport/football" not in urls
+    assert "https://www.bbc.com/news/oil" in urls
+    assert "https://www.bbc.com/news/chips" in urls
+
+
+def test_market_category_does_not_match_ai_inside_words() -> None:
+    assert _market_category("Nine people in critical condition after train crash") == "市場"
+    assert _market_category("AI chip earnings lift Asian markets") == "半導體"
 
 
 def test_market_clock_taiwan_preopen_sequence() -> None:
