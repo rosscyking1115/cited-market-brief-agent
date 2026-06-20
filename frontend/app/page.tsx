@@ -6,6 +6,7 @@ import BriefCanvas from "@/app/components/BriefCanvas";
 import ChangesPanel from "@/app/components/ChangesPanel";
 import EvidenceRail from "@/app/components/EvidenceRail";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
+import FundAttributionPanel from "@/app/components/FundAttributionPanel";
 import MarketContextStrip from "@/app/components/MarketContextStrip";
 import MorningMarketDashboard from "@/app/components/MorningMarketDashboard";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
@@ -14,6 +15,7 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 import {
   API_URL,
   getChanges,
+  getFundAttributionPlan,
   getLatestEvidence,
   getMorningRadar,
   type ChangesPayload,
@@ -245,44 +247,7 @@ const DEMO_RADAR: MorningRadarPayload = {
       note: "台灣早上主要看昨晚收盤與期貨。",
     },
   ],
-  snapshots: [
-    {
-      label: "US Close",
-      local_name: "美股三大指數",
-      value: "行情 API 待接入",
-      change: "道瓊 / 標普500 / 那斯達克",
-      tone: "pending",
-      source: "Twelve Data / Alpha Vantage next",
-      source_status: "planned",
-    },
-    {
-      label: "SOX",
-      local_name: "費城半導體",
-      value: "待接入",
-      change: "AI / 半導體族群溫度",
-      tone: "pending",
-      source: "market feed next",
-      source_status: "planned",
-    },
-    {
-      label: "Asia Futures",
-      local_name: "台指期 / 日韓早盤",
-      value: "待接入",
-      change: "日本 08:00、韓國 08:00、台灣 09:00",
-      tone: "pending",
-      source: "TWSE / TAIFEX next",
-      source_status: "planned",
-    },
-    {
-      label: "Oil / Gold",
-      local_name: "油價 / 黃金",
-      value: "待接入",
-      change: "用來觀察通膨與避險情緒",
-      tone: "pending",
-      source: "EIA / market feed next",
-      source_status: "planned",
-    },
-  ],
+  snapshots: [],
   popular_news: [
     {
       rank: 1,
@@ -341,68 +306,7 @@ const DEMO_RADAR: MorningRadarPayload = {
       rights_note: "Requires NYT API key and compliance with NYT developer terms.",
     },
   ],
-  top_indices: [
-    ["SPX", "S&P 500", "標普500", "美國"],
-    ["NDX", "Nasdaq-100", "那斯達克100", "美國"],
-    ["DJI", "Dow Jones Industrial Average", "道瓊工業指數", "美國"],
-    ["RUT", "Russell 2000", "羅素2000", "美國"],
-    ["SOX", "PHLX Semiconductor Index", "費城半導體指數（費半）", "美國"],
-    ["SXXP", "STOXX Europe 600", "泛歐 STOXX 600", "歐洲"],
-    ["SX5E", "Euro Stoxx 50", "歐洲 STOXX 50", "歐洲"],
-    ["DAX", "DAX 40", "德國 DAX", "歐洲"],
-    ["UKX", "FTSE 100", "英國富時100", "歐洲"],
-    ["N225", "Nikkei 225", "日經225", "日本"],
-    ["TOPIX", "TOPIX", "東證股價指數", "日本"],
-    ["KOSPI", "KOSPI", "韓國 KOSPI", "韓國"],
-    ["KOSDAQ", "KOSDAQ", "韓國 KOSDAQ", "韓國"],
-    ["TAIEX", "TAIEX", "台股加權指數", "台灣"],
-    ["TW50", "FTSE TWSE Taiwan 50", "台灣50", "台灣"],
-    ["TPEX", "TPEx / Taiwan OTC Index", "櫃買指數", "台灣"],
-    ["HSI", "Hang Seng Index", "恆生指數", "香港/中國"],
-    ["HSTECH", "Hang Seng Tech", "恆生科技指數", "香港/中國"],
-    ["CSI300", "CSI 300", "滬深300", "中國"],
-    ["SHCOMP", "Shanghai Composite", "上證指數", "中國"],
-  ].map(([symbol, name, local_name, region], index) => ({
-    rank: index + 1,
-    symbol,
-    name,
-    local_name,
-    region,
-    value: "待接入",
-    change: "行情來源待確認",
-    tone: "pending",
-    source: "licensed market feed next",
-    source_status: "planned",
-    rights_note: "Show only after display/redistribution rights are confirmed.",
-  })),
-  overnight_risk: [
-    ["ES", "S&P 500 futures", "標普500期貨", "futures", "台灣早上用來觀察美股隔夜風險情緒。"],
-    ["NQ", "Nasdaq-100 futures", "那斯達克100期貨", "futures", "科技股與 AI 族群開盤前參考。"],
-    ["NK", "Nikkei futures", "日經期貨", "futures", "日本開盤前後的亞洲第一棒參考。"],
-    ["HSI-F", "Hang Seng futures", "恆生期貨", "futures", "香港與中國風險情緒參考。"],
-    ["TX", "TAIFEX TAIEX futures", "台指期", "futures", "台股開盤前最直接的本地期貨參考。"],
-    ["VIX", "CBOE Volatility Index", "VIX 波動率指數", "volatility", "避險與市場波動壓力參考。"],
-    ["USD/TWD", "US dollar / Taiwan dollar", "美元兌台幣", "fx", "影響台股電子與出口股情緒。"],
-    ["USD/JPY", "US dollar / Japanese yen", "美元兌日圓", "fx", "日本股市、出口股與亞洲匯率參考。"],
-    ["USD/CNH", "US dollar / offshore yuan", "美元兌離岸人民幣", "fx", "中國與香港市場風險情緒參考。"],
-    ["DXY", "US Dollar Index", "美元指數", "fx", "美元強弱會影響商品、亞洲匯率與資金流。"],
-    ["WTI", "WTI crude oil", "WTI 原油", "commodities", "油價影響通膨、能源股與市場風險情緒。"],
-    ["XAU", "Gold spot", "黃金", "commodities", "避險與實質利率情緒參考。"],
-    ["US10Y", "US 10-year Treasury yield", "美國 10 年債殖利率", "rates", "利率變化會影響科技股估值與美元。"],
-  ].map(([symbol, name, local_name, group, why], index) => ({
-    rank: index + 1,
-    symbol,
-    name,
-    local_name,
-    group: group as "futures" | "volatility" | "fx" | "commodities" | "rates",
-    value: "待接入",
-    change: "行情來源待確認",
-    tone: "pending",
-    source: "licensed market feed next",
-    source_status: "planned",
-    why,
-    rights_note: "Show only after display/redistribution rights are confirmed.",
-  })),
+  overnight_risk: [],
   stories: [
     {
       title: "先看隔夜美股、歐股，再看亞洲開盤順序。",
@@ -443,6 +347,7 @@ export default async function Page() {
     isLive && data.watchlist_id ? await getChanges(data.watchlist_id) : null;
   const changesData = liveChanges ?? DEMO_CHANGES;
   const radarData = (await getMorningRadar()) ?? DEMO_RADAR;
+  const attributionPlan = await getFundAttributionPlan();
   const ts = data.created_at.slice(0, 16).replace("T", " ");
   const supported = data.claims.filter((c) => c.support_status === "supported").length;
   const flagged = data.claims.length - supported;
@@ -478,6 +383,8 @@ export default async function Page() {
 
       <main className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
         <MorningMarketDashboard radar={radarData} />
+
+        <FundAttributionPanel plan={attributionPlan} />
 
         <MarketContextStrip changes={changesData} />
 

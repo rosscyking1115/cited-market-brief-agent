@@ -141,20 +141,6 @@ export type PopularNewsItem = {
   rights_note: string;
 };
 
-export type TopIndexItem = {
-  rank: number;
-  symbol: string;
-  name: string;
-  local_name: string;
-  region: string;
-  value: string;
-  change: string;
-  tone: SnapshotTone;
-  source: string;
-  source_status: "live" | "delayed" | "eod" | "planned";
-  rights_note: string;
-};
-
 export type OvernightRiskItem = {
   rank: number;
   symbol: string;
@@ -185,10 +171,26 @@ export type MorningRadarPayload = {
   market_clock: MarketClockItem[];
   snapshots: MarketSnapshotItem[];
   popular_news: PopularNewsItem[];
-  top_indices: TopIndexItem[];
   overnight_risk: OvernightRiskItem[];
   stories: MarketStoryItem[];
   glossary: GlossaryItem[];
+  disclaimer: string;
+};
+
+export type AutomationPolicyItem = {
+  label: string;
+  status: "allowed" | "manual_first" | "needs_review" | "blocked";
+  note: string;
+};
+
+export type FundAttributionPlanPayload = {
+  title: string;
+  target_use_case: string;
+  first_region: string;
+  daily_trigger: string;
+  required_inputs: string[];
+  first_supported_workflow: string[];
+  automation_policy: AutomationPolicyItem[];
   disclaimer: string;
 };
 
@@ -227,4 +229,9 @@ export async function getLatestEvidence(): Promise<EvidencePayload | null> {
 /** Taiwan-morning market radar payload, or null when the API/DB isn't reachable. */
 export async function getMorningRadar(): Promise<MorningRadarPayload | null> {
   return fetchJson<MorningRadarPayload>("/market-radar");
+}
+
+/** Fund attribution workflow plan, or null when the API isn't reachable. */
+export async function getFundAttributionPlan(): Promise<FundAttributionPlanPayload | null> {
+  return fetchJson<FundAttributionPlanPayload>("/fund-attribution/plan");
 }

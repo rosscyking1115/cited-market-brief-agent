@@ -6,7 +6,6 @@ import type {
   SnapshotTone,
 } from "@/lib/api";
 import OvernightRiskRail from "@/app/components/OvernightRiskRail";
-import TopIndicesRail from "@/app/components/TopIndicesRail";
 
 function statusText(status: MarketStatus) {
   if (status === "open") return "盤中";
@@ -35,7 +34,7 @@ function snapshotStatusText(status: MorningRadarPayload["snapshots"][number]["so
   if (status === "eod") return "每日資料";
   if (status === "delayed") return "延遲行情";
   if (status === "live") return "即時";
-  return "需授權";
+  return "待資料";
 }
 
 function snapshotStatusClass(status: MorningRadarPayload["snapshots"][number]["source_status"]) {
@@ -168,7 +167,6 @@ function PopularNewsRail({ items }: { items: PopularNewsItem[] }) {
 
 export default function MorningMarketDashboard({ radar }: { radar: MorningRadarPayload }) {
   const activeSnapshots = radar.snapshots.filter((item) => item.source_status !== "planned");
-  const plannedSnapshots = radar.snapshots.filter((item) => item.source_status === "planned");
 
   return (
     <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card">
@@ -180,7 +178,7 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
               {radar.headline}
             </h1>
             <p className="reader-body mt-2 max-w-3xl text-neutral-70">
-              目標是把 StockQ、Yahoo Finance、新聞、財報與總經資料濃縮到一個早晨頁面；目前已建立正式資料欄位，下一步接行情來源。
+              目標是把 StockQ、Yahoo Finance、新聞、財報與總經資料濃縮到一個早晨頁面；未授權的指數行情先不顯示，避免頁面充滿不能用的占位資料。
             </p>
           </div>
           <div className="shrink-0 rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
@@ -233,7 +231,7 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
           <div className="border-b border-hairline px-4 py-3 sm:px-5">
             <p className="th-label">目前可用的市場快照</p>
             <p className="reader-body mt-1 text-neutral-70">
-              先顯示已接入的匯率、油價、VIX、利率等資料；正式指數行情先藏到待授權區。
+              只顯示已接入或可用公開資料的匯率、油價、VIX、利率；需要付費授權的正式指數行情不放在主畫面。
             </p>
           </div>
           <div className="grid grid-cols-1 divide-y divide-hairline sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-1 lg:divide-x-0 lg:divide-y">
@@ -256,7 +254,7 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
                     {snapshotStatusText(item.source_status)}
                   </span>
                   <span className="reader-meta font-mono text-neutral-90">
-                    {item.source_status === "planned" ? "授權後顯示行情" : `source: ${item.source}`}
+                    {item.source_status === "planned" ? "等待可用資料" : `source: ${item.source}`}
                   </span>
                 </div>
               </div>
@@ -264,26 +262,8 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
             {activeSnapshots.length === 0 && (
               <div className="px-4 py-3 sm:px-5">
                 <p className="reader-body font-semibold text-neutral-40">目前沒有可顯示的已授權快照</p>
-                <p className="reader-meta mt-1 text-neutral-90">請看下方 Overnight Risk；FRED/Alpha 有資料時會自動出現在這裡。</p>
+                <p className="reader-meta mt-1 text-neutral-90">FRED/Alpha 有資料時會自動出現在這裡；付費指數行情已移除。</p>
               </div>
-            )}
-            {plannedSnapshots.length > 0 && (
-              <details className="px-4 py-3 sm:px-5">
-                <summary className="cursor-pointer reader-body font-semibold text-neutral-40">
-                  待接授權行情 ({plannedSnapshots.length})
-                </summary>
-                <div className="mt-2 grid gap-2">
-                  {plannedSnapshots.map((item) => (
-                    <div key={`${item.label}-${item.local_name}`} className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-2 py-2">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="reader-body font-semibold text-neutral-40">{item.local_name}</p>
-                        <span className="font-mono text-[10px] text-neutral-90">{item.label}</span>
-                      </div>
-                      <p className="reader-meta mt-1 text-neutral-90">{item.change}</p>
-                    </div>
-                  ))}
-                </div>
-              </details>
             )}
           </div>
         </div>
@@ -292,8 +272,6 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
       <PopularNewsRail items={radar.popular_news} />
 
       <OvernightRiskRail items={radar.overnight_risk} />
-
-      <TopIndicesRail items={radar.top_indices} />
 
       <div className="grid gap-0 border-t border-hairline lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="border-b border-hairline px-4 py-4 sm:px-5 lg:border-b-0 lg:border-r">

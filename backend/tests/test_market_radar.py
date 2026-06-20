@@ -38,10 +38,10 @@ def test_market_radar_endpoint_contract() -> None:
     assert body["headline"]
     assert len(body["summary_points"]) == 3
     assert len(body["market_clock"]) >= 6
-    assert len(body["snapshots"]) >= 6
+    assert all(item["source_status"] != "planned" for item in body["snapshots"])
     assert len(body["popular_news"]) >= 4
-    assert len(body["top_indices"]) == 20
-    assert len(body["overnight_risk"]) >= 10
+    assert "top_indices" not in body
+    assert all(item["source_status"] != "planned" for item in body["overnight_risk"])
     assert any(item["term"] == "費半" for item in body["glossary"])
     assert "投資建議" in body["disclaimer"]
 
@@ -150,13 +150,10 @@ def test_market_clock_taiwan_preopen_sequence() -> None:
 def test_overnight_risk_is_separate_from_cash_indices() -> None:
     body = client.get("/market-radar").json()
     risk_symbols = {item["symbol"] for item in body["overnight_risk"]}
-    cash_symbols = {item["symbol"] for item in body["top_indices"]}
 
-    assert {"ES", "NQ", "WTI", "XAU", "US10Y", "USD/CNY", "USD-BROAD"}.issubset(
-        risk_symbols
-    )
-    assert risk_symbols.isdisjoint(cash_symbols)
-    assert all(item["source_status"] == "planned" for item in body["overnight_risk"])
+    assert {"ES", "NQ", "NK", "HSI-F", "TX"}.isdisjoint(risk_symbols)
+    assert "top_indices" not in body
+    assert all(item["source_status"] != "planned" for item in body["overnight_risk"])
 
 
 def test_alpha_series_latest_uses_latest_and_previous_numeric_values() -> None:
@@ -285,7 +282,7 @@ def test_fred_latest_value_maps_observations_to_market_value() -> None:
 
 
 def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:
-    rows = build_overnight_risk()
+    rows = build_overnight_risk(include_planned=True)
     hydrated = hydrate_overnight_risk_with_alpha(
         rows,
         {
@@ -308,7 +305,6 @@ def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:
 
     fx = next(item for item in hydrated if item.symbol == "USD/TWD")
     rate = next(item for item in hydrated if item.symbol == "US10Y")
-    futures = next(item for item in hydrated if item.symbol == "ES")
 
     assert fx.value == "31.1234"
     assert fx.change == "latest · 2026-06-12 16:00:00"
@@ -317,11 +313,10 @@ def test_alpha_hydration_updates_only_matching_overnight_risk_rows() -> None:
     assert rate.value == "4.21%"
     assert rate.change.startswith("+0.03")
     assert rate.tone == "up"
-    assert futures.source_status == "planned"
 
 
 def test_alpha_hydration_updates_market_snapshot_cards() -> None:
-    rows = build_snapshots()
+    rows = build_snapshots(include_planned=True)
     hydrated = hydrate_snapshots_with_alpha(
         rows,
         {
@@ -358,7 +353,6 @@ def test_alpha_hydration_updates_market_snapshot_cards() -> None:
 
     fx = next(item for item in hydrated if item.label == "USD/TWD")
     oil = next(item for item in hydrated if item.label == "Oil / Gold")
-    us_close = next(item for item in hydrated if item.label == "US Close")
 
     assert fx.value == "31.1234"
     assert fx.source_status == "delayed"
@@ -366,4 +360,3 @@ def test_alpha_hydration_updates_market_snapshot_cards() -> None:
     assert oil.value == "78.25"
     assert "黃金 +25.00" in oil.change
     assert oil.source_status == "eod"
-    assert us_close.source_status == "planned"

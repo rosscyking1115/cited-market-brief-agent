@@ -22,7 +22,7 @@ personalized portfolio guidance.
 | Feedback | Requirement |
 |---|---|
 | `閱讀量最大的新聞 within 1 hour and 24 hour, start from BBC` | Add a `Popular News` module with 1h and 24h tabs. Use official/licensed popularity endpoints only. If a publisher does not expose readership ranking, label it as `latest` or `editorial/trending`, not `most read`. |
-| `指數 not all investor want to see them all, maybe top 20` | Add a default Top 20 cash-equity index list, with pin/hide/reorder later. Keep futures, FX, rates, oil/gold, and volatility in a separate overnight-risk rail. |
+| `指數 not all investor want to see them all, maybe top 20` | Removed from the app until there is a paid/licensed data source with display rights. Do not rebuild placeholder index tables. |
 | `ensure all sources and data are within policy and regulation` | Every data row must carry source, timestamp, delay/realtime/EOD status, license tier, and display rights note. No scraping behind logins/paywalls. No redistributing provider text/tables unless explicitly licensed. |
 | Screenshots show TOPNEWS filters: content type, 1h/24h, most read/latest, source filters | Add compact controls: time window, ranking mode, source, region/topic, content type. Keep list dense but readable on mobile. |
 
@@ -108,30 +108,12 @@ Phase N4 - Ranking engine:
   and Taiwan-morning relevance.
 - Clearly label as `市場雷達排序`, not readership.
 
-## Top 20 Indices Module
+## Removed: Top 20 Indices Module
 
-Default Top 20 should be cash-equity indices only:
-
-1. S&P 500
-2. Nasdaq-100
-3. Dow Jones Industrial Average
-4. Russell 2000
-5. PHLX Semiconductor Index
-6. STOXX Europe 600
-7. Euro Stoxx 50
-8. DAX 40
-9. FTSE 100
-10. Nikkei 225
-11. TOPIX
-12. KOSPI
-13. KOSDAQ
-14. TAIEX
-15. FTSE TWSE Taiwan 50
-16. TPEx / Taiwan OTC Index
-17. Hang Seng Index
-18. Hang Seng Tech
-19. CSI 300
-20. Shanghai Composite
+The Top 20 index module was removed after testing because it created a page full
+of `需授權` placeholders. Formal cash index levels, index futures, and
+exchange-owned benchmark data should stay out of the product until we have a
+permitted data source and display/redistribution rights.
 
 Separate overnight-risk rail:
 
@@ -149,30 +131,19 @@ Separate overnight-risk rail:
 - Gold
 - US 10Y
 
-Keep this separate from `Top 20 指數` because the risk rail mixes futures,
+Keep this separate from formal index tables because the risk rail mixes futures,
 volatility, FX, commodities, and rates. These instruments may trade in different
 hours and have different licensing/display rules from cash equity indices.
 
 ### Phases
 
-Phase I1 - Editorial default:
-
-- Add `top_indices` to `/market-radar`.
-- Show top 20 as grouped regions with source/delay placeholders.
-
-Phase I2 - Personalization:
-
-- Add pin/hide/reorder.
-- Presets: `台股開盤前`, `半導體供應鏈`, `全球 ETF 投資人`,
-  `中國/香港觀察`, `匯率與利率`.
-
-Phase I3 - Data provider:
+Future data-provider phase:
 
 - Internal beta: Twelve Data business tier or Alpha Vantage only if rights fit.
 - Taiwan: TWSE/TIP/TAIFEX official or contracted vendors.
 - Public/professional: LSEG/direct exchange contracts with display rights.
 
-Phase I4 - Compliance hardening:
+Compliance hardening:
 
 - Store per-symbol license metadata.
 - Show realtime/delayed/EOD label.
@@ -181,7 +152,7 @@ Phase I4 - Compliance hardening:
 
 ## Immediate Build Order
 
-1. Add data contract: `popular_news`, `top_indices`, `overnight_risk`.
+1. Add data contract: `popular_news`, `overnight_risk`.
 2. Render compact rails in the morning dashboard.
 3. Keep placeholder labels honest: `planned`, `latest`, `licensed required`.
 4. Add source policy table before ingesting BBC/Yahoo/StockQ/LSEG-like data.

@@ -15,7 +15,6 @@ from app.market_radar.schemas import (
     OvernightRiskItem,
     PopularNewsItem,
     SnapshotTone,
-    TopIndexItem,
 )
 from app.sources.policy import source_policy
 
@@ -114,50 +113,26 @@ def _market_clock(now: datetime) -> list[MarketClockItem]:
 def _snapshots() -> list[MarketSnapshotItem]:
     return [
         MarketSnapshotItem(
-            label="US Close",
-            local_name="美股三大指數",
-            value="需授權行情源",
-            change="道瓊 / 標普500 / 那斯達克",
-            tone="pending",
-            source="licensed market feed required",
-        ),
-        MarketSnapshotItem(
-            label="SOX",
-            local_name="費城半導體",
-            value="需授權行情源",
-            change="AI / 半導體族群溫度",
-            tone="pending",
-            source="licensed market feed required",
-        ),
-        MarketSnapshotItem(
-            label="Asia Futures",
-            local_name="台指期 / 日韓早盤",
-            value="需授權行情源",
-            change="日本 08:00、韓國 08:00、台灣 09:00",
-            tone="pending",
-            source="licensed futures feed required",
-        ),
-        MarketSnapshotItem(
             label="Oil / Gold",
             local_name="油價 / 黃金",
-            value="需授權行情源",
-            change="用來觀察通膨與避險情緒",
+            value="待資料",
+            change="有 FRED/授權商品資料時顯示",
             tone="pending",
             source="FRED / licensed metals feed required",
         ),
         MarketSnapshotItem(
             label="USD/TWD",
             local_name="美元 / 台幣",
-            value="需授權行情源",
-            change="匯率會影響台股電子與出口股",
+            value="待資料",
+            change="有延遲匯率資料時顯示",
             tone="pending",
             source="FX feed required",
         ),
         MarketSnapshotItem(
             label="US10Y",
             local_name="美國 10 年債",
-            value="需授權行情源",
-            change="觀察利率與成長股估值壓力",
+            value="待資料",
+            change="有 FRED 資料時顯示",
             tone="pending",
             source="FRED",
         ),
@@ -196,11 +171,16 @@ def hydrate_snapshots_with_alpha(
 
 def build_snapshots(
     alpha_values: dict[str, AlphaMarketValue] | None = None,
+    *,
+    include_planned: bool = False,
 ) -> list[MarketSnapshotItem]:
     rows = _snapshots()
     if not alpha_values:
-        return rows
-    return hydrate_snapshots_with_alpha(rows, alpha_values)
+        return rows if include_planned else []
+    hydrated = hydrate_snapshots_with_alpha(rows, alpha_values)
+    if include_planned:
+        return hydrated
+    return [row for row in hydrated if row.source_status != "planned"]
 
 
 def _alpha_value_for_snapshot(
@@ -428,83 +408,8 @@ def popular_news_from_gdelt(
     return rows or _placeholder_popular_news()
 
 
-def _top_indices() -> list[TopIndexItem]:
-    rows = [
-        ("SPX", "S&P 500", "標普500", "美國"),
-        ("NDX", "Nasdaq-100", "那斯達克100", "美國"),
-        ("DJI", "Dow Jones Industrial Average", "道瓊工業指數", "美國"),
-        ("RUT", "Russell 2000", "羅素2000", "美國"),
-        ("SOX", "PHLX Semiconductor Index", "費城半導體指數（費半）", "美國"),
-        ("SXXP", "STOXX Europe 600", "泛歐 STOXX 600", "歐洲"),
-        ("SX5E", "Euro Stoxx 50", "歐洲 STOXX 50", "歐洲"),
-        ("DAX", "DAX 40", "德國 DAX", "歐洲"),
-        ("UKX", "FTSE 100", "英國富時100", "歐洲"),
-        ("N225", "Nikkei 225", "日經225", "日本"),
-        ("TOPIX", "TOPIX", "東證股價指數", "日本"),
-        ("KOSPI", "KOSPI", "韓國 KOSPI", "韓國"),
-        ("KOSDAQ", "KOSDAQ", "韓國 KOSDAQ", "韓國"),
-        ("TAIEX", "TAIEX", "台股加權指數", "台灣"),
-        ("TW50", "FTSE TWSE Taiwan 50", "台灣50", "台灣"),
-        ("TPEX", "TPEx / Taiwan OTC Index", "櫃買指數", "台灣"),
-        ("HSI", "Hang Seng Index", "恆生指數", "香港/中國"),
-        ("HSTECH", "Hang Seng Tech", "恆生科技指數", "香港/中國"),
-        ("CSI300", "CSI 300", "滬深300", "中國"),
-        ("SHCOMP", "Shanghai Composite", "上證指數", "中國"),
-    ]
-    return [
-        TopIndexItem(
-            rank=rank,
-            symbol=symbol,
-            name=name,
-            local_name=local_name,
-            region=region,
-            value="需授權",
-            change="正式行情源待確認",
-            tone="pending",
-            source="licensed market feed required",
-            rights_note="Display after licensed market-data rights are confirmed.",
-        )
-        for rank, (symbol, name, local_name, region) in enumerate(rows, start=1)
-    ]
-
-
 def _overnight_risk() -> list[OvernightRiskItem]:
     rows: list[tuple[str, str, str, RiskGroup, str]] = [
-        (
-            "ES",
-            "S&P 500 futures",
-            "標普500期貨",
-            "futures",
-            "台灣早上用來觀察美股隔夜風險情緒。",
-        ),
-        (
-            "NQ",
-            "Nasdaq-100 futures",
-            "那斯達克100期貨",
-            "futures",
-            "科技股與 AI 族群開盤前參考。",
-        ),
-        (
-            "NK",
-            "Nikkei futures",
-            "日經期貨",
-            "futures",
-            "日本開盤前後的亞洲第一棒參考。",
-        ),
-        (
-            "HSI-F",
-            "Hang Seng futures",
-            "恆生期貨",
-            "futures",
-            "香港與中國風險情緒參考。",
-        ),
-        (
-            "TX",
-            "TAIFEX TAIEX futures",
-            "台指期",
-            "futures",
-            "台股開盤前最直接的本地期貨參考。",
-        ),
         (
             "VIX",
             "CBOE Volatility Index",
@@ -569,12 +474,12 @@ def _overnight_risk() -> list[OvernightRiskItem]:
             name=name,
             local_name=local_name,
             group=group,
-            value="需授權",
-            change="正式行情源待確認",
+            value="待資料",
+            change="公開或延遲資料更新後顯示",
             tone="pending",
-            source="licensed market feed required",
+            source="public/delayed source pending",
             why=why,
-            rights_note="Display after licensed market-data rights are confirmed.",
+            rights_note="Show only when a usable public, delayed, or licensed source is available.",
         )
         for rank, (symbol, name, local_name, group, why) in enumerate(rows, start=1)
     ]
@@ -609,11 +514,16 @@ def hydrate_overnight_risk_with_alpha(
 
 def build_overnight_risk(
     alpha_values: dict[str, AlphaMarketValue] | None = None,
+    *,
+    include_planned: bool = False,
 ) -> list[OvernightRiskItem]:
     rows = _overnight_risk()
     if not alpha_values:
-        return rows
-    return hydrate_overnight_risk_with_alpha(rows, alpha_values)
+        return rows if include_planned else []
+    hydrated = hydrate_overnight_risk_with_alpha(rows, alpha_values)
+    if include_planned:
+        return hydrated
+    return [row for row in hydrated if row.source_status != "planned"]
 
 
 def _format_market_value(symbol: str, value: float) -> str:
@@ -701,7 +611,6 @@ def build_morning_radar(
         market_clock=market_clock,
         snapshots=snapshots or build_snapshots(),
         popular_news=popular_news or _placeholder_popular_news(),
-        top_indices=_top_indices(),
         overnight_risk=overnight_risk or build_overnight_risk(),
         stories=_stories(),
         glossary=_glossary(),

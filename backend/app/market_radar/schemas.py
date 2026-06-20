@@ -47,20 +47,6 @@ class PopularNewsItem(BaseModel):
     rights_note: str
 
 
-class TopIndexItem(BaseModel):
-    rank: int
-    symbol: str
-    name: str
-    local_name: str
-    region: str
-    value: str
-    change: str
-    tone: SnapshotTone
-    source: str
-    source_status: Literal["live", "delayed", "eod", "planned"] = "planned"
-    rights_note: str
-
-
 class OvernightRiskItem(BaseModel):
     rank: int
     symbol: str
@@ -91,7 +77,6 @@ class MorningRadarOut(BaseModel):
     market_clock: list[MarketClockItem]
     snapshots: list[MarketSnapshotItem]
     popular_news: list[PopularNewsItem]
-    top_indices: list[TopIndexItem]
     overnight_risk: list[OvernightRiskItem]
     stories: list[MarketStoryItem]
     glossary: list[GlossaryItem]

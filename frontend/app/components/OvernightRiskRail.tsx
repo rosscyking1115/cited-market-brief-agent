@@ -24,7 +24,7 @@ function statusText(status: OvernightRiskItem["source_status"]) {
   if (status === "eod") return "每日資料";
   if (status === "delayed") return "延遲行情";
   if (status === "live") return "即時";
-  return "需授權";
+  return "待資料";
 }
 
 function statusClass(status: OvernightRiskItem["source_status"]) {
@@ -36,11 +36,12 @@ function statusClass(status: OvernightRiskItem["source_status"]) {
 
 export default function OvernightRiskRail({ items }: { items: OvernightRiskItem[] }) {
   const [group, setGroup] = useState<string>(ALL_GROUPS);
+  const displayItems = items.filter((item) => item.source_status !== "planned");
   const groups = useMemo(
-    () => [ALL_GROUPS, ...Array.from(new Set(items.map((item) => item.group)))],
-    [items],
+    () => [ALL_GROUPS, ...Array.from(new Set(displayItems.map((item) => item.group)))],
+    [displayItems],
   );
-  const visible = items.filter((item) => group === ALL_GROUPS || item.group === group);
+  const visible = displayItems.filter((item) => group === ALL_GROUPS || item.group === group);
 
   return (
     <section className="border-t border-hairline px-4 py-4 sm:px-5">
@@ -48,10 +49,10 @@ export default function OvernightRiskRail({ items }: { items: OvernightRiskItem[
         <div>
           <p className="th-label">Overnight Risk</p>
           <h2 className="reader-heading mt-1 font-semibold text-neutral-30">
-            期貨、匯率、油金、VIX、利率另外看
+            匯率、油價、VIX、利率另外看
           </h2>
           <p className="reader-meta mt-1 max-w-2xl text-neutral-90">
-            這些不是現貨股市指數；它們常在台灣早上提供隔夜風險情緒，但需確認行情授權。
+            只保留目前能從公開或延遲資料取得的風險訊號；付費期貨與現貨指數行情先不顯示。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -74,6 +75,14 @@ export default function OvernightRiskRail({ items }: { items: OvernightRiskItem[
       </div>
 
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {visible.length === 0 && (
+          <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-3 py-3 md:col-span-2 xl:col-span-4">
+            <p className="reader-body font-semibold text-neutral-40">目前沒有可顯示的隔夜風險數字</p>
+            <p className="reader-meta mt-1 text-neutral-90">
+              FRED 或延遲匯率資料更新後會出現在這裡；需要正式授權的指數與期貨行情已移除。
+            </p>
+          </div>
+        )}
         {visible.map((item) => (
           <article key={item.symbol} className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-3 py-3">
             <div className="flex items-start justify-between gap-3">
@@ -101,7 +110,7 @@ export default function OvernightRiskRail({ items }: { items: OvernightRiskItem[
             </div>
             <p className="reader-meta mt-2 text-neutral-90">{item.why}</p>
             <p className="reader-meta mt-2 font-mono text-neutral-90">
-              {item.source_status === "planned" ? "授權後顯示行情" : `source: ${item.source}`}
+              {item.source_status === "planned" ? "等待可用資料" : `source: ${item.source}`}
             </p>
           </article>
         ))}
