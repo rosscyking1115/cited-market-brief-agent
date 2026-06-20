@@ -151,6 +151,12 @@ def test_bbc_news_rows_filter_non_market_headlines() -> None:
                 category="UK",
             ),
             BbcArticle(
+                title="Why an AI company cleaned my New York City apartment for free",
+                url="https://www.bbc.com/news/ai-apartment",
+                published_at=datetime(2026, 6, 20, 23, 40, tzinfo=ZoneInfo("UTC")),
+                category="Technology",
+            ),
+            BbcArticle(
                 title="Why Harry Kane is different at this tournament",
                 url="https://www.bbc.com/sport/football",
                 published_at=datetime(2026, 6, 20, 23, 45, tzinfo=ZoneInfo("UTC")),
@@ -173,6 +179,7 @@ def test_bbc_news_rows_filter_non_market_headlines() -> None:
 
     urls = {row.url for row in rows}
     assert "https://www.bbc.com/news/train" not in urls
+    assert "https://www.bbc.com/news/ai-apartment" not in urls
     assert "https://www.bbc.com/sport/football" not in urls
     assert "https://www.bbc.com/news/oil" in urls
     assert "https://www.bbc.com/news/chips" in urls
@@ -181,6 +188,35 @@ def test_bbc_news_rows_filter_non_market_headlines() -> None:
 def test_market_category_does_not_match_ai_inside_words() -> None:
     assert _market_category("Nine people in critical condition after train crash") == "市場"
     assert _market_category("AI chip earnings lift Asian markets") == "半導體"
+    assert _market_category("Why an AI company cleaned my apartment for free") == "市場"
+
+
+def test_bbc_news_rows_do_not_duplicate_one_hour_items_in_day_bucket() -> None:
+    now = datetime(2026, 6, 21, 8, 30, tzinfo=ZoneInfo("Asia/Taipei"))
+    rows = popular_news_from_bbc(
+        now=now,
+        articles=[
+            BbcArticle(
+                title="Oil prices rise as Strait of Hormuz tensions grow",
+                url="https://www.bbc.com/news/oil",
+                published_at=datetime(2026, 6, 21, 0, 0, tzinfo=ZoneInfo("UTC")),
+                category="World",
+            ),
+            BbcArticle(
+                title="Central bank keeps interest rates unchanged",
+                url="https://www.bbc.com/news/rates",
+                published_at=datetime(2026, 6, 20, 18, 0, tzinfo=ZoneInfo("UTC")),
+                category="Business",
+            ),
+        ],
+    )
+
+    by_url = {}
+    for row in rows:
+        by_url.setdefault(row.url, []).append(row.window)
+
+    assert by_url["https://www.bbc.com/news/oil"] == ["1h"]
+    assert by_url["https://www.bbc.com/news/rates"] == ["24h"]
 
 
 def test_market_clock_taiwan_preopen_sequence() -> None:

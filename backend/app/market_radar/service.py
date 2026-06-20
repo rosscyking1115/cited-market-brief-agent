@@ -24,7 +24,6 @@ type RiskGroup = Literal["futures", "volatility", "fx", "commodities", "rates"]
 
 BUSINESS_CATEGORIES = {"business", "economy", "money"}
 MARKET_TOKENS = {
-    "ai",
     "bank",
     "banks",
     "brent",
@@ -60,6 +59,22 @@ MARKET_TOKENS = {
     "yen",
     "yield",
     "yields",
+}
+AI_CONTEXT_TOKENS = {
+    "chip",
+    "chips",
+    "earnings",
+    "equities",
+    "investment",
+    "investors",
+    "market",
+    "markets",
+    "nvidia",
+    "revenue",
+    "semiconductor",
+    "semiconductors",
+    "stocks",
+    "tsmc",
 }
 MARKET_PHRASES = {
     "central bank",
@@ -349,7 +364,7 @@ def _market_category(title: str) -> str:
         title, {"strait of hormuz"}
     ):
         return "商品"
-    if tokens & {"ai", "semiconductor", "semiconductors", "chip", "chips", "nvidia", "tsmc"}:
+    if tokens & {"semiconductor", "semiconductors", "chip", "chips", "nvidia", "tsmc"}:
         return "半導體"
     if tokens & {
         "inflation",
@@ -376,6 +391,8 @@ def _is_market_relevant_bbc(article: BbcArticle) -> bool:
     if category in BUSINESS_CATEGORIES:
         return True
     tokens = _tokens(article.title)
+    if "ai" in tokens and tokens & AI_CONTEXT_TOKENS:
+        return True
     return bool(tokens & MARKET_TOKENS) or _has_phrase(article.title, MARKET_PHRASES)
 
 
@@ -455,7 +472,12 @@ def popular_news_from_bbc(
 ) -> list[PopularNewsItem]:
     local_now = now or datetime.now(TAIPEI_TZ)
     one_hour = _bbc_latest_rows(articles=articles, now=local_now, window="1h", limit=6)
-    day = _bbc_latest_rows(articles=articles, now=local_now, window="24h", limit=8)
+    one_hour_urls = {row.url for row in one_hour if row.url}
+    day = [
+        row
+        for row in _bbc_latest_rows(articles=articles, now=local_now, window="24h", limit=14)
+        if not row.url or row.url not in one_hour_urls
+    ][:8]
     return [*one_hour, *day]
 
 
