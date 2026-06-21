@@ -1,5 +1,8 @@
+from datetime import date
+
 from fastapi.testclient import TestClient
 
+from app.connectors.twse import twse_daily_return_from_payload
 from app.fund_attribution.schemas import FundAttributionRequest, HoldingsParseRequest
 from app.fund_attribution.service import analyze_fund_attribution, parse_holdings_text
 from app.main import app
@@ -139,3 +142,40 @@ def test_parse_holdings_endpoint() -> None:
     body = response.json()
     assert body["parsed_count"] == 1
     assert body["holdings"][0]["symbol"] == "2330"
+
+
+def test_twse_daily_return_parser_uses_latest_available_close() -> None:
+    result = twse_daily_return_from_payload(
+        symbol="2330",
+        as_of=date(2026, 6, 18),
+        payload={
+            "fields": ["日期", "成交股數", "收盤價", "漲跌價差"],
+            "data": [
+                ["115/06/16", "1,000", "1,000.00", "+10.00"],
+                ["115/06/17", "1,100", "1,020.00", "+20.00"],
+                ["115/06/18", "1,200", "1,040.40", "+20.40"],
+                ["115/06/19", "1,300", "1,030.00", "-10.40"],
+            ],
+        },
+    )
+
+    assert result is not None
+    assert result.symbol == "2330"
+    assert result.trade_date == "2026-06-18"
+    assert result.return_pct == 2.0
+
+
+def test_fill_returns_endpoint_rejects_bad_date_without_network() -> None:
+    response = client.post(
+        "/fund-attribution/fill-returns/twse",
+        json={
+            "as_of": "bad-date",
+            "holdings": [{"symbol": "2330", "name": "台積電", "weight_pct": 20.5}],
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["filled_count"] == 0
+    assert body["missing_symbols"] == ["2330"]
+    assert "YYYY-MM-DD" in body["warnings"][0]

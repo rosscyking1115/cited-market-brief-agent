@@ -25,6 +25,11 @@ class HoldingsParseRequest(BaseModel):
     source_name: str = "manual paste"
 
 
+class HoldingReturnFillRequest(BaseModel):
+    as_of: str = Field(min_length=1)
+    holdings: list[HoldingInput] = Field(min_length=1)
+
+
 class AttributionRow(BaseModel):
     symbol: str
     name: str
@@ -75,6 +80,15 @@ class HoldingsParseOut(BaseModel):
     parsed_count: int
     skipped_rows: int
     detected_columns: list[str]
+    holdings: list[HoldingInput]
+    warnings: list[str]
+    source_notes: list[str]
+
+
+class HoldingReturnFillOut(BaseModel):
+    as_of: str
+    filled_count: int
+    missing_symbols: list[str]
     holdings: list[HoldingInput]
     warnings: list[str]
     source_notes: list[str]

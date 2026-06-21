@@ -220,6 +220,15 @@ export type HoldingsParsePayload = {
   source_notes: string[];
 };
 
+export type HoldingReturnFillPayload = {
+  as_of: string;
+  filled_count: number;
+  missing_symbols: string[];
+  holdings: HoldingInput[];
+  warnings: string[];
+  source_notes: string[];
+};
+
 export type FundAttributionPayload = {
   fund_name: string;
   benchmark_name: string;

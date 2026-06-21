@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     market_radar_value_cache_path: str = ".data/cache/market_radar_values.json"
     market_radar_value_cache_max_age_seconds: int = 604800
 
+    # TWSE after-close stock prices for Taiwan ETF attribution. This is used as
+    # delayed/public after-trading data, not as an intraday market-data feed.
+    twse_stock_day_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY"
+    twse_request_timeout_seconds: float = 8.0
+
     # LLM providers (LiteLLM library mode; two providers at MVP)
     anthropic_api_key: str = ""
     openai_api_key: str = ""

@@ -6,12 +6,15 @@ from app.fund_attribution.schemas import (
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
+    HoldingReturnFillOut,
+    HoldingReturnFillRequest,
     HoldingsParseOut,
     HoldingsParseRequest,
 )
 from app.fund_attribution.service import (
     analyze_fund_attribution,
     attribution_plan,
+    fill_holding_returns_from_twse,
     parse_holdings_text,
 )
 
@@ -31,3 +34,8 @@ def analyze(request: FundAttributionRequest) -> FundAttributionOut:
 @router.post("/parse-holdings", response_model=HoldingsParseOut)
 def parse_holdings(request: HoldingsParseRequest) -> HoldingsParseOut:
     return parse_holdings_text(request)
+
+
+@router.post("/fill-returns/twse", response_model=HoldingReturnFillOut)
+def fill_returns_twse(request: HoldingReturnFillRequest) -> HoldingReturnFillOut:
+    return fill_holding_returns_from_twse(request)

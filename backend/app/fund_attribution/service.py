@@ -1,7 +1,9 @@
 import csv
 import io
 import re
+from datetime import date
 
+from app.connectors.twse import TwseClient
 from app.fund_attribution.schemas import (
     AttributionRow,
     AutomationPolicyItem,
@@ -9,6 +11,8 @@ from app.fund_attribution.schemas import (
     FundAttributionPlanOut,
     FundAttributionRequest,
     HoldingInput,
+    HoldingReturnFillOut,
+    HoldingReturnFillRequest,
     HoldingsParseOut,
     HoldingsParseRequest,
 )
@@ -181,6 +185,62 @@ def parse_holdings_text(request: HoldingsParseRequest) -> HoldingsParseOut:
     )
 
 
+def fill_holding_returns_from_twse(request: HoldingReturnFillRequest) -> HoldingReturnFillOut:
+    as_of = _parse_iso_date(request.as_of)
+    if as_of is None:
+        return HoldingReturnFillOut(
+            as_of=request.as_of,
+            filled_count=0,
+            missing_symbols=[holding.symbol for holding in request.holdings],
+            holdings=request.holdings,
+            warnings=["日期格式需要是 YYYY-MM-DD。"],
+            source_notes=["TWSE after-close return fill skipped"],
+        )
+
+    client = TwseClient()
+    holdings: list[HoldingInput] = []
+    missing: list[str] = []
+    warnings: list[str] = []
+    filled = 0
+    try:
+        for holding in request.holdings:
+            symbol = _normalize_twse_symbol(holding.symbol)
+            if not symbol:
+                holdings.append(holding)
+                missing.append(holding.symbol)
+                continue
+            try:
+                daily_return = client.stock_daily_return(symbol=symbol, as_of=as_of)
+            except Exception as exc:  # noqa: BLE001 - source failures should not break manual flow.
+                warnings.append(f"{symbol} TWSE 取價失敗：{exc}")
+                holdings.append(holding)
+                missing.append(holding.symbol)
+                continue
+            if daily_return is None:
+                holdings.append(holding)
+                missing.append(holding.symbol)
+                continue
+            holdings.append(holding.model_copy(update={"return_pct": daily_return.return_pct}))
+            filled += 1
+    finally:
+        client.close()
+
+    if missing:
+        warnings.append(f"有 {len(missing)} 檔沒有補到 TWSE 漲跌幅，仍可手動填入。")
+
+    return HoldingReturnFillOut(
+        as_of=as_of.isoformat(),
+        filled_count=filled,
+        missing_symbols=missing,
+        holdings=holdings,
+        warnings=warnings,
+        source_notes=[
+            "source: TWSE afterTrading STOCK_DAY",
+            "returns calculated from latest available close and previous close",
+        ],
+    )
+
+
 def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttributionOut:
     rows = [_row_from_holding(holding) for holding in request.holdings]
     explained_return = sum(row.contribution_pct or 0 for row in rows)
@@ -315,6 +375,18 @@ def _parse_percent(value: str | None) -> float | None:
         return round(float(cleaned), 6)
     except ValueError:
         return None
+
+
+def _parse_iso_date(value: str) -> date | None:
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _normalize_twse_symbol(value: str) -> str:
+    match = re.search(r"\b[0-9]{4,6}\b", value)
+    return match.group(0) if match else ""
 
 
 def _infer_symbol(name: str) -> str:

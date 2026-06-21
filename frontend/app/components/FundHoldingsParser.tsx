@@ -5,6 +5,7 @@ import {
   API_URL,
   type AttributionRow,
   type FundAttributionPayload,
+  type HoldingReturnFillPayload,
   type HoldingsParsePayload,
 } from "@/lib/api";
 
@@ -70,7 +71,7 @@ export default function FundHoldingsParser() {
   const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
   const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"parse" | "analyze" | null>(null);
+  const [busy, setBusy] = useState<"parse" | "fill" | "analyze" | null>(null);
 
   const totalWeight = useMemo(
     () => parseResult?.holdings.reduce((sum, row) => sum + row.weight_pct, 0) ?? 0,
@@ -130,6 +131,32 @@ export default function FundHoldingsParser() {
     }
   }
 
+  async function fillReturnsFromTwse() {
+    if (!parseResult?.holdings.length) return;
+    setBusy("fill");
+    setError(null);
+    setAnalysis(null);
+    try {
+      const response = await fetch(`${API_URL}/fund-attribution/fill-returns/twse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ as_of: asOf, holdings: parseResult.holdings }),
+      });
+      if (!response.ok) throw new Error(`TWSE fill failed (${response.status})`);
+      const payload = (await response.json()) as HoldingReturnFillPayload;
+      setParseResult({
+        ...parseResult,
+        holdings: payload.holdings,
+        warnings: [...parseResult.warnings, ...payload.warnings],
+        source_notes: [...parseResult.source_notes, ...payload.source_notes],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not fill returns from TWSE");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="border-t border-hairline px-4 py-4 sm:px-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -147,6 +174,14 @@ export default function FundHoldingsParser() {
             className="min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy === "parse" ? "解析中..." : "解析持股"}
+          </button>
+          <button
+            type="button"
+            onClick={fillReturnsFromTwse}
+            disabled={busy !== null || !parseResult?.holdings.length}
+            className="min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy === "fill" ? "補資料中..." : "用 TWSE 補漲跌幅"}
           </button>
           <button
             type="button"
@@ -262,8 +297,12 @@ export default function FundHoldingsParser() {
               >
                 <span className="font-mono text-[12px] text-neutral-90">{holding.symbol}</span>
                 <span className="reader-body truncate text-neutral-40">{holding.name}</span>
-                <span className="font-mono text-[12px] text-neutral-70">
+                <span className="text-right font-mono text-[12px] text-neutral-70">
                   {fmt(holding.weight_pct)}
+                  <br />
+                  <span className={holding.return_pct === null ? "text-flag" : "text-neutral-90"}>
+                    {fmt(holding.return_pct)}
+                  </span>
                 </span>
               </div>
             ))}
