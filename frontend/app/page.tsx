@@ -7,7 +7,6 @@ import ChangesPanel from "@/app/components/ChangesPanel";
 import EvidenceRail from "@/app/components/EvidenceRail";
 import EvidenceLedger from "@/app/components/EvidenceLedger";
 import FundAttributionPanel from "@/app/components/FundAttributionPanel";
-import MarketContextStrip from "@/app/components/MarketContextStrip";
 import MorningMarketDashboard from "@/app/components/MorningMarketDashboard";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
 import TextSizeToggle from "@/app/components/TextSizeToggle";
@@ -248,64 +247,7 @@ const DEMO_RADAR: MorningRadarPayload = {
     },
   ],
   snapshots: [],
-  popular_news: [
-    {
-      rank: 1,
-      title: "BBC latest headlines connector pending",
-      title_zh_hant: "BBC 最新新聞接入待確認",
-      source: "BBC",
-      url: null,
-      published_at: null,
-      window: "1h",
-      rank_kind: "latest",
-      source_status: "rss",
-      category: "全球",
-      why: "BBC 公開 RSS 可作為最新新聞來源候選，但不能標示為閱讀最多，除非取得官方人氣資料或授權。",
-      rights_note: "Use as latest/RSS only after confirming BBC terms; do not scrape Most Read.",
-    },
-    {
-      rank: 2,
-      title: "GDELT trending cluster connector pending",
-      title_zh_hant: "GDELT 熱門/最多報導新聞群組待接入",
-      source: "GDELT",
-      url: null,
-      published_at: null,
-      window: "1h",
-      rank_kind: "trending",
-      source_status: "official_api",
-      category: "市場",
-      why: "可用來源數、來源多樣性與首頁位置推估熱門程度，但這不是實際閱讀量。",
-      rights_note: "Cite GDELT; link to publishers; do not republish article text.",
-    },
-    {
-      rank: 1,
-      title: "Most covered global market stories connector pending",
-      title_zh_hant: "24 小時全球市場最多報導新聞待接入",
-      source: "GDELT",
-      url: null,
-      published_at: null,
-      window: "24h",
-      rank_kind: "most_covered",
-      source_status: "official_api",
-      category: "全球市場",
-      why: "24 小時窗口適合整理跨媒體重複出現的重大新聞。",
-      rights_note: "Most covered is not most read; label must stay precise.",
-    },
-    {
-      rank: 2,
-      title: "NYT Most Popular can provide source-specific 24h popularity",
-      title_zh_hant: "NYT 可作為單一來源 24 小時熱門新聞候選",
-      source: "New York Times",
-      url: null,
-      published_at: null,
-      window: "24h",
-      rank_kind: "most_viewed",
-      source_status: "official_api",
-      category: "國際",
-      why: "NYT Most Popular 是乾淨的官方人氣 API 範例，但只代表 NYT，不代表全網。",
-      rights_note: "Requires NYT API key and compliance with NYT developer terms.",
-    },
-  ],
+  popular_news: [],
   overnight_risk: [],
   stories: [
     {
@@ -385,8 +327,6 @@ export default async function Page() {
         <MorningMarketDashboard radar={radarData} />
 
         <FundAttributionPanel plan={attributionPlan} />
-
-        <MarketContextStrip changes={changesData} />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-4 sm:space-y-5">

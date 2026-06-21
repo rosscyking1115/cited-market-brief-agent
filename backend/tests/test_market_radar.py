@@ -40,7 +40,8 @@ def test_market_radar_endpoint_contract() -> None:
     assert len(body["summary_points"]) == 3
     assert len(body["market_clock"]) >= 6
     assert all(item["source_status"] != "planned" for item in body["snapshots"])
-    assert len(body["popular_news"]) >= 4
+    assert isinstance(body["popular_news"], list)
+    assert all(item["url"] for item in body["popular_news"])
     assert "top_indices" not in body
     assert all(item["source_status"] != "planned" for item in body["overnight_risk"])
     assert any(item["term"] == "費半" for item in body["glossary"])
@@ -48,12 +49,21 @@ def test_market_radar_endpoint_contract() -> None:
 
 
 def test_market_radar_labels_unlicensed_bbc_as_latest_not_most_read() -> None:
-    body = client.get("/market-radar").json()
-    bbc_items = [item for item in body["popular_news"] if item["source"] == "BBC"]
+    bbc_items = popular_news_from_bbc(
+        now=datetime(2026, 6, 15, 8, 30, tzinfo=ZoneInfo("Asia/Taipei")),
+        articles=[
+            BbcArticle(
+                title="Markets brace for central bank decision",
+                url="https://www.bbc.com/news/example",
+                published_at=datetime(2026, 6, 15, 0, 10, tzinfo=ZoneInfo("UTC")),
+                category="Business",
+            )
+        ],
+    )
 
     assert bbc_items
-    assert all(item["rank_kind"] == "latest" for item in bbc_items)
-    assert all("Most Read" in item["rights_note"] for item in bbc_items)
+    assert all(item.rank_kind == "latest" for item in bbc_items)
+    assert all("Most Read" in item.rights_note for item in bbc_items)
 
 
 def test_gdelt_news_rows_are_not_labeled_most_read() -> None:

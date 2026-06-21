@@ -291,64 +291,6 @@ def _stories() -> list[MarketStoryItem]:
     ]
 
 
-def _placeholder_popular_news() -> list[PopularNewsItem]:
-    bbc_policy = source_policy("bbc_rss")
-    gdelt_policy = source_policy("gdelt_doc")
-    return [
-        PopularNewsItem(
-            rank=1,
-            title="BBC latest headlines connector pending",
-            title_zh_hant="BBC 最新新聞接入待確認",
-            source=bbc_policy.display_name,
-            window="1h",
-            rank_kind="latest",
-            source_status=bbc_policy.source_status,
-            category="全球",
-            why=(
-                "BBC 公開 RSS 可作為最新新聞來源候選，但不能標示為閱讀最多，"
-                "除非取得官方人氣資料或授權。"
-            ),
-            rights_note=bbc_policy.rights_note,
-        ),
-        PopularNewsItem(
-            rank=2,
-            title="GDELT trending cluster connector pending",
-            title_zh_hant="GDELT 熱門/最多報導新聞群組待接入",
-            source=gdelt_policy.display_name,
-            window="1h",
-            rank_kind="trending",
-            source_status=gdelt_policy.source_status,
-            category="市場",
-            why="可用來源數、來源多樣性與首頁位置推估熱門程度，但這不是實際閱讀量。",
-            rights_note=gdelt_policy.rights_note,
-        ),
-        PopularNewsItem(
-            rank=1,
-            title="Most covered global market stories connector pending",
-            title_zh_hant="24 小時全球市場最多報導新聞待接入",
-            source=gdelt_policy.display_name,
-            window="24h",
-            rank_kind="most_covered",
-            source_status=gdelt_policy.source_status,
-            category="全球市場",
-            why="24 小時窗口適合整理跨媒體重複出現的重大新聞。",
-            rights_note="Most covered is not most read; label must stay precise.",
-        ),
-        PopularNewsItem(
-            rank=2,
-            title="NYT Most Popular can provide source-specific 24h popularity",
-            title_zh_hant="NYT 可作為單一來源 24 小時熱門新聞候選",
-            source="New York Times",
-            window="24h",
-            rank_kind="most_viewed",
-            source_status="official_api",
-            category="國際",
-            why="NYT Most Popular 是乾淨的官方人氣 API 範例，但只代表 NYT，不代表全網。",
-            rights_note="Requires NYT API key and compliance with NYT developer terms.",
-        ),
-    ]
-
-
 def _tokens(text: str) -> set[str]:
     return set(re.findall(r"[a-z0-9]+", text.lower()))
 
@@ -509,7 +451,7 @@ def popular_news_from_gdelt(
             limit=24,
         ),
     ]
-    return rows or _placeholder_popular_news()
+    return rows
 
 
 def _overnight_risk() -> list[OvernightRiskItem]:
@@ -714,7 +656,7 @@ def build_morning_radar(
         current_focus=f"{current.market} · {_status_text(current.status)}",
         market_clock=market_clock,
         snapshots=snapshots or build_snapshots(),
-        popular_news=popular_news or _placeholder_popular_news(),
+        popular_news=popular_news or [],
         overnight_risk=overnight_risk or build_overnight_risk(),
         stories=_stories(),
         glossary=_glossary(),
