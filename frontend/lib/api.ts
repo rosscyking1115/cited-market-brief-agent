@@ -194,6 +194,23 @@ export type FundAttributionPlanPayload = {
   disclaimer: string;
 };
 
+export type HoldingInput = {
+  symbol: string;
+  name: string;
+  weight_pct: number;
+  return_pct: number | null;
+};
+
+export type HoldingsParsePayload = {
+  source_name: string;
+  parsed_count: number;
+  skipped_rows: number;
+  detected_columns: string[];
+  holdings: HoldingInput[];
+  warnings: string[];
+  source_notes: string[];
+};
+
 async function fetchJson<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${SERVER_API_URL}${path}`, {

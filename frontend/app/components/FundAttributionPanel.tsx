@@ -1,4 +1,5 @@
 import type { AutomationPolicyItem, FundAttributionPlanPayload } from "@/lib/api";
+import FundHoldingsParser from "@/app/components/FundHoldingsParser";
 
 const DEMO_PLAN: FundAttributionPlanPayload = {
   title: "ETF / Fund vs Benchmark Attribution",
@@ -117,6 +118,8 @@ export default function FundAttributionPanel({
         </div>
         <p className="reader-meta mt-3 text-neutral-90">{data.disclaimer}</p>
       </div>
+
+      <FundHoldingsParser />
     </section>
   );
 }

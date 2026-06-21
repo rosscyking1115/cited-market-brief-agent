@@ -1,3 +1,7 @@
+import csv
+import io
+import re
+
 from app.fund_attribution.schemas import (
     AttributionRow,
     AutomationPolicyItem,
@@ -5,9 +9,70 @@ from app.fund_attribution.schemas import (
     FundAttributionPlanOut,
     FundAttributionRequest,
     HoldingInput,
+    HoldingsParseOut,
+    HoldingsParseRequest,
 )
 
 DISCLAIMER = "本頁提供績效歸因與教育資訊，不構成個人化投資建議或買賣建議。"
+
+COLUMN_ALIASES = {
+    "symbol": {
+        "symbol",
+        "ticker",
+        "ticker_symbol",
+        "stock_code",
+        "code",
+        "sedol",
+        "isin",
+        "ric",
+        "代號",
+        "股票代號",
+        "證券代號",
+        "標的代號",
+    },
+    "name": {
+        "name",
+        "security",
+        "security_name",
+        "holding",
+        "holdings",
+        "company",
+        "issuer",
+        "description",
+        "名稱",
+        "股票名稱",
+        "證券名稱",
+        "持股名稱",
+        "基金資產股票",
+    },
+    "weight_pct": {
+        "weight",
+        "weight_pct",
+        "weight_percent",
+        "weighting",
+        "percent",
+        "pct",
+        "of_nav",
+        "nav_percent",
+        "market_value_percent",
+        "權重",
+        "比重",
+        "持股比重",
+        "占比",
+        "淨資產百分比",
+    },
+    "return_pct": {
+        "return",
+        "return_pct",
+        "return_percent",
+        "daily_return",
+        "daily_return_pct",
+        "漲跌幅",
+        "報酬率",
+        "日報酬",
+        "當日報酬",
+    },
+}
 
 
 def automation_policy() -> list[AutomationPolicyItem]:
@@ -60,6 +125,62 @@ def attribution_plan() -> FundAttributionPlanOut:
     )
 
 
+def parse_holdings_text(request: HoldingsParseRequest) -> HoldingsParseOut:
+    rows, detected_columns = _read_tabular_text(request.text)
+    warnings: list[str] = []
+    skipped = 0
+    holdings: list[HoldingInput] = []
+
+    if not rows:
+        return HoldingsParseOut(
+            source_name=request.source_name,
+            parsed_count=0,
+            skipped_rows=0,
+            detected_columns=detected_columns,
+            holdings=[],
+            warnings=["找不到可解析的持股表格。請貼上 CSV/TSV 或從試算表複製完整表格。"],
+            source_notes=[f"source: {request.source_name}", "manual holdings parse"],
+        )
+
+    for index, row in enumerate(rows, start=1):
+        symbol = _clean_text(row.get("symbol"))
+        name = _clean_text(row.get("name"))
+        weight = _parse_percent(row.get("weight_pct"))
+        return_pct = _parse_percent(row.get("return_pct"))
+
+        if not symbol and name:
+            symbol = _infer_symbol(name)
+        if not name and symbol:
+            name = symbol
+        if not name or weight is None:
+            skipped += 1
+            continue
+
+        holdings.append(
+            HoldingInput(
+                symbol=symbol or f"ROW-{index}",
+                name=name,
+                weight_pct=weight,
+                return_pct=return_pct,
+            )
+        )
+
+    if not holdings:
+        warnings.append("沒有成功解析任何持股；請確認欄位包含名稱與權重。")
+    if skipped:
+        warnings.append(f"已略過 {skipped} 列缺少名稱或權重的資料。")
+
+    return HoldingsParseOut(
+        source_name=request.source_name,
+        parsed_count=len(holdings),
+        skipped_rows=skipped,
+        detected_columns=detected_columns,
+        holdings=holdings,
+        warnings=warnings,
+        source_notes=[f"source: {request.source_name}", "manual holdings parse"],
+    )
+
+
 def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttributionOut:
     rows = [_row_from_holding(holding) for holding in request.holdings]
     explained_return = sum(row.contribution_pct or 0 for row in rows)
@@ -103,6 +224,104 @@ def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttribution
         ),
         disclaimer=DISCLAIMER,
     )
+
+
+def _read_tabular_text(text: str) -> tuple[list[dict[str, str]], list[str]]:
+    lines = [line for line in text.replace("\ufeff", "").splitlines() if line.strip()]
+    if not lines:
+        return [], []
+
+    delimiter = _guess_delimiter(lines)
+    reader = csv.reader(io.StringIO("\n".join(lines)), delimiter=delimiter)
+    raw_rows = [row for row in reader if any(cell.strip() for cell in row)]
+    if not raw_rows:
+        return [], []
+
+    header_index, field_map = _find_header(raw_rows)
+    if header_index is None:
+        return [], []
+
+    headers = [cell.strip() for cell in raw_rows[header_index]]
+    parsed_rows: list[dict[str, str]] = []
+    for raw in raw_rows[header_index + 1 :]:
+        normalized: dict[str, str] = {}
+        for source_idx, target in field_map.items():
+            if source_idx < len(raw):
+                normalized[target] = raw[source_idx].strip()
+        if normalized:
+            parsed_rows.append(normalized)
+    return parsed_rows, headers
+
+
+def _guess_delimiter(lines: list[str]) -> str:
+    candidates = [",", "\t", ";", "|"]
+    sample = "\n".join(lines[:8])
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters="".join(candidates))
+        return dialect.delimiter
+    except csv.Error:
+        return max(
+            candidates,
+            key=lambda delimiter: sum(line.count(delimiter) for line in lines[:8]),
+        )
+
+
+def _find_header(rows: list[list[str]]) -> tuple[int | None, dict[int, str]]:
+    best_index: int | None = None
+    best_map: dict[int, str] = {}
+    best_score = 0
+    for index, row in enumerate(rows[:20]):
+        field_map: dict[int, str] = {}
+        for cell_index, cell in enumerate(row):
+            target = _field_for_header(cell)
+            if target:
+                field_map[cell_index] = target
+        score = len(set(field_map.values()))
+        if score > best_score and {"name", "weight_pct"}.issubset(set(field_map.values())):
+            best_index = index
+            best_map = field_map
+            best_score = score
+    return best_index, best_map
+
+
+def _field_for_header(value: str) -> str | None:
+    normalized = _normalize_header(value)
+    for target, aliases in COLUMN_ALIASES.items():
+        if normalized in aliases:
+            return target
+    return None
+
+
+def _normalize_header(value: str) -> str:
+    cleaned = value.strip().lower()
+    cleaned = cleaned.replace("%", " percent ")
+    cleaned = re.sub(r"[\s/().\-]+", "_", cleaned)
+    cleaned = re.sub(r"_+", "_", cleaned).strip("_")
+    return cleaned
+
+
+def _clean_text(value: str | None) -> str:
+    return (value or "").strip().strip('"').strip()
+
+
+def _parse_percent(value: str | None) -> float | None:
+    cleaned = _clean_text(value)
+    if not cleaned or cleaned in {"-", "--", "N/A", "n/a"}:
+        return None
+    cleaned = cleaned.replace("%", "").replace(",", "").replace("％", "").strip()
+    if cleaned.startswith("(") and cleaned.endswith(")"):
+        cleaned = f"-{cleaned[1:-1]}"
+    try:
+        return round(float(cleaned), 6)
+    except ValueError:
+        return None
+
+
+def _infer_symbol(name: str) -> str:
+    match = re.search(r"\b[0-9]{4,6}\b", name)
+    if match:
+        return match.group(0)
+    return ""
 
 
 def _row_from_holding(holding: HoldingInput) -> AttributionRow:

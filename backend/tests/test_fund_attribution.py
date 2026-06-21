@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from app.fund_attribution.schemas import FundAttributionRequest
-from app.fund_attribution.service import analyze_fund_attribution
+from app.fund_attribution.schemas import FundAttributionRequest, HoldingsParseRequest
+from app.fund_attribution.service import analyze_fund_attribution, parse_holdings_text
 from app.main import app
 
 client = TestClient(app)
@@ -84,3 +84,58 @@ def test_fund_attribution_analyze_endpoint() -> None:
     body = response.json()
     assert body["active_return_pct"] == 0.24
     assert body["contributors"][0]["symbol"] == "2330"
+
+
+def test_parse_holdings_text_accepts_chinese_table_headers() -> None:
+    result = parse_holdings_text(
+        HoldingsParseRequest(
+            source_name="jpm paste",
+            text=(
+                "日期,股票代號,股票名稱,持股比重,漲跌幅\n"
+                "2026-06-18,2330,台積電,20.5%,1.2%\n"
+                "2026-06-18,2454,聯發科,5.25,-0.4\n"
+                "2026-06-18,,缺權重,,0.1\n"
+            ),
+        )
+    )
+
+    assert result.parsed_count == 2
+    assert result.skipped_rows == 1
+    assert result.holdings[0].symbol == "2330"
+    assert result.holdings[0].name == "台積電"
+    assert result.holdings[0].weight_pct == 20.5
+    assert result.holdings[0].return_pct == 1.2
+    assert result.holdings[1].return_pct == -0.4
+
+
+def test_parse_holdings_text_accepts_tsv_and_english_headers() -> None:
+    result = parse_holdings_text(
+        HoldingsParseRequest(
+            text=(
+                "Ticker\tSecurity Name\tWeight (%)\tDaily Return\n"
+                "2882\tCathay Financial\t4.0%\t-1.0%\n"
+                "CASH\tCash\t3\t0\n"
+            ),
+        )
+    )
+
+    assert result.parsed_count == 2
+    assert result.detected_columns == ["Ticker", "Security Name", "Weight (%)", "Daily Return"]
+    assert result.holdings[0].symbol == "2882"
+    assert result.holdings[0].weight_pct == 4.0
+    assert result.holdings[1].symbol == "CASH"
+
+
+def test_parse_holdings_endpoint() -> None:
+    response = client.post(
+        "/fund-attribution/parse-holdings",
+        json={
+            "source_name": "unit test paste",
+            "text": "代號,名稱,權重\n2330,台積電,20.5%\n",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["parsed_count"] == 1
+    assert body["holdings"][0]["symbol"] == "2330"

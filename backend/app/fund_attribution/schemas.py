@@ -20,6 +20,11 @@ class FundAttributionRequest(BaseModel):
     source_notes: list[str] = Field(default_factory=list)
 
 
+class HoldingsParseRequest(BaseModel):
+    text: str = Field(min_length=1)
+    source_name: str = "manual paste"
+
+
 class AttributionRow(BaseModel):
     symbol: str
     name: str
@@ -63,3 +68,13 @@ class FundAttributionPlanOut(BaseModel):
     first_supported_workflow: list[str]
     automation_policy: list[AutomationPolicyItem]
     disclaimer: str
+
+
+class HoldingsParseOut(BaseModel):
+    source_name: str
+    parsed_count: int
+    skipped_rows: int
+    detected_columns: list[str]
+    holdings: list[HoldingInput]
+    warnings: list[str]
+    source_notes: list[str]
