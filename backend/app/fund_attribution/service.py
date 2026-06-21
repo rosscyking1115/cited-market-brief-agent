@@ -7,6 +7,8 @@ from app.connectors.twse import TwseClient
 from app.fund_attribution.schemas import (
     AttributionRow,
     AutomationPolicyItem,
+    BenchmarkReturnOut,
+    BenchmarkReturnRequest,
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
@@ -237,6 +239,59 @@ def fill_holding_returns_from_twse(request: HoldingReturnFillRequest) -> Holding
         source_notes=[
             "source: TWSE afterTrading STOCK_DAY",
             "returns calculated from latest available close and previous close",
+        ],
+    )
+
+
+def benchmark_return_from_twse(request: BenchmarkReturnRequest) -> BenchmarkReturnOut:
+    as_of = _parse_iso_date(request.as_of)
+    if as_of is None:
+        return BenchmarkReturnOut(
+            as_of=request.as_of,
+            benchmark=request.benchmark,
+            name="台灣加權指數",
+            return_pct=None,
+            close=None,
+            previous_close=None,
+            warnings=["日期格式需要是 YYYY-MM-DD。"],
+            source_notes=["TWSE benchmark return skipped"],
+        )
+
+    client = TwseClient()
+    warnings: list[str] = []
+    try:
+        try:
+            value = client.taiex_return(as_of=as_of)
+        except Exception as exc:  # noqa: BLE001 - keep manual benchmark fallback available.
+            value = None
+            warnings.append(f"TAIEX TWSE 取價失敗：{exc}")
+    finally:
+        client.close()
+
+    if value is None:
+        warnings.append("沒有補到台灣加權指數漲跌幅，仍可手動填入。")
+        return BenchmarkReturnOut(
+            as_of=as_of.isoformat(),
+            benchmark=request.benchmark,
+            name="台灣加權指數",
+            return_pct=None,
+            close=None,
+            previous_close=None,
+            warnings=warnings,
+            source_notes=["source: TWSE afterTrading MI_INDEX"],
+        )
+
+    return BenchmarkReturnOut(
+        as_of=value.trade_date,
+        benchmark=value.symbol,
+        name=value.name,
+        return_pct=value.return_pct,
+        close=value.close,
+        previous_close=value.previous_close,
+        warnings=warnings,
+        source_notes=[
+            "source: TWSE afterTrading MI_INDEX",
+            "benchmark return from TWSE reported index percentage change",
         ],
     )
 

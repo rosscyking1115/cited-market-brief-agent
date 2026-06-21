@@ -30,6 +30,11 @@ class HoldingReturnFillRequest(BaseModel):
     holdings: list[HoldingInput] = Field(min_length=1)
 
 
+class BenchmarkReturnRequest(BaseModel):
+    as_of: str = Field(min_length=1)
+    benchmark: Literal["TAIEX"] = "TAIEX"
+
+
 class AttributionRow(BaseModel):
     symbol: str
     name: str
@@ -90,5 +95,16 @@ class HoldingReturnFillOut(BaseModel):
     filled_count: int
     missing_symbols: list[str]
     holdings: list[HoldingInput]
+    warnings: list[str]
+    source_notes: list[str]
+
+
+class BenchmarkReturnOut(BaseModel):
+    as_of: str
+    benchmark: str
+    name: str
+    return_pct: float | None
+    close: float | None
+    previous_close: float | None
     warnings: list[str]
     source_notes: list[str]

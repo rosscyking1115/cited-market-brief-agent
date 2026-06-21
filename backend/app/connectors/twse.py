@@ -25,6 +25,18 @@ class TwseDailyReturn:
     source_status: str = "eod"
 
 
+@dataclass(frozen=True)
+class TwseBenchmarkReturn:
+    symbol: str
+    name: str
+    trade_date: str
+    close: float
+    previous_close: float
+    return_pct: float
+    source: str = "TWSE afterTrading MI_INDEX"
+    source_status: str = "eod"
+
+
 class TwseClient:
     def __init__(self) -> None:
         self._client = httpx.Client(timeout=settings.twse_request_timeout_seconds)
@@ -43,6 +55,26 @@ class TwseClient:
         if not isinstance(payload, dict):
             return None
         return twse_daily_return_from_payload(symbol=symbol, payload=payload, as_of=as_of)
+
+    def taiex_return(self, *, as_of: date) -> TwseBenchmarkReturn | None:
+        response = self._client.get(
+            settings.twse_mi_index_url,
+            params={
+                "response": "json",
+                "date": as_of.strftime("%Y%m%d"),
+                "type": "IND",
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict):
+            return None
+        return twse_benchmark_return_from_payload(
+            symbol="TAIEX",
+            name="台灣加權指數",
+            payload=payload,
+            as_of=as_of,
+        )
 
     def close(self) -> None:
         self._client.close()
@@ -95,6 +127,82 @@ def twse_daily_return_from_payload(
     )
 
 
+def twse_benchmark_return_from_payload(
+    *,
+    symbol: str,
+    name: str,
+    payload: dict[str, object],
+    as_of: date,
+) -> TwseBenchmarkReturn | None:
+    tables = payload.get("tables")
+    if isinstance(tables, list):
+        for table in tables:
+            if not isinstance(table, dict):
+                continue
+            result = _benchmark_return_from_table(
+                symbol=symbol,
+                name=name,
+                fields=table.get("fields"),
+                rows=table.get("data"),
+                as_of=as_of,
+            )
+            if result is not None:
+                return result
+
+    return _benchmark_return_from_table(
+        symbol=symbol,
+        name=name,
+        fields=payload.get("fields"),
+        rows=payload.get("data"),
+        as_of=as_of,
+    )
+
+
+def _benchmark_return_from_table(
+    *,
+    symbol: str,
+    name: str,
+    fields: object,
+    rows: object,
+    as_of: date,
+) -> TwseBenchmarkReturn | None:
+    if not isinstance(fields, list) or not isinstance(rows, list):
+        return None
+
+    field_map = {_normalize_header(str(field)): index for index, field in enumerate(fields)}
+    name_index = _first_index(field_map, ("指數", "index", "name", "指數名稱"))
+    close_index = _first_index(field_map, ("收盤指數", "收盤價", "close", "closing_index"))
+    change_pct_index = _first_index(
+        field_map,
+        ("漲跌百分比", "漲跌幅", "change_percent", "change_pct"),
+    )
+    if name_index is None or close_index is None or change_pct_index is None:
+        return None
+
+    for row in rows:
+        if not isinstance(row, list):
+            continue
+        if max(name_index, close_index, change_pct_index) >= len(row):
+            continue
+        row_name = str(row[name_index]).strip()
+        if not _is_taiex_name(row_name):
+            continue
+        close = _parse_float(row[close_index])
+        return_pct = _parse_float(row[change_pct_index])
+        if close is None or return_pct is None:
+            continue
+        previous_close = close / (1 + return_pct / 100) if return_pct != -100 else close
+        return TwseBenchmarkReturn(
+            symbol=symbol,
+            name=name,
+            trade_date=as_of.isoformat(),
+            close=round(close, 4),
+            previous_close=round(previous_close, 4),
+            return_pct=round(return_pct, 4),
+        )
+    return None
+
+
 def _first_index(field_map: dict[str, int], candidates: tuple[str, ...]) -> int | None:
     for candidate in candidates:
         if candidate in field_map:
@@ -103,7 +211,12 @@ def _first_index(field_map: dict[str, int], candidates: tuple[str, ...]) -> int 
 
 
 def _normalize_header(value: str) -> str:
-    return value.strip().lower().replace(" ", "_")
+    return value.strip().lower().replace(" ", "_").replace("(%)", "")
+
+
+def _is_taiex_name(value: str) -> bool:
+    normalized = value.replace(" ", "")
+    return normalized in {"發行量加權股價指數", "臺灣加權指數", "台灣加權指數", "TAIEX"}
 
 
 def _parse_twse_date(value: str) -> date | None:

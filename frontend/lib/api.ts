@@ -229,6 +229,17 @@ export type HoldingReturnFillPayload = {
   source_notes: string[];
 };
 
+export type BenchmarkReturnPayload = {
+  as_of: string;
+  benchmark: string;
+  name: string;
+  return_pct: number | null;
+  close: number | null;
+  previous_close: number | null;
+  warnings: string[];
+  source_notes: string[];
+};
+
 export type FundAttributionPayload = {
   fund_name: string;
   benchmark_name: string;

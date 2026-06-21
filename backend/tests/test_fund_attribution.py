@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi.testclient import TestClient
 
-from app.connectors.twse import twse_daily_return_from_payload
+from app.connectors.twse import twse_benchmark_return_from_payload, twse_daily_return_from_payload
 from app.fund_attribution.schemas import FundAttributionRequest, HoldingsParseRequest
 from app.fund_attribution.service import analyze_fund_attribution, parse_holdings_text
 from app.main import app
@@ -178,4 +178,42 @@ def test_fill_returns_endpoint_rejects_bad_date_without_network() -> None:
     body = response.json()
     assert body["filled_count"] == 0
     assert body["missing_symbols"] == ["2330"]
+    assert "YYYY-MM-DD" in body["warnings"][0]
+
+
+def test_twse_benchmark_parser_reads_taiex_return() -> None:
+    result = twse_benchmark_return_from_payload(
+        symbol="TAIEX",
+        name="台灣加權指數",
+        as_of=date(2026, 6, 18),
+        payload={
+            "tables": [
+                {
+                    "fields": ["指數", "收盤指數", "漲跌(+/-)", "漲跌點數", "漲跌百分比"],
+                    "data": [
+                        ["寶島股價指數", "40,000.00", "+", "100.00", "0.25"],
+                        ["發行量加權股價指數", "41,000.00", "+", "410.00", "1.01"],
+                    ],
+                }
+            ]
+        },
+    )
+
+    assert result is not None
+    assert result.symbol == "TAIEX"
+    assert result.name == "台灣加權指數"
+    assert result.return_pct == 1.01
+    assert result.close == 41000.0
+
+
+def test_benchmark_return_endpoint_rejects_bad_date_without_network() -> None:
+    response = client.post(
+        "/fund-attribution/benchmark-return/twse",
+        json={"as_of": "bad-date", "benchmark": "TAIEX"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["benchmark"] == "TAIEX"
+    assert body["return_pct"] is None
     assert "YYYY-MM-DD" in body["warnings"][0]

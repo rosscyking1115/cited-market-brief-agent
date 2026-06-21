@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   API_URL,
   type AttributionRow,
+  type BenchmarkReturnPayload,
   type FundAttributionPayload,
   type HoldingReturnFillPayload,
   type HoldingsParsePayload,
@@ -71,7 +72,7 @@ export default function FundHoldingsParser() {
   const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
   const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"parse" | "fill" | "analyze" | null>(null);
+  const [busy, setBusy] = useState<"parse" | "fill" | "benchmark" | "analyze" | null>(null);
 
   const totalWeight = useMemo(
     () => parseResult?.holdings.reduce((sum, row) => sum + row.weight_pct, 0) ?? 0,
@@ -152,6 +153,31 @@ export default function FundHoldingsParser() {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not fill returns from TWSE");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function fillBenchmarkFromTwse() {
+    setBusy("benchmark");
+    setError(null);
+    setAnalysis(null);
+    try {
+      const response = await fetch(`${API_URL}/fund-attribution/benchmark-return/twse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ as_of: asOf, benchmark: "TAIEX" }),
+      });
+      if (!response.ok) throw new Error(`TWSE benchmark failed (${response.status})`);
+      const payload = (await response.json()) as BenchmarkReturnPayload;
+      if (payload.return_pct === null) {
+        setError(payload.warnings[0] ?? "沒有補到台灣加權指數漲跌幅。");
+        return;
+      }
+      setBenchmarkName(payload.name);
+      setBenchmarkReturn(String(payload.return_pct));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not fill benchmark from TWSE");
     } finally {
       setBusy(null);
     }
@@ -241,12 +267,22 @@ export default function FundHoldingsParser() {
             </label>
             <label className="block">
               <span className="th-label">台灣加權指數漲跌幅 %</span>
-              <input
-                inputMode="decimal"
-                value={benchmarkReturn}
-                onChange={(event) => setBenchmarkReturn(event.target.value)}
-                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
-              />
+              <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  inputMode="decimal"
+                  value={benchmarkReturn}
+                  onChange={(event) => setBenchmarkReturn(event.target.value)}
+                  className="w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
+                />
+                <button
+                  type="button"
+                  onClick={fillBenchmarkFromTwse}
+                  disabled={busy !== null}
+                  className="rounded-(--radius-ctl) border border-elevated bg-page px-2 py-1.5 text-[12px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busy === "benchmark" ? "補中" : "TWSE"}
+                </button>
+              </div>
             </label>
           </div>
 

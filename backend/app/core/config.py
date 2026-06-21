@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     # TWSE after-close stock prices for Taiwan ETF attribution. This is used as
     # delayed/public after-trading data, not as an intraday market-data feed.
     twse_stock_day_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY"
+    twse_mi_index_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX"
     twse_request_timeout_seconds: float = 8.0
 
     # LLM providers (LiteLLM library mode; two providers at MVP)

@@ -3,6 +3,8 @@
 from fastapi import APIRouter
 
 from app.fund_attribution.schemas import (
+    BenchmarkReturnOut,
+    BenchmarkReturnRequest,
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
@@ -14,6 +16,7 @@ from app.fund_attribution.schemas import (
 from app.fund_attribution.service import (
     analyze_fund_attribution,
     attribution_plan,
+    benchmark_return_from_twse,
     fill_holding_returns_from_twse,
     parse_holdings_text,
 )
@@ -39,3 +42,8 @@ def parse_holdings(request: HoldingsParseRequest) -> HoldingsParseOut:
 @router.post("/fill-returns/twse", response_model=HoldingReturnFillOut)
 def fill_returns_twse(request: HoldingReturnFillRequest) -> HoldingReturnFillOut:
     return fill_holding_returns_from_twse(request)
+
+
+@router.post("/benchmark-return/twse", response_model=BenchmarkReturnOut)
+def benchmark_return_twse(request: BenchmarkReturnRequest) -> BenchmarkReturnOut:
+    return benchmark_return_from_twse(request)
