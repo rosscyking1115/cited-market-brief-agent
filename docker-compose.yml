@@ -51,7 +51,12 @@ services:
   frontend:
     build: ./frontend
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Same-origin model: the client bundle bakes API_URL="/api" (NEXT_PUBLIC_*
+      # is inlined at build, which runs unset in the Dockerfile). API_URL feeds the
+      # RSC server fetch; BACKEND_ORIGIN is where next.config's /api rewrite proxies
+      # to. Both must resolve the backend over the compose network, not localhost.
+      API_URL: http://backend:8000
+      BACKEND_ORIGIN: http://backend:8000
     ports:
       - "3000:3000"
     depends_on:
