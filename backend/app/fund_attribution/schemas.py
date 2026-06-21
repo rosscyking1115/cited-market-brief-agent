@@ -25,6 +25,12 @@ class HoldingsParseRequest(BaseModel):
     source_name: str = "manual paste"
 
 
+class HoldingsFileParseRequest(BaseModel):
+    filename: str = Field(min_length=1)
+    content_base64: str = Field(min_length=1)
+    source_name: str | None = None
+
+
 class HoldingReturnFillRequest(BaseModel):
     as_of: str = Field(min_length=1)
     holdings: list[HoldingInput] = Field(min_length=1)
@@ -82,6 +88,8 @@ class FundAttributionPlanOut(BaseModel):
 
 class HoldingsParseOut(BaseModel):
     source_name: str
+    as_of: str | None = None
+    fund_name: str | None = None
     parsed_count: int
     skipped_rows: int
     detected_columns: list[str]

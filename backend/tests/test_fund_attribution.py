@@ -1,10 +1,21 @@
+import base64
 from datetime import date
+from io import BytesIO
 
 from fastapi.testclient import TestClient
+from openpyxl import Workbook
 
 from app.connectors.twse import twse_benchmark_return_from_payload, twse_daily_return_from_payload
-from app.fund_attribution.schemas import FundAttributionRequest, HoldingsParseRequest
-from app.fund_attribution.service import analyze_fund_attribution, parse_holdings_text
+from app.fund_attribution.schemas import (
+    FundAttributionRequest,
+    HoldingsFileParseRequest,
+    HoldingsParseRequest,
+)
+from app.fund_attribution.service import (
+    analyze_fund_attribution,
+    parse_holdings_text,
+    parse_holdings_workbook,
+)
 from app.main import app
 
 client = TestClient(app)
@@ -142,6 +153,46 @@ def test_parse_holdings_endpoint() -> None:
     body = response.json()
     assert body["parsed_count"] == 1
     assert body["holdings"][0]["symbol"] == "2330"
+
+
+def test_parse_jpm_workbook_accepts_downloaded_shape() -> None:
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "基金資產 - 股票"
+    sheet.append(["基金資產 - 股票 (2026-06-18)", None, None, None, None])
+    sheet.append(["摩根台灣鑫收益主動式ETF基金", None, None, None, None])
+    sheet.append([None, None, None, None, None])
+    sheet.append(["股票代碼", "股票名稱", "股數", "金額", "權重(%)"])
+    sheet.append(["2330", "台灣積體電路製造", "122,000", "294,020,000", "8.36%"])
+    sheet.append(["2454", "聯發科技", "54,000", "237,060,000", "6.74%"])
+    output = BytesIO()
+    workbook.save(output)
+
+    result = parse_holdings_workbook(
+        HoldingsFileParseRequest(
+            filename="JPMAM-投資組合(TW00000401A1).xlsx",
+            content_base64=base64.b64encode(output.getvalue()).decode("ascii"),
+        )
+    )
+
+    assert result.as_of == "2026-06-18"
+    assert result.fund_name == "摩根台灣鑫收益主動式ETF基金"
+    assert result.parsed_count == 2
+    assert result.detected_columns == ["股票代碼", "股票名稱", "股數", "金額", "權重(%)"]
+    assert result.holdings[0].symbol == "2330"
+    assert result.holdings[0].weight_pct == 8.36
+
+
+def test_parse_holdings_file_endpoint_rejects_bad_base64() -> None:
+    response = client.post(
+        "/fund-attribution/parse-holdings-file",
+        json={"filename": "bad.xlsx", "content_base64": "not base64"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["parsed_count"] == 0
+    assert "base64" in body["warnings"][0]
 
 
 def test_twse_daily_return_parser_uses_latest_available_close() -> None:

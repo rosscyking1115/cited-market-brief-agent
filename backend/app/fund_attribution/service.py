@@ -1,7 +1,11 @@
+import base64
+import binascii
 import csv
 import io
 import re
 from datetime import date
+
+from openpyxl import load_workbook
 
 from app.connectors.twse import TwseClient
 from app.fund_attribution.schemas import (
@@ -15,6 +19,7 @@ from app.fund_attribution.schemas import (
     HoldingInput,
     HoldingReturnFillOut,
     HoldingReturnFillRequest,
+    HoldingsFileParseRequest,
     HoldingsParseOut,
     HoldingsParseRequest,
 )
@@ -32,6 +37,7 @@ COLUMN_ALIASES = {
         "isin",
         "ric",
         "代號",
+        "股票代碼",
         "股票代號",
         "證券代號",
         "標的代號",
@@ -64,6 +70,7 @@ COLUMN_ALIASES = {
         "權重",
         "比重",
         "持股比重",
+        "權重_percent",
         "占比",
         "淨資產百分比",
     },
@@ -133,19 +140,77 @@ def attribution_plan() -> FundAttributionPlanOut:
 
 def parse_holdings_text(request: HoldingsParseRequest) -> HoldingsParseOut:
     rows, detected_columns = _read_tabular_text(request.text)
+    return _holdings_out_from_rows(
+        rows=rows,
+        detected_columns=detected_columns,
+        source_name=request.source_name,
+        source_note="manual holdings parse",
+    )
+
+
+def parse_holdings_workbook(request: HoldingsFileParseRequest) -> HoldingsParseOut:
+    source_name = request.source_name or request.filename
+    try:
+        content = base64.b64decode(request.content_base64, validate=True)
+    except (binascii.Error, ValueError):
+        return HoldingsParseOut(
+            source_name=source_name,
+            parsed_count=0,
+            skipped_rows=0,
+            detected_columns=[],
+            holdings=[],
+            warnings=["檔案內容不是有效的 base64；請重新選擇 Excel 檔。"],
+            source_notes=[f"source: {source_name}", "JPM holdings workbook parse failed"],
+        )
+
+    try:
+        rows, detected_columns, metadata, warnings = _read_workbook_holdings(content)
+    except Exception as exc:  # noqa: BLE001 - bad uploads should become user-facing warnings.
+        return HoldingsParseOut(
+            source_name=source_name,
+            parsed_count=0,
+            skipped_rows=0,
+            detected_columns=[],
+            holdings=[],
+            warnings=[f"Excel 檔解析失敗：{exc}"],
+            source_notes=[f"source: {source_name}", "JPM holdings workbook parse failed"],
+        )
+
+    parsed = _holdings_out_from_rows(
+        rows=rows,
+        detected_columns=detected_columns,
+        source_name=source_name,
+        source_note="JPM holdings workbook parse",
+        as_of=metadata.get("as_of"),
+        fund_name=metadata.get("fund_name"),
+    )
+    return parsed.model_copy(update={"warnings": [*warnings, *parsed.warnings]})
+
+
+def _holdings_out_from_rows(
+    *,
+    rows: list[dict[str, str]],
+    detected_columns: list[str],
+    source_name: str,
+    source_note: str,
+    as_of: str | None = None,
+    fund_name: str | None = None,
+) -> HoldingsParseOut:
     warnings: list[str] = []
     skipped = 0
     holdings: list[HoldingInput] = []
 
     if not rows:
         return HoldingsParseOut(
-            source_name=request.source_name,
+            source_name=source_name,
+            as_of=as_of,
+            fund_name=fund_name,
             parsed_count=0,
             skipped_rows=0,
             detected_columns=detected_columns,
             holdings=[],
             warnings=["找不到可解析的持股表格。請貼上 CSV/TSV 或從試算表複製完整表格。"],
-            source_notes=[f"source: {request.source_name}", "manual holdings parse"],
+            source_notes=[f"source: {source_name}", source_note],
         )
 
     for index, row in enumerate(rows, start=1):
@@ -177,13 +242,15 @@ def parse_holdings_text(request: HoldingsParseRequest) -> HoldingsParseOut:
         warnings.append(f"已略過 {skipped} 列缺少名稱或權重的資料。")
 
     return HoldingsParseOut(
-        source_name=request.source_name,
+        source_name=source_name,
+        as_of=as_of,
+        fund_name=fund_name,
         parsed_count=len(holdings),
         skipped_rows=skipped,
         detected_columns=detected_columns,
         holdings=holdings,
         warnings=warnings,
-        source_notes=[f"source: {request.source_name}", "manual holdings parse"],
+        source_notes=[f"source: {source_name}", source_note],
     )
 
 
@@ -366,6 +433,82 @@ def _read_tabular_text(text: str) -> tuple[list[dict[str, str]], list[str]]:
         if normalized:
             parsed_rows.append(normalized)
     return parsed_rows, headers
+
+
+def _read_workbook_holdings(
+    content: bytes,
+) -> tuple[list[dict[str, str]], list[str], dict[str, str], list[str]]:
+    workbook = load_workbook(io.BytesIO(content), data_only=True, read_only=True)
+    warnings: list[str] = []
+    fallback: tuple[list[dict[str, str]], list[str], dict[str, str], list[str]] | None = None
+
+    for sheet in workbook.worksheets:
+        raw_rows = [
+            ["" if cell is None else str(cell).strip() for cell in row]
+            for row in sheet.iter_rows(values_only=True)
+            if any(cell is not None and str(cell).strip() for cell in row)
+        ]
+        if not raw_rows:
+            continue
+
+        header_index, field_map = _find_header(raw_rows)
+        if header_index is None:
+            continue
+
+        headers = [cell.strip() for cell in raw_rows[header_index]]
+        parsed_rows = _rows_after_header(raw_rows, header_index, field_map)
+        metadata = _workbook_metadata(sheet.title, raw_rows)
+        result = (parsed_rows, headers, metadata, warnings)
+        if "股票" in sheet.title:
+            return result
+        if fallback is None:
+            fallback = result
+
+    if fallback is not None:
+        warnings.append("沒有找到名稱包含「股票」的工作表，已改用第一個可解析工作表。")
+        return fallback
+
+    return [], [], {}, ["找不到包含股票代碼、股票名稱、權重欄位的工作表。"]
+
+
+def _rows_after_header(
+    raw_rows: list[list[str]],
+    header_index: int,
+    field_map: dict[int, str],
+) -> list[dict[str, str]]:
+    parsed_rows: list[dict[str, str]] = []
+    for raw in raw_rows[header_index + 1 :]:
+        normalized: dict[str, str] = {}
+        for source_idx, target in field_map.items():
+            if source_idx < len(raw):
+                normalized[target] = raw[source_idx].strip()
+        if normalized:
+            parsed_rows.append(normalized)
+    return parsed_rows
+
+
+def _workbook_metadata(sheet_title: str, raw_rows: list[list[str]]) -> dict[str, str]:
+    metadata: dict[str, str] = {}
+    for row in raw_rows[:8]:
+        first = row[0].strip() if row else ""
+        if not first:
+            continue
+        if not metadata.get("as_of"):
+            match = re.search(r"\((\d{4}-\d{2}-\d{2})\)", first)
+            if match:
+                metadata["as_of"] = match.group(1)
+        if (
+            not metadata.get("fund_name")
+            and "基金" in first
+            and not first.startswith(("(", "基金資產"))
+        ):
+            metadata["fund_name"] = first
+
+    if not metadata.get("as_of"):
+        match = re.search(r"\((\d{4}-\d{2}-\d{2})\)", sheet_title)
+        if match:
+            metadata["as_of"] = match.group(1)
+    return metadata
 
 
 def _guess_delimiter(lines: list[str]) -> str:

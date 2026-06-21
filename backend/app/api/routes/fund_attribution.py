@@ -10,6 +10,7 @@ from app.fund_attribution.schemas import (
     FundAttributionRequest,
     HoldingReturnFillOut,
     HoldingReturnFillRequest,
+    HoldingsFileParseRequest,
     HoldingsParseOut,
     HoldingsParseRequest,
 )
@@ -19,6 +20,7 @@ from app.fund_attribution.service import (
     benchmark_return_from_twse,
     fill_holding_returns_from_twse,
     parse_holdings_text,
+    parse_holdings_workbook,
 )
 
 router = APIRouter(prefix="/fund-attribution", tags=["fund-attribution"])
@@ -37,6 +39,11 @@ def analyze(request: FundAttributionRequest) -> FundAttributionOut:
 @router.post("/parse-holdings", response_model=HoldingsParseOut)
 def parse_holdings(request: HoldingsParseRequest) -> HoldingsParseOut:
     return parse_holdings_text(request)
+
+
+@router.post("/parse-holdings-file", response_model=HoldingsParseOut)
+def parse_holdings_file(request: HoldingsFileParseRequest) -> HoldingsParseOut:
+    return parse_holdings_workbook(request)
 
 
 @router.post("/fill-returns/twse", response_model=HoldingReturnFillOut)

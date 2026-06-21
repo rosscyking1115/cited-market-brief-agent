@@ -212,6 +212,8 @@ export type AttributionRow = {
 
 export type HoldingsParsePayload = {
   source_name: string;
+  as_of: string | null;
+  fund_name: string | null;
   parsed_count: number;
   skipped_rows: number;
   detected_columns: string[];

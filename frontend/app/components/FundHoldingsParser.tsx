@@ -24,6 +24,15 @@ function signed(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let index = 0; index < bytes.byteLength; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+  return window.btoa(binary);
+}
+
 function rowTone(row: AttributionRow) {
   if (row.direction === "positive") return "text-up";
   if (row.direction === "negative") return "text-down";
@@ -72,7 +81,7 @@ export default function FundHoldingsParser() {
   const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
   const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"parse" | "fill" | "benchmark" | "analyze" | null>(null);
+  const [busy, setBusy] = useState<"parse" | "upload" | "fill" | "benchmark" | "analyze" | null>(null);
 
   const totalWeight = useMemo(
     () => parseResult?.holdings.reduce((sum, row) => sum + row.weight_pct, 0) ?? 0,
@@ -90,12 +99,43 @@ export default function FundHoldingsParser() {
         body: JSON.stringify({ source_name: sourceName, text }),
       });
       if (!response.ok) throw new Error(`Parse failed (${response.status})`);
-      setParseResult((await response.json()) as HoldingsParsePayload);
+      applyParseResult((await response.json()) as HoldingsParsePayload);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not parse holdings");
     } finally {
       setBusy(null);
     }
+  }
+
+  async function parseWorkbook(file: File) {
+    setBusy("upload");
+    setError(null);
+    setAnalysis(null);
+    try {
+      const contentBase64 = arrayBufferToBase64(await file.arrayBuffer());
+      const response = await fetch(`${API_URL}/fund-attribution/parse-holdings-file`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          source_name: file.name,
+          content_base64: contentBase64,
+        }),
+      });
+      if (!response.ok) throw new Error(`File parse failed (${response.status})`);
+      setSourceName(file.name);
+      applyParseResult((await response.json()) as HoldingsParsePayload);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not parse uploaded workbook");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function applyParseResult(payload: HoldingsParsePayload) {
+    setParseResult(payload);
+    if (payload.as_of) setAsOf(payload.as_of);
+    if (payload.fund_name) setFundName(payload.fund_name);
   }
 
   async function analyze() {
@@ -287,7 +327,28 @@ export default function FundHoldingsParser() {
           </div>
 
           <label className="th-label mt-3 block" htmlFor="fund-holdings-text">
-            CSV / TSV 內容
+            上傳 JPM Excel 或貼上 CSV / TSV
+          </label>
+          <div className="mt-1 rounded-(--radius-ctl) border border-dashed border-elevated bg-page px-3 py-3">
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              disabled={busy !== null}
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = "";
+                if (file) void parseWorkbook(file);
+              }}
+              className="w-full text-[13px] text-neutral-70 file:mr-3 file:rounded-(--radius-ctl) file:border file:border-elevated file:bg-surface file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-neutral-40"
+            />
+            <p className="reader-meta mt-2 text-neutral-90">
+              支援 JPMAM 下載的投資組合 Excel；會讀取「基金資產 - 股票」中的股票代碼、股票名稱與權重。
+            </p>
+            {busy === "upload" && <p className="reader-meta mt-1 text-action">Excel 解析中...</p>}
+          </div>
+
+          <label className="th-label mt-3 block" htmlFor="fund-holdings-text">
+            手動貼上內容
           </label>
           <textarea
             id="fund-holdings-text"
