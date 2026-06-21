@@ -1,8 +1,9 @@
 // Server-side API client with graceful degradation: every helper returns null on
 // failure so the dashboard falls back to demo data instead of erroring.
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const SERVER_API_URL = process.env.API_URL ?? API_URL;
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const SERVER_API_URL =
+  process.env.API_URL ?? (API_URL.startsWith("http") ? API_URL : "http://localhost:8000");
 
 export type CitationDetail = {
   span_id: string;

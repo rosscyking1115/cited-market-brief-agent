@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 // Next.js runtime without nonce plumbing; the Phase 5 follow-up moves to
 // nonce-based CSP via proxy.ts (Next 16's middleware) before external launch.
 const isDev = process.env.NODE_ENV !== "production";
+const apiConnectSource = process.env.NEXT_PUBLIC_API_URL ? ` ${process.env.NEXT_PUBLIC_API_URL}` : "";
 
 const securityHeaders = [
   {
@@ -16,7 +17,7 @@ const securityHeaders = [
       "font-src 'self'",
       "manifest-src 'self'",
       "worker-src 'self'",
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}`,
+      `connect-src 'self'${apiConnectSource}${isDev ? " http://localhost:8000" : ""}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
