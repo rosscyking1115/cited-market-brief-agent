@@ -26,13 +26,13 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  applicationName: "Cited Market Brief",
+  applicationName: "Morning Market Radar",
   title: {
-    default: "Cited Market Brief Agent",
-    template: "%s · Cited Market Brief Agent",
+    default: "Morning Market Radar",
+    template: "%s · Morning Market Radar",
   },
   description:
-    "Cited, reviewable morning briefs from public data. Every claim validated against a stored source span.",
+    "A morning market radar from public data: what moved overnight, what opens next in Asia, and the headlines that matter — plus an evidence-backed company brief where every claim is validated against a stored source span.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Market Brief",
+    title: "Market Radar",
     statusBarStyle: "black-translucent",
   },
   formatDetection: {

@@ -1,12 +1,21 @@
 """Application settings (pydantic-settings). All secrets come from env, never the repo."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Resolve the repo-root .env regardless of the process CWD, so the documented
+# quickstart (`cd backend && uvicorn app.main:app`) still loads keys and feature
+# flags. Docker/staging inject config via real environment variables, which take
+# precedence over the file and don't depend on this path existing.
+_ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=str(_ROOT_ENV), env_file_encoding="utf-8", extra="ignore"
+    )
 
     environment: str = "development"
     log_level: str = "INFO"

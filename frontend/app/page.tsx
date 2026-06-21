@@ -330,6 +330,19 @@ export default async function Page() {
 
         <FundAttributionPanel plan={attributionPlan} />
 
+        <div className="flex flex-col gap-1 border-t border-hairline pt-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <p className="th-label">Secondary module · Beta</p>
+            <h2 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
+              Evidence-backed company brief
+            </h2>
+          </div>
+          <p className="reader-meta max-w-xl break-words text-neutral-90">
+            A separate research module: SEC filing changes and macro deltas, validated claim-by-claim against
+            stored source spans. Shown {isLive ? "live from your watchlist." : "with sample data — start the backend to go live."}
+          </p>
+        </div>
+
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-4 sm:space-y-5">
             <article className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card px-4 py-4 sm:px-6 sm:py-5">

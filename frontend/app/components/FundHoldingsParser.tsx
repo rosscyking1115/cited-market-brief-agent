@@ -329,9 +329,7 @@ export default function FundHoldingsParser() {
             </label>
           </div>
 
-          <label className="th-label mt-3 block" htmlFor="fund-holdings-text">
-            上傳 JPM Excel 或貼上 CSV / TSV
-          </label>
+          <label className="th-label mt-3 block">上傳 JPM Excel 檔（.xlsx / .xls）</label>
           <div className="mt-1 rounded-(--radius-ctl) border border-dashed border-elevated bg-page px-3 py-3">
             <input
               type="file"
@@ -351,7 +349,7 @@ export default function FundHoldingsParser() {
           </div>
 
           <label className="th-label mt-3 block" htmlFor="fund-holdings-text">
-            手動貼上內容
+            或手動貼上 CSV / TSV 內容
           </label>
           <textarea
             id="fund-holdings-text"
