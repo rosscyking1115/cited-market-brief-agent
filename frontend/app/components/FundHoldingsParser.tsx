@@ -15,8 +15,11 @@ const SAMPLE = `股票代號,股票名稱,持股比重,漲跌幅
 2454,聯發科,5.25%,-0.4%
 2882,國泰金,4.0%,-1.0%`;
 
-function fmt(value: number | null, suffix = "%") {
-  if (value === null) return "待資料";
+const buttonMotion =
+  "transition-[background-color,border-color,box-shadow,transform] hover:shadow-md active:translate-y-px disabled:translate-y-0 disabled:hover:shadow-none";
+
+function fmt(value: number | null, suffix = "%", nullLabel = "缺資料") {
+  if (value === null) return nullLabel;
   return `${value.toFixed(2)}${suffix}`;
 }
 
@@ -54,11 +57,11 @@ function ResultRows({ title, rows }: { title: string; rows: AttributionRow[] }) 
               <div className="min-w-0">
                 <p className="reader-body truncate text-neutral-40">{row.name}</p>
                 <p className="reader-meta text-neutral-90">
-                  權重 {fmt(row.weight_pct)} · 漲跌 {fmt(row.return_pct)}
+                  權重 {fmt(row.weight_pct)} · 漲跌 {fmt(row.return_pct, "%", "缺漲跌幅")}
                 </p>
               </div>
               <span className={`font-mono text-[12px] font-semibold ${rowTone(row)}`}>
-                {row.contribution_pct === null ? "缺資料" : signed(row.contribution_pct)}
+                {row.contribution_pct === null ? "缺漲跌幅" : signed(row.contribution_pct)}
               </span>
             </div>
           ))}
@@ -237,7 +240,7 @@ export default function FundHoldingsParser() {
             type="button"
             onClick={parse}
             disabled={busy !== null || !text.trim()}
-            className="min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className={`min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
           >
             {busy === "parse" ? "解析中..." : "解析持股"}
           </button>
@@ -245,7 +248,7 @@ export default function FundHoldingsParser() {
             type="button"
             onClick={fillReturnsFromTwse}
             disabled={busy !== null || !parseResult?.holdings.length}
-            className="min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
           >
             {busy === "fill" ? "補資料中..." : "用 TWSE 補漲跌幅"}
           </button>
@@ -253,7 +256,7 @@ export default function FundHoldingsParser() {
             type="button"
             onClick={analyze}
             disabled={busy !== null || !parseResult?.holdings.length}
-            className="min-h-9 rounded-(--radius-ctl) border border-up bg-up px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className={`min-h-9 rounded-(--radius-ctl) border border-up bg-up px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
           >
             {busy === "analyze" ? "分析中..." : "分析差異"}
           </button>
@@ -318,7 +321,7 @@ export default function FundHoldingsParser() {
                   type="button"
                   onClick={fillBenchmarkFromTwse}
                   disabled={busy !== null}
-                  className="rounded-(--radius-ctl) border border-elevated bg-page px-2 py-1.5 text-[12px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`rounded-(--radius-ctl) border border-elevated bg-page px-2 py-1.5 text-[12px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
                 >
                   {busy === "benchmark" ? "補中" : "TWSE"}
                 </button>
@@ -339,7 +342,7 @@ export default function FundHoldingsParser() {
                 event.currentTarget.value = "";
                 if (file) void parseWorkbook(file);
               }}
-              className="w-full text-[13px] text-neutral-70 file:mr-3 file:rounded-(--radius-ctl) file:border file:border-elevated file:bg-surface file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-neutral-40"
+              className="w-full text-[13px] text-neutral-70 file:mr-3 file:rounded-(--radius-ctl) file:border file:border-elevated file:bg-surface file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-neutral-40 file:transition-shadow file:hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             />
             <p className="reader-meta mt-2 text-neutral-90">
               支援 JPMAM 下載的投資組合 Excel；會讀取「基金資產 - 股票」中的股票代碼、股票名稱與權重。
@@ -366,9 +369,14 @@ export default function FundHoldingsParser() {
           <div className="border-b border-hairline px-3 py-2">
             <p className="th-label">解析結果</p>
             {parseResult ? (
-              <p className="reader-meta mt-1 text-neutral-90">
-                {parseResult.parsed_count} 檔 · 權重合計 {fmt(totalWeight)} · 略過 {parseResult.skipped_rows} 列
-              </p>
+              <div className="mt-1 space-y-1">
+                <p className="reader-meta text-neutral-90">
+                  {parseResult.parsed_count} 檔 · 權重合計 {fmt(totalWeight)} · 略過 {parseResult.skipped_rows} 列
+                </p>
+                <p className="reader-meta text-neutral-90">
+                  「缺漲跌幅」代表已讀到持股與權重，但還沒有該股票當日漲跌幅；按 TWSE 補資料後才可計算貢獻。
+                </p>
+              </div>
             ) : (
               <p className="reader-meta mt-1 text-neutral-90">尚未解析。</p>
             )}
@@ -398,7 +406,7 @@ export default function FundHoldingsParser() {
                   {fmt(holding.weight_pct)}
                   <br />
                   <span className={holding.return_pct === null ? "text-flag" : "text-neutral-90"}>
-                    {fmt(holding.return_pct)}
+                    {fmt(holding.return_pct, "%", "缺漲跌幅")}
                   </span>
                 </span>
               </div>
