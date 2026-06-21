@@ -1,51 +1,105 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRegion } from "@/app/components/RegionProvider";
+import type { UserRegion } from "@/lib/regions";
 
 const STORAGE_KEY = "cmb-onboarding-v1";
 
-const STEPS = [
-  {
-    title: "先看 3 句話早盤",
-    body: "最上方會用台北時間整理昨晚全球市場、今早亞洲開盤、以及今天先觀察什麼。",
-  },
-  {
-    title: "跟著全球市場時鐘",
-    body: "日本、韓國先開，再到台灣、香港/A股、歐洲、美國。狀態會顯示未開盤、盤中、午休或已收盤。",
-  },
-  {
-    title: "指數先看中文名稱",
-    body: "標普500、費半、日經225、KOSPI、加權指數都會保留英文代碼，但先用中文說明它代表什麼。",
-  },
-  {
-    title: "看不懂就打開小字典",
-    body: "殖利率、VIX、期貨、ADR 這類詞會用一兩句話解釋，目標是不用另外查。",
-  },
-  {
-    title: "需要時再看證據",
-    body: "下方仍保留原文與來源證據。任何重要句子都應該能回到資料來源，不只是一段 AI 摘要。",
-  },
-] as const;
+const STEPS: Record<UserRegion, { title: string; body: string }[]> = {
+  TW: [
+    {
+      title: "先看市場新聞",
+      body: "台灣版會先整理有來源、可點開閱讀的新聞，再接基金歸因與早盤資料。",
+    },
+    {
+      title: "語言已自動選好",
+      body: "選台灣後，文章會自動使用繁體中文閱讀輔助；原文仍保留，方便回到最準確的來源。",
+    },
+    {
+      title: "基金歸因可以上傳檔案",
+      body: "把 JPM 或基金公司下載的持股 Excel 放進來，就能看哪些持股讓基金贏或輸大盤。",
+    },
+    {
+      title: "只放能真的用的資料",
+      body: "未授權或還沒接好的指數行情會先藏起來，避免首頁看起來很多但實際不能判斷。",
+    },
+  ],
+  KR: [
+    {
+      title: "시장 뉴스를 먼저 봅니다",
+      body: "한국판은 링크와 출처가 있는 뉴스, 반도체·배터리, 아시아 개장 흐름을 우선 보여줍니다.",
+    },
+    {
+      title: "언어는 자동으로 바뀝니다",
+      body: "한국을 선택하면 브리프가 자동으로 한국어 읽기 모드로 열립니다. 감사용 원문은 그대로 보관됩니다.",
+    },
+    {
+      title: "펀드 분석은 다음 단계입니다",
+      body: "첫 파일 업로드 분석은 대만 ETF부터 지원하고, 한국 ETF/펀드 템플릿은 공식 자료원을 확인한 뒤 확장합니다.",
+    },
+  ],
+  UK: [
+    {
+      title: "Start with the market tape",
+      body: "The UK edition frames the page around the London morning: US close, sterling, gilts, Europe and macro context.",
+    },
+    {
+      title: "No translation click needed",
+      body: "English is the source language here, so the audited brief opens directly without a separate translation step.",
+    },
+    {
+      title: "Fund attribution comes by region",
+      body: "The Taiwan upload workflow is the pilot. UK fund/ETF attribution comes after we confirm official holdings and benchmark sources.",
+    },
+  ],
+  EU: [
+    {
+      title: "Start with the European open",
+      body: "The Europe edition frames the page around US close, euro, Bunds, STOXX sectors, energy and macro context.",
+    },
+    {
+      title: "No translation click needed",
+      body: "English is the source language here, so the audited brief opens directly without a separate translation step.",
+    },
+    {
+      title: "Fund attribution comes by region",
+      body: "The Taiwan upload workflow is the pilot. Europe fund/ETF attribution comes after we confirm official holdings and benchmark sources.",
+    },
+  ],
+};
+
+const GUIDE_UI: Record<UserRegion, { guide: string; skip: string; next: string; done: string }> = {
+  TW: { guide: "快速導覽", skip: "略過", next: "下一步", done: "完成" },
+  KR: { guide: "빠른 안내", skip: "건너뛰기", next: "다음", done: "완료" },
+  UK: { guide: "Quick guide", skip: "Skip", next: "Next", done: "Done" },
+  EU: { guide: "Quick guide", skip: "Skip", next: "Next", done: "Done" },
+};
 
 export default function OnboardingGuide() {
+  const { needsChoice, profile, ready } = useRegion();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const steps = STEPS[profile.region];
+  const ui = GUIDE_UI[profile.region];
 
   useEffect(() => {
+    if (!ready || needsChoice) return;
     if (window.localStorage.getItem(STORAGE_KEY) !== "done") {
+      setStep(0);
       setOpen(true);
     }
-  }, []);
+  }, [needsChoice, ready]);
 
   function close() {
     window.localStorage.setItem(STORAGE_KEY, "done");
     setOpen(false);
   }
 
-  if (!open) return null;
+  if (!open || !ready || needsChoice) return null;
 
-  const current = STEPS[step];
-  const last = step === STEPS.length - 1;
+  const current = steps[step];
+  const last = step === steps.length - 1;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/55 px-3 py-4 sm:items-center sm:justify-center">
@@ -57,14 +111,14 @@ export default function OnboardingGuide() {
       >
         <div className="flex items-center justify-between gap-3">
           <p className="th-label">
-            Quick guide {step + 1}/{STEPS.length}
+            {ui.guide} {step + 1}/{steps.length}
           </p>
           <button
             type="button"
             onClick={close}
-            className="rounded-(--radius-ctl) border border-elevated px-2 py-1 text-[12px] text-neutral-70 hover:border-action hover:text-neutral-30"
+            className="rounded-(--radius-ctl) border border-elevated px-2 py-1 text-[12px] text-neutral-70 transition-[border-color,box-shadow] hover:border-action hover:text-neutral-30 hover:shadow-sm"
           >
-            Skip
+            {ui.skip}
           </button>
         </div>
 
@@ -77,7 +131,7 @@ export default function OnboardingGuide() {
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <div className="flex gap-1.5">
-            {STEPS.map((item, index) => (
+            {steps.map((item, index) => (
               <span
                 key={item.title}
                 className={`h-1.5 w-6 rounded-full ${index <= step ? "bg-action" : "bg-elevated"}`}
@@ -89,9 +143,9 @@ export default function OnboardingGuide() {
           <button
             type="button"
             onClick={() => (last ? close() : setStep((currentStep) => currentStep + 1))}
-            className="min-h-10 rounded-(--radius-ctl) bg-action px-4 py-2 text-[14px] font-semibold text-white hover:bg-action-hover"
+            className="min-h-10 rounded-(--radius-ctl) bg-action px-4 py-2 text-[14px] font-semibold text-white transition-[background-color,box-shadow,transform] hover:bg-action-hover hover:shadow-md active:translate-y-px"
           >
-            {last ? "Done" : "Next"}
+            {last ? ui.done : ui.next}
           </button>
         </div>
       </section>

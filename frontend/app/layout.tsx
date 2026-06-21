@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Inter, Source_Serif_4 } from "next/font/google";
 import OnboardingGuide from "@/app/components/OnboardingGuide";
+import { RegionProvider } from "@/app/components/RegionProvider";
 import ServiceWorkerRegister from "@/app/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -65,8 +66,10 @@ export default function RootLayout({
       className={`${inter.variable} ${sourceSerif.variable} ${plexMono.variable}`}
     >
       <body>
-        {children}
-        <OnboardingGuide />
+        <RegionProvider>
+          {children}
+          <OnboardingGuide />
+        </RegionProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

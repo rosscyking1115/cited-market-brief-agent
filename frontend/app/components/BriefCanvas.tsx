@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import ApprovalChecklist from "@/app/components/ApprovalChecklist";
+import { useRegion } from "@/app/components/RegionProvider";
 import type { BriefLocale, BriefTranslation, ClaimRow, BriefSectionData, SectionEdit } from "@/lib/api";
 
 const ACTIONS = [
@@ -283,6 +284,8 @@ export default function BriefCanvas({
   const translationRequestRef = useRef(0);
   const translationPrefetchStartedRef = useRef(false);
   const translationPromisesRef = useRef<Partial<Record<TranslatableLocale, Promise<BriefTranslation>>>>({});
+  const { profile } = useRegion();
+  const regionalLocale = profile.briefLocale;
 
   const resolved = sections.every((_, i) => {
     const e = edits[String(i)];
@@ -389,6 +392,13 @@ export default function BriefCanvas({
     }
   }
 
+  useEffect(() => {
+    if (regionalLocale === locale) return;
+    void selectLocale(regionalLocale);
+    // The selected region is the source of truth; avoid re-running when locale state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [briefId, regionalLocale]);
+
   async function act(index: number, action: string, content?: string) {
     if (!live || approved || busy) return;
     setBusy(true);
@@ -468,9 +478,9 @@ export default function BriefCanvas({
       <div className="mt-5 rounded-(--radius-ctl) border border-hairline bg-page/60 px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="th-label">Reader language</p>
+            <p className="th-label">Reader edition · {profile.shortLabel}</p>
             <p className="reader-body mt-1 text-[12px] leading-relaxed text-neutral-70">
-              English stays visible as the accurate source; translations are reading aids.
+              {profile.languageLabel} is selected automatically from your region. Original text stays available as the audited source.
             </p>
           </div>
           <div className="grid w-full grid-cols-3 gap-1 rounded-(--radius-ctl) border border-elevated p-1 sm:w-auto sm:min-w-80">

@@ -9,6 +9,7 @@ import EvidenceLedger from "@/app/components/EvidenceLedger";
 import FundAttributionPanel from "@/app/components/FundAttributionPanel";
 import MorningMarketDashboard from "@/app/components/MorningMarketDashboard";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
+import { RegionSwitcher } from "@/app/components/RegionProvider";
 import TextSizeToggle from "@/app/components/TextSizeToggle";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import {
@@ -307,6 +308,7 @@ export default async function Page() {
             <span className="th-label mt-px hidden sm:inline">Taiwan morning · Evidence-backed</span>
           </div>
           <div className="flex min-w-0 basis-full items-center justify-between gap-2 sm:basis-auto sm:justify-start sm:gap-3">
+            <RegionSwitcher />
             <ThemeToggle />
             <TextSizeToggle />
             <span
