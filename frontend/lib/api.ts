@@ -201,6 +201,15 @@ export type HoldingInput = {
   return_pct: number | null;
 };
 
+export type AttributionRow = {
+  symbol: string;
+  name: string;
+  weight_pct: number;
+  return_pct: number | null;
+  contribution_pct: number | null;
+  direction: "positive" | "negative" | "flat" | "missing";
+};
+
 export type HoldingsParsePayload = {
   source_name: string;
   parsed_count: number;
@@ -209,6 +218,25 @@ export type HoldingsParsePayload = {
   holdings: HoldingInput[];
   warnings: string[];
   source_notes: string[];
+};
+
+export type FundAttributionPayload = {
+  fund_name: string;
+  benchmark_name: string;
+  as_of: string;
+  fund_return_pct: number;
+  benchmark_return_pct: number;
+  active_return_pct: number;
+  explained_return_pct: number;
+  residual_pct: number;
+  holdings_count: number;
+  contributors: AttributionRow[];
+  drags: AttributionRow[];
+  missing_returns: AttributionRow[];
+  source_notes: string[];
+  automation_policy: AutomationPolicyItem[];
+  summary_zh_hant: string;
+  disclaimer: string;
 };
 
 async function fetchJson<T>(path: string): Promise<T | null> {

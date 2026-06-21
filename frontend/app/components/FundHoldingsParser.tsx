@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { API_URL, type HoldingsParsePayload } from "@/lib/api";
+import {
+  API_URL,
+  type AttributionRow,
+  type FundAttributionPayload,
+  type HoldingsParsePayload,
+} from "@/lib/api";
 
 const SAMPLE = `股票代號,股票名稱,持股比重,漲跌幅
 2330,台積電,20.5%,1.2%
@@ -13,21 +18,69 @@ function fmt(value: number | null, suffix = "%") {
   return `${value.toFixed(2)}${suffix}`;
 }
 
+function signed(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function rowTone(row: AttributionRow) {
+  if (row.direction === "positive") return "text-up";
+  if (row.direction === "negative") return "text-down";
+  if (row.direction === "missing") return "text-flag";
+  return "text-neutral-70";
+}
+
+function ResultRows({ title, rows }: { title: string; rows: AttributionRow[] }) {
+  return (
+    <div className="rounded-(--radius-ctl) border border-hairline bg-page/50">
+      <div className="border-b border-hairline px-3 py-2">
+        <p className="th-label">{title}</p>
+      </div>
+      {rows.length ? (
+        <div className="divide-y divide-hairline">
+          {rows.map((row) => (
+            <div key={`${title}-${row.symbol}-${row.name}`} className="grid grid-cols-[58px_1fr_auto] gap-2 px-3 py-2">
+              <span className="font-mono text-[12px] text-neutral-90">{row.symbol}</span>
+              <div className="min-w-0">
+                <p className="reader-body truncate text-neutral-40">{row.name}</p>
+                <p className="reader-meta text-neutral-90">
+                  權重 {fmt(row.weight_pct)} · 漲跌 {fmt(row.return_pct)}
+                </p>
+              </div>
+              <span className={`font-mono text-[12px] font-semibold ${rowTone(row)}`}>
+                {row.contribution_pct === null ? "缺資料" : signed(row.contribution_pct)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="reader-meta px-3 py-3 text-neutral-90">沒有資料。</p>
+      )}
+    </div>
+  );
+}
+
 export default function FundHoldingsParser() {
   const [text, setText] = useState(SAMPLE);
   const [sourceName, setSourceName] = useState("JPM holdings paste");
-  const [result, setResult] = useState<HoldingsParsePayload | null>(null);
+  const [fundName, setFundName] = useState("主動摩根台灣鑫收益ETF");
+  const [benchmarkName, setBenchmarkName] = useState("台灣加權指數");
+  const [asOf, setAsOf] = useState(new Date().toISOString().slice(0, 10));
+  const [fundReturn, setFundReturn] = useState("0.42");
+  const [benchmarkReturn, setBenchmarkReturn] = useState("0.18");
+  const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
+  const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"parse" | "analyze" | null>(null);
 
   const totalWeight = useMemo(
-    () => result?.holdings.reduce((sum, row) => sum + row.weight_pct, 0) ?? 0,
-    [result],
+    () => parseResult?.holdings.reduce((sum, row) => sum + row.weight_pct, 0) ?? 0,
+    [parseResult],
   );
 
   async function parse() {
-    setBusy(true);
+    setBusy("parse");
     setError(null);
+    setAnalysis(null);
     try {
       const response = await fetch(`${API_URL}/fund-attribution/parse-holdings`, {
         method: "POST",
@@ -35,11 +88,45 @@ export default function FundHoldingsParser() {
         body: JSON.stringify({ source_name: sourceName, text }),
       });
       if (!response.ok) throw new Error(`Parse failed (${response.status})`);
-      setResult((await response.json()) as HoldingsParsePayload);
+      setParseResult((await response.json()) as HoldingsParsePayload);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not parse holdings");
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  async function analyze() {
+    if (!parseResult?.holdings.length) return;
+    const fundReturnPct = Number(fundReturn);
+    const benchmarkReturnPct = Number(benchmarkReturn);
+    if (!Number.isFinite(fundReturnPct) || !Number.isFinite(benchmarkReturnPct)) {
+      setError("請輸入基金與台灣加權指數的漲跌幅數字。");
+      return;
+    }
+
+    setBusy("analyze");
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/fund-attribution/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fund_name: fundName,
+          benchmark_name: benchmarkName,
+          as_of: asOf,
+          fund_return_pct: fundReturnPct,
+          benchmark_return_pct: benchmarkReturnPct,
+          holdings: parseResult.holdings,
+          source_notes: parseResult.source_notes,
+        }),
+      });
+      if (!response.ok) throw new Error(`Analyze failed (${response.status})`);
+      setAnalysis((await response.json()) as FundAttributionPayload);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not analyze attribution");
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -47,32 +134,87 @@ export default function FundHoldingsParser() {
     <div className="border-t border-hairline px-4 py-4 sm:px-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="th-label">持股表格解析</p>
+          <p className="th-label">持股歸因試算</p>
           <h3 className="reader-heading mt-1 font-semibold text-neutral-30">
-            先貼上 JPM 下載檔中的持股表，確認系統讀得懂
+            貼上持股後，直接看基金和台灣加權指數差在哪裡
           </h3>
         </div>
-        <button
-          type="button"
-          onClick={parse}
-          disabled={busy || !text.trim()}
-          className="min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy ? "解析中..." : "解析持股"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={parse}
+            disabled={busy !== null || !text.trim()}
+            className="min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy === "parse" ? "解析中..." : "解析持股"}
+          </button>
+          <button
+            type="button"
+            onClick={analyze}
+            disabled={busy !== null || !parseResult?.holdings.length}
+            className="min-h-9 rounded-(--radius-ctl) border border-up bg-up px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy === "analyze" ? "分析中..." : "分析差異"}
+          </button>
+        </div>
       </div>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.8fr)]">
+      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <div>
-          <label className="th-label" htmlFor="fund-source-name">
-            來源名稱
-          </label>
-          <input
-            id="fund-source-name"
-            value={sourceName}
-            onChange={(event) => setSourceName(event.target.value)}
-            className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 text-[13px] text-neutral-40 outline-none focus:border-action"
-          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="th-label">基金名稱</span>
+              <input
+                value={fundName}
+                onChange={(event) => setFundName(event.target.value)}
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+            <label className="block">
+              <span className="th-label">比較基準</span>
+              <input
+                value={benchmarkName}
+                onChange={(event) => setBenchmarkName(event.target.value)}
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+            <label className="block">
+              <span className="th-label">日期</span>
+              <input
+                type="date"
+                value={asOf}
+                onChange={(event) => setAsOf(event.target.value)}
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+            <label className="block">
+              <span className="th-label">來源名稱</span>
+              <input
+                value={sourceName}
+                onChange={(event) => setSourceName(event.target.value)}
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+            <label className="block">
+              <span className="th-label">基金當日漲跌幅 %</span>
+              <input
+                inputMode="decimal"
+                value={fundReturn}
+                onChange={(event) => setFundReturn(event.target.value)}
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+            <label className="block">
+              <span className="th-label">台灣加權指數漲跌幅 %</span>
+              <input
+                inputMode="decimal"
+                value={benchmarkReturn}
+                onChange={(event) => setBenchmarkReturn(event.target.value)}
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+          </div>
+
           <label className="th-label mt-3 block" htmlFor="fund-holdings-text">
             CSV / TSV 內容
           </label>
@@ -80,7 +222,7 @@ export default function FundHoldingsParser() {
             id="fund-holdings-text"
             value={text}
             onChange={(event) => setText(event.target.value)}
-            rows={7}
+            rows={8}
             className="mt-1 w-full resize-y rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[12px] leading-relaxed text-neutral-40 outline-none focus:border-action"
           />
           <p className="reader-meta mt-2 text-neutral-90">
@@ -91,9 +233,9 @@ export default function FundHoldingsParser() {
         <div className="rounded-(--radius-ctl) border border-hairline bg-page/50">
           <div className="border-b border-hairline px-3 py-2">
             <p className="th-label">解析結果</p>
-            {result ? (
+            {parseResult ? (
               <p className="reader-meta mt-1 text-neutral-90">
-                {result.parsed_count} 檔 · 權重合計 {fmt(totalWeight)} · 略過 {result.skipped_rows} 列
+                {parseResult.parsed_count} 檔 · 權重合計 {fmt(totalWeight)} · 略過 {parseResult.skipped_rows} 列
               </p>
             ) : (
               <p className="reader-meta mt-1 text-neutral-90">尚未解析。</p>
@@ -102,9 +244,9 @@ export default function FundHoldingsParser() {
 
           {error && <p className="reader-body px-3 py-3 text-down">{error}</p>}
 
-          {result?.warnings.length ? (
+          {parseResult?.warnings.length ? (
             <div className="border-b border-hairline px-3 py-2">
-              {result.warnings.map((warning) => (
+              {parseResult.warnings.map((warning) => (
                 <p key={warning} className="reader-meta text-flag">
                   {warning}
                 </p>
@@ -113,7 +255,7 @@ export default function FundHoldingsParser() {
           ) : null}
 
           <div className="max-h-72 overflow-auto">
-            {result?.holdings.slice(0, 12).map((holding) => (
+            {parseResult?.holdings.slice(0, 12).map((holding) => (
               <div
                 key={`${holding.symbol}-${holding.name}`}
                 className="grid grid-cols-[64px_1fr_auto] gap-2 border-b border-hairline px-3 py-2 last:border-b-0"
@@ -128,6 +270,51 @@ export default function FundHoldingsParser() {
           </div>
         </div>
       </div>
+
+      {analysis && (
+        <section className="mt-4 border-t border-hairline pt-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">
+              <p className="th-label">分析結論</p>
+              <p className="reader-heading mt-2 font-semibold text-neutral-30">{analysis.summary_zh_hant}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <div>
+                  <p className="th-label">相對表現</p>
+                  <p className={`mt-1 font-mono text-[18px] font-semibold ${analysis.active_return_pct >= 0 ? "text-up" : "text-down"}`}>
+                    {signed(analysis.active_return_pct)}
+                  </p>
+                </div>
+                <div>
+                  <p className="th-label">持股解釋</p>
+                  <p className="mt-1 font-mono text-[18px] font-semibold text-neutral-40">
+                    {signed(analysis.explained_return_pct)}
+                  </p>
+                </div>
+                <div>
+                  <p className="th-label">無法解釋殘差</p>
+                  <p className="mt-1 font-mono text-[18px] font-semibold text-flag">
+                    {signed(analysis.residual_pct)}
+                  </p>
+                </div>
+              </div>
+              <p className="reader-meta mt-3 text-neutral-90">{analysis.disclaimer}</p>
+            </div>
+
+            <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">
+              <p className="th-label">讀法</p>
+              <p className="reader-body mt-2 text-neutral-70">
+                正貢獻代表該持股推升基金表現；負貢獻代表拖累。殘差通常來自現金、未填報酬率、費用、權重日期和價格日期不同。
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-3 lg:grid-cols-3">
+            <ResultRows title="最大正貢獻" rows={analysis.contributors} />
+            <ResultRows title="最大拖累" rows={analysis.drags} />
+            <ResultRows title="缺少漲跌幅" rows={analysis.missing_returns.slice(0, 5)} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
