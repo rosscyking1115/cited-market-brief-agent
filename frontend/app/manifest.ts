@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Cited Market Brief Agent",
-    short_name: "Market Brief",
+    name: "Morning Market Radar",
+    short_name: "Market Radar",
     description:
-      "Cited, reviewable morning briefs from public market data with audit-ready evidence.",
+      "A morning market radar from public data — overnight risk, the Asia-to-US clock, and source-backed headlines, with an evidence-backed company brief.",
     start_url: "/",
     scope: "/",
     display: "standalone",
