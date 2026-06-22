@@ -41,11 +41,54 @@ _ALPHA_FAILURE_CACHE: dict[str, datetime] = {}
 _PERSISTED_CACHE_LOADED = False
 
 
+@dataclass
+class _NewsCache:
+    items: list[PopularNewsItem]
+    fetched_at: datetime
+
+
+_NEWS_CACHE: _NewsCache | None = None
+
+
 @router.get("", response_model=MorningRadarOut)
 def get_market_radar() -> MorningRadarOut:
-    popular_news: list[PopularNewsItem] = []
+    now = datetime.now(UTC)
+    popular_news = _cached_popular_news(now=now)
+
     snapshots = None
     overnight_risk: list[OvernightRiskItem] | None = None
+    market_values = _market_values()
+    if market_values:
+        snapshots = build_snapshots(market_values)
+        overnight_risk = build_overnight_risk(market_values)
+
+    return build_morning_radar(
+        popular_news=popular_news or None,
+        snapshots=snapshots,
+        overnight_risk=overnight_risk,
+    )
+
+
+def _cached_popular_news(*, now: datetime) -> list[PopularNewsItem]:
+    """Serve assembled news from a short-lived cache.
+
+    The endpoint blocks on live BBC/GDELT/NYT fetches that can exceed the
+    frontend server-render timeout. A brief TTL keeps the page fast; a transient
+    empty result falls back to the last good set instead of blanking the rail.
+    """
+    global _NEWS_CACHE
+    ttl = timedelta(seconds=max(settings.news_cache_ttl_seconds, 0))
+    if _NEWS_CACHE is not None and now - _NEWS_CACHE.fetched_at <= ttl:
+        return _NEWS_CACHE.items
+    fetched = _fetch_popular_news()
+    if fetched:
+        _NEWS_CACHE = _NewsCache(items=fetched, fetched_at=now)
+        return fetched
+    return _NEWS_CACHE.items if _NEWS_CACHE is not None else []
+
+
+def _fetch_popular_news() -> list[PopularNewsItem]:
+    popular_news: list[PopularNewsItem] = []
 
     if settings.bbc_rss_enabled:
         client = BbcRssClient()
@@ -86,16 +129,7 @@ def get_market_radar() -> MorningRadarOut:
         finally:
             client.close()
 
-    market_values = _market_values()
-    if market_values:
-        snapshots = build_snapshots(market_values)
-        overnight_risk = build_overnight_risk(market_values)
-
-    return build_morning_radar(
-        popular_news=normalize_popular_news_ranks(popular_news) if popular_news else None,
-        snapshots=snapshots,
-        overnight_risk=overnight_risk,
-    )
+    return normalize_popular_news_ranks(popular_news) if popular_news else []
 
 
 def _market_values() -> dict[str, AlphaMarketValue]:
