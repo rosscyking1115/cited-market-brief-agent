@@ -292,3 +292,43 @@ def test_fund_return_endpoint_rejects_bad_date_without_network() -> None:
     assert body["symbol"] == "00982A"
     assert body["return_pct"] is None
     assert "YYYY-MM-DD" in body["warnings"][0]
+
+
+def test_latest_endpoint_reports_unconfigured_when_empty(tmp_path, monkeypatch) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "fund_attribution_store_path", str(tmp_path / "fa"))
+    response = client.get("/fund-attribution/latest")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["configured"] is False
+    assert body["result"] is None
+
+
+def test_fund_config_round_trips_through_the_store(tmp_path, monkeypatch) -> None:
+    from app.core.config import settings
+    from app.fund_attribution.schemas import FundConfig
+    from app.fund_attribution.store import load_config, save_config
+
+    monkeypatch.setattr(settings, "fund_attribution_store_path", str(tmp_path / "fa"))
+    save_config(
+        FundConfig(
+            fund_name="主動摩根台灣鑫收益ETF",
+            fund_symbol="00982A",
+            holdings=[{"symbol": "2330", "name": "台積電", "weight_pct": 20.5}],
+        )
+    )
+
+    loaded = load_config()
+    assert loaded is not None
+    assert loaded.fund_symbol == "00982A"
+    assert loaded.holdings[0].symbol == "2330"
+
+
+def test_refresh_is_noop_without_config(tmp_path, monkeypatch) -> None:
+    from app.core.config import settings
+    from app.fund_attribution.service import refresh_latest_attribution
+
+    monkeypatch.setattr(settings, "fund_attribution_store_path", str(tmp_path / "empty"))
+    assert refresh_latest_attribution() is None

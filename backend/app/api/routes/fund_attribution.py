@@ -8,6 +8,7 @@ from app.fund_attribution.schemas import (
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
+    FundConfig,
     FundReturnOut,
     FundReturnRequest,
     HoldingReturnFillOut,
@@ -15,6 +16,7 @@ from app.fund_attribution.schemas import (
     HoldingsFileParseRequest,
     HoldingsParseOut,
     HoldingsParseRequest,
+    LatestAttributionOut,
 )
 from app.fund_attribution.service import (
     analyze_fund_attribution,
@@ -24,7 +26,10 @@ from app.fund_attribution.service import (
     fund_return_from_twse,
     parse_holdings_text,
     parse_holdings_workbook,
+    refresh_latest_attribution,
+    save_fund_config,
 )
+from app.fund_attribution.store import load_config, load_result
 
 router = APIRouter(prefix="/fund-attribution", tags=["fund-attribution"])
 
@@ -62,3 +67,31 @@ def benchmark_return_twse(request: BenchmarkReturnRequest) -> BenchmarkReturnOut
 @router.post("/fund-return/twse", response_model=FundReturnOut)
 def fund_return_twse(request: FundReturnRequest) -> FundReturnOut:
     return fund_return_from_twse(request)
+
+
+@router.put("/config", response_model=FundConfig)
+def put_config(config: FundConfig) -> FundConfig:
+    """Save the fund's holdings + code so the daily job can recompute unattended."""
+    return save_fund_config(config)
+
+
+@router.get("/latest", response_model=LatestAttributionOut)
+def get_latest() -> LatestAttributionOut:
+    """The most recent pre-computed attribution, ready to show on page load."""
+    result = load_result()
+    return LatestAttributionOut(
+        configured=load_config() is not None,
+        as_of=result.as_of if result else None,
+        result=result,
+    )
+
+
+@router.post("/refresh", response_model=LatestAttributionOut)
+def post_refresh() -> LatestAttributionOut:
+    """Recompute now from the saved config (manual trigger / cron)."""
+    result = refresh_latest_attribution()
+    return LatestAttributionOut(
+        configured=load_config() is not None,
+        as_of=result.as_of if result else None,
+        result=result,
+    )

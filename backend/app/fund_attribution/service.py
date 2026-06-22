@@ -3,7 +3,8 @@ import binascii
 import csv
 import io
 import re
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from openpyxl import load_workbook
 
@@ -16,6 +17,7 @@ from app.fund_attribution.schemas import (
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
+    FundConfig,
     FundReturnOut,
     FundReturnRequest,
     HoldingInput,
@@ -25,6 +27,9 @@ from app.fund_attribution.schemas import (
     HoldingsParseOut,
     HoldingsParseRequest,
 )
+from app.fund_attribution.store import load_config, save_result
+
+TAIPEI_TZ = ZoneInfo("Asia/Taipei")
 
 DISCLAIMER = "本頁提供績效歸因與教育資訊，不構成個人化投資建議或買賣建議。"
 
@@ -467,6 +472,68 @@ def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttribution
         ),
         disclaimer=DISCLAIMER,
     )
+
+
+def refresh_latest_attribution(as_of: date | None = None) -> FundAttributionOut | None:
+    """Recompute today's attribution from the saved config, using TWSE after-close
+    data, and persist it so the page can show it pre-computed. Returns None when no
+    fund has been configured yet. Designed to run unattended on an evening cron."""
+    config = load_config()
+    if config is None or not config.holdings:
+        return None
+
+    day = as_of or datetime.now(TAIPEI_TZ).date()
+    iso = day.isoformat()
+    notes: list[str] = list(config.source_notes)
+
+    fill = fill_holding_returns_from_twse(
+        HoldingReturnFillRequest(as_of=iso, holdings=config.holdings)
+    )
+    holdings = fill.holdings
+    notes.extend(fill.source_notes)
+
+    benchmark = benchmark_return_from_twse(BenchmarkReturnRequest(as_of=iso, benchmark="TAIEX"))
+    benchmark_return = benchmark.return_pct
+    notes.extend(benchmark.source_notes)
+
+    fund_return: float | None = None
+    if config.fund_symbol:
+        fund = fund_return_from_twse(FundReturnRequest(as_of=iso, symbol=config.fund_symbol))
+        fund_return = fund.return_pct
+        notes.extend(fund.source_notes)
+
+    explained = sum(
+        holding.weight_pct * holding.return_pct / 100
+        for holding in holdings
+        if holding.return_pct is not None
+    )
+    if fund_return is None:
+        fund_return = round(explained, 4)
+        notes.append("基金當日報酬以持股貢獻估算（未取得 ETF 收盤價）。")
+    if benchmark_return is None:
+        benchmark_return = 0.0
+        notes.append("未取得台灣加權指數當日報酬，暫以 0 計算。")
+
+    result = analyze_fund_attribution(
+        FundAttributionRequest(
+            fund_name=config.fund_name,
+            benchmark_name=config.benchmark_name,
+            as_of=iso,
+            fund_return_pct=fund_return,
+            benchmark_return_pct=benchmark_return,
+            holdings=holdings,
+            source_notes=notes,
+        )
+    )
+    save_result(result)
+    return result
+
+
+def save_fund_config(config: FundConfig) -> FundConfig:
+    from app.fund_attribution.store import save_config
+
+    save_config(config)
+    return config
 
 
 def _read_tabular_text(text: str) -> tuple[list[dict[str, str]], list[str]]:

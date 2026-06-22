@@ -46,6 +46,17 @@ class FundReturnRequest(BaseModel):
     symbol: str = Field(min_length=1)
 
 
+class FundConfig(BaseModel):
+    """Saved holdings + fund metadata so the daily job can recompute without an
+    upload. Holdings carry weights; returns are refilled from TWSE each run."""
+
+    fund_name: str = Field(min_length=1)
+    fund_symbol: str | None = None
+    benchmark_name: str = "台灣加權指數"
+    holdings: list[HoldingInput] = Field(min_length=1)
+    source_notes: list[str] = Field(default_factory=list)
+
+
 class AttributionRow(BaseModel):
     symbol: str
     name: str
@@ -78,6 +89,12 @@ class FundAttributionOut(BaseModel):
     automation_policy: list[AutomationPolicyItem]
     summary_zh_hant: str
     disclaimer: str
+
+
+class LatestAttributionOut(BaseModel):
+    configured: bool
+    as_of: str | None = None
+    result: FundAttributionOut | None = None
 
 
 class FundAttributionPlanOut(BaseModel):
