@@ -2,7 +2,7 @@
 
 import FundHoldingsParser from "@/app/components/FundHoldingsParser";
 import { useRegion } from "@/app/components/RegionProvider";
-import type { AutomationPolicyItem, FundAttributionPlanPayload } from "@/lib/api";
+import type { FundAttributionPlanPayload } from "@/lib/api";
 import type { UserRegion } from "@/lib/regions";
 
 const DEMO_PLAN: FundAttributionPlanPayload = {
@@ -95,32 +95,6 @@ const COPY: Record<
   },
 };
 
-function policyText(status: AutomationPolicyItem["status"], region: UserRegion) {
-  if (region === "KR") {
-    if (status === "allowed") return "자동 가능";
-    if (status === "manual_first") return "먼저 수동";
-    if (status === "needs_review") return "확인 필요";
-    return "차단";
-  }
-  if (region !== "TW") {
-    if (status === "allowed") return "Automatable";
-    if (status === "manual_first") return "Manual first";
-    if (status === "needs_review") return "Needs review";
-    return "Blocked";
-  }
-  if (status === "allowed") return "可自動";
-  if (status === "manual_first") return "先手動";
-  if (status === "needs_review") return "需確認";
-  return "不做";
-}
-
-function policyClass(status: AutomationPolicyItem["status"]) {
-  if (status === "allowed") return "border-up/50 bg-up/10 text-up";
-  if (status === "manual_first") return "border-action/50 bg-action/10 text-action";
-  if (status === "needs_review") return "border-flag/50 bg-flag/10 text-flag";
-  return "border-down/50 bg-down/10 text-down";
-}
-
 export default function FundAttributionPanel({
   plan,
 }: {
@@ -135,7 +109,7 @@ export default function FundAttributionPanel({
     <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card">
       <div className="border-b border-hairline px-4 py-4 sm:px-5">
         <p className="th-label">{copy.eyebrow}</p>
-        <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div className={isTaiwan ? "mt-2" : "mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"}>
           <div>
             <h2 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
               {copy.title}
@@ -144,69 +118,18 @@ export default function FundAttributionPanel({
               {isTaiwan ? data.target_use_case : copy.pilotBody}
             </p>
           </div>
-          <div className="rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
-            <p className="th-label">{copy.firstMarket}</p>
-            <p className="reader-body mt-1 font-semibold text-neutral-40">
-              {isTaiwan ? data.first_region : profile.label}
-            </p>
-            <p className="reader-meta mt-1 text-neutral-90">
-              {isTaiwan ? data.daily_trigger : copy.pilotTitle}
-            </p>
-          </div>
+          {!isTaiwan && (
+            <div className="rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
+              <p className="th-label">{copy.firstMarket}</p>
+              <p className="reader-body mt-1 font-semibold text-neutral-40">{profile.label}</p>
+              <p className="reader-meta mt-1 text-neutral-90">{copy.pilotTitle}</p>
+            </div>
+          )}
         </div>
       </div>
 
       {isTaiwan ? (
-        <>
-          <div className="grid gap-0 lg:grid-cols-2">
-            <div className="border-b border-hairline px-4 py-4 sm:px-5 lg:border-b-0 lg:border-r">
-              <p className="th-label">{copy.inputs}</p>
-              <ol className="mt-3 grid gap-2">
-                {data.required_inputs.map((item, index) => (
-                  <li key={item} className="grid grid-cols-[24px_1fr] gap-2">
-                    <span className="font-mono text-[12px] text-neutral-90">{index + 1}</span>
-                    <span className="reader-body text-neutral-50">{item}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="px-4 py-4 sm:px-5">
-              <p className="th-label">{copy.workflow}</p>
-              <ol className="mt-3 grid gap-2">
-                {data.first_supported_workflow.map((item, index) => (
-                  <li key={item} className="grid grid-cols-[24px_1fr] gap-2">
-                    <span className="font-mono text-[12px] text-neutral-90">{index + 1}</span>
-                    <span className="reader-body text-neutral-50">{item}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-
-          <div className="border-t border-hairline px-4 py-4 sm:px-5">
-            <p className="th-label">{copy.policy}</p>
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
-              {data.automation_policy.map((item) => (
-                <article
-                  key={item.label}
-                  className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-3 py-3"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="reader-body font-semibold text-neutral-40">{item.label}</h3>
-                    <span className={`rounded-(--radius-ctl) border px-1.5 py-0.5 font-mono text-[10px] ${policyClass(item.status)}`}>
-                      {policyText(item.status, profile.region)}
-                    </span>
-                  </div>
-                  <p className="reader-meta mt-2 text-neutral-90">{item.note}</p>
-                </article>
-              ))}
-            </div>
-            <p className="reader-meta mt-3 text-neutral-90">{data.disclaimer}</p>
-          </div>
-
-          <FundHoldingsParser />
-        </>
+        <FundHoldingsParser />
       ) : (
         <div className="border-t border-hairline px-4 py-4 sm:px-5">
           <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">
