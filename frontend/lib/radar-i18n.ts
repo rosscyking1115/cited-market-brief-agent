@@ -17,7 +17,7 @@ export type RadarLang = "tw" | "ko" | "en";
 type NarrativeLang = "ko" | "en";
 
 type RiskGroup = OvernightRiskItem["group"];
-export type RadarSection = "clock" | "risk" | "glossary" | "focus" | "dataTime";
+export type RadarSection = "clock" | "risk" | "glossary" | "focus" | "dataTime" | "mostRead";
 
 export function radarLang(region: UserRegion): RadarLang {
   if (region === "TW") return "tw";
@@ -58,6 +58,7 @@ export const SECTION_LABELS: Record<RadarSection, Record<RadarLang, string>> = {
   glossary: { tw: "名詞解釋", ko: "용어 설명", en: "Glossary" },
   focus: { tw: "目前焦點", ko: "현재 포커스", en: "Now" },
   dataTime: { tw: "資料時間", ko: "데이터 시간", en: "Data time" },
+  mostRead: { tw: "最多瀏覽", ko: "많이 본 기사", en: "Most read" },
 };
 
 export const RANK_KIND_LABELS: Record<RadarLang, Record<NewsRankKind, string>> = {
@@ -155,14 +156,16 @@ export const RISK_WHY: Record<string, Record<NarrativeLang, string>> = {
   },
 };
 
-export const NEWS_WHY: Record<NarrativeLang, { rss: string; api: string }> = {
+export const NEWS_WHY: Record<NarrativeLang, { latest: string; coverage: string; readership: string }> = {
   ko: {
-    rss: "해당 시간대에 게시된 BBC RSS 최신 뉴스이며, 조회수 순위가 아닙니다.",
-    api: "해당 시간대 GDELT에서 찾은 시장 관련 뉴스로, 트렌드/보도량 신호이며 조회수가 아닙니다.",
+    latest: "해당 시간대에 게시된 BBC RSS 최신 뉴스이며, 조회수 순위가 아닙니다.",
+    coverage: "해당 시간대 GDELT에서 찾은 시장 관련 뉴스로, 트렌드/보도량 신호이며 조회수가 아닙니다.",
+    readership: "NYT Most Popular API 기준 최근 1일 최다 조회 기사 — 실제 열독량 데이터입니다.",
   },
   en: {
-    rss: "Latest BBC RSS headlines published in this window — not a readership ranking.",
-    api: "Market-relevant news GDELT found in this window — a trend/coverage signal, not readership.",
+    latest: "Latest BBC RSS headlines published in this window — not a readership ranking.",
+    coverage: "Market-relevant news GDELT found in this window — a trend/coverage signal, not readership.",
+    readership: "Genuinely most-viewed over the last day via the NYT Most Popular API — real readership data.",
   },
 };
 
@@ -212,11 +215,12 @@ export function localizedGlossary(lang: RadarLang, twValue: GlossaryItem[]): Glo
 
 export function localizedNewsWhy(
   lang: RadarLang,
-  sourceStatus: string,
+  rankKind: NewsRankKind,
   twValue: string,
 ): string | null {
   if (lang === "tw") return twValue || null;
-  if (sourceStatus === "rss") return NEWS_WHY[lang].rss;
-  if (sourceStatus === "official_api") return NEWS_WHY[lang].api;
+  if (rankKind === "most_read" || rankKind === "most_viewed") return NEWS_WHY[lang].readership;
+  if (rankKind === "trending" || rankKind === "most_covered") return NEWS_WHY[lang].coverage;
+  if (rankKind === "latest") return NEWS_WHY[lang].latest;
   return null;
 }

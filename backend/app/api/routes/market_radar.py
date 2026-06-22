@@ -13,6 +13,7 @@ from fastapi import APIRouter
 from app.connectors.alpha_vantage import AlphaMarketValue, AlphaVantageClient
 from app.connectors.bbc import BbcRssClient
 from app.connectors.gdelt import GdeltClient
+from app.connectors.nyt import NytMostPopularClient
 from app.core.config import settings
 from app.market_radar.schemas import MorningRadarOut, OvernightRiskItem, PopularNewsItem
 from app.market_radar.service import (
@@ -22,6 +23,7 @@ from app.market_radar.service import (
     normalize_popular_news_ranks,
     popular_news_from_bbc,
     popular_news_from_gdelt,
+    popular_news_from_nyt,
 )
 
 router = APIRouter(prefix="/market-radar", tags=["market-radar"])
@@ -65,6 +67,22 @@ def get_market_radar() -> MorningRadarOut:
             )
         except Exception as exc:
             logger.info("GDELT news discovery fetch failed: %s", exc)
+        finally:
+            client.close()
+
+    if settings.nyt_enabled and settings.nyt_api_key.strip():
+        client = NytMostPopularClient()
+        try:
+            popular_news.extend(
+                popular_news_from_nyt(
+                    articles=client.most_viewed(
+                        period=settings.nyt_most_popular_period_days,
+                        max_records=20,
+                    ),
+                ),
+            )
+        except Exception as exc:
+            logger.info("NYT Most Popular fetch failed: %s", exc)
         finally:
             client.close()
 

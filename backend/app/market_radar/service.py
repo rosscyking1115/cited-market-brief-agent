@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from app.connectors.alpha_vantage import AlphaMarketValue
 from app.connectors.bbc import BbcArticle
 from app.connectors.gdelt import GdeltArticle
+from app.connectors.nyt import NytArticle
 from app.market_radar.schemas import (
     GlossaryItem,
     MarketClockItem,
@@ -430,6 +431,59 @@ def normalize_popular_news_ranks(items: list[PopularNewsItem]) -> list[PopularNe
         counters[item.window] += 1
         normalized.append(item.model_copy(update={"rank": counters[item.window]}))
     return normalized
+
+
+# NYT most-viewed mixes hard news with lifestyle; drop the clearly non-news
+# sections so a market-morning reader still gets a news-weighted "most read" list.
+NYT_SKIP_SECTIONS = {
+    "arts",
+    "automobiles",
+    "books",
+    "fashion",
+    "food",
+    "magazine",
+    "movies",
+    "music",
+    "real estate",
+    "sports",
+    "style",
+    "t magazine",
+    "theater",
+    "travel",
+    "well",
+}
+
+
+def _nyt_news_rows(*, articles: list[NytArticle], limit: int) -> list[PopularNewsItem]:
+    policy = source_policy("nyt_most_popular")
+    rows: list[PopularNewsItem] = []
+    for article in articles:
+        section = (article.section or "").strip().lower()
+        if section in NYT_SKIP_SECTIONS:
+            continue
+        rows.append(
+            PopularNewsItem(
+                rank=len(rows) + 1,
+                title=article.title,
+                title_zh_hant=article.title,
+                source=policy.display_name,
+                url=article.url,
+                published_at=article.published_at,
+                window="24h",
+                rank_kind="most_viewed",
+                source_status=policy.source_status,
+                category=_market_category(article.title),
+                why="NYT Most Popular API 近一日最多瀏覽文章；這是真實閱讀量資料，不是覆蓋度。",
+                rights_note=policy.rights_note,
+            )
+        )
+        if len(rows) >= limit:
+            break
+    return rows
+
+
+def popular_news_from_nyt(*, articles: list[NytArticle]) -> list[PopularNewsItem]:
+    return _nyt_news_rows(articles=articles, limit=8)
 
 
 def popular_news_from_gdelt(

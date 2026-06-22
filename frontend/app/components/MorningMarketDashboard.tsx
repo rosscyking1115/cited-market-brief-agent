@@ -277,14 +277,14 @@ function NewsGroup({
         <span className="font-mono text-[10px] text-neutral-90">{items.length} rows</span>
       </div>
       <div className="divide-y divide-hairline">
-        {items.map((item) => {
-          const why = localizedNewsWhy(lang, item.source_status, item.why);
+        {items.map((item, index) => {
+          const why = localizedNewsWhy(lang, item.rank_kind, item.why);
           return (
             <article
-              key={`${item.window}-${item.rank}-${item.source}-${item.url ?? item.title}`}
+              key={`${item.rank_kind}-${item.source}-${item.url ?? item.title}`}
               className="grid grid-cols-[28px_1fr] gap-2 px-3 py-3"
             >
-              <span className="font-mono text-[12px] text-neutral-90">{item.rank}</span>
+              <span className="font-mono text-[12px] text-neutral-90">{index + 1}</span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="rounded-(--radius-ctl) border border-elevated px-1.5 py-0.5 font-mono text-[10px] text-neutral-90">
@@ -337,8 +337,12 @@ function PopularNewsRail({
   lang: RadarLang;
 }) {
   const realItems = items.filter((item) => item.url);
-  const oneHour = realItems.filter((item) => item.window === "1h");
-  const day = realItems.filter((item) => item.window === "24h");
+  const isReadership = (item: PopularNewsItem) =>
+    item.rank_kind === "most_read" || item.rank_kind === "most_viewed";
+  const readership = realItems.filter(isReadership);
+  const latest = realItems.filter((item) => !isReadership(item));
+  const oneHour = latest.filter((item) => item.window === "1h");
+  const day = latest.filter((item) => item.window === "24h");
   const sourceCount = new Set(realItems.map((item) => item.source)).size;
   const categories = Array.from(new Set(realItems.map((item) => item.category))).slice(0, 8);
   const empty = emptyNewsText(lang);
@@ -371,6 +375,16 @@ function PopularNewsRail({
               </span>
             ))}
           </div>
+          {readership.length > 0 && (
+            <div className="mt-3">
+              <NewsGroup
+                label={SECTION_LABELS.mostRead[lang]}
+                items={readership}
+                profile={profile}
+                lang={lang}
+              />
+            </div>
+          )}
           <div className="mt-3 grid gap-3 lg:grid-cols-2">
             <NewsGroup label={profile.oneHourLabel} items={oneHour} profile={profile} lang={lang} />
             <NewsGroup label={profile.dayLabel} items={day} profile={profile} lang={lang} />
