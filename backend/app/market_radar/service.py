@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime, timedelta
 from typing import Literal
@@ -7,6 +8,7 @@ from app.connectors.alpha_vantage import AlphaMarketValue
 from app.connectors.bbc import BbcArticle
 from app.connectors.gdelt import GdeltArticle
 from app.connectors.nyt import NytArticle
+from app.core.config import settings
 from app.market_radar.schemas import (
     GlossaryItem,
     MarketClockItem,
@@ -21,6 +23,7 @@ from app.market_radar.schemas import (
 from app.sources.policy import source_policy
 
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
+logger = logging.getLogger(__name__)
 type RiskGroup = Literal["futures", "volatility", "fx", "commodities", "rates"]
 
 BUSINESS_CATEGORIES = {"business", "economy", "money"}
@@ -382,11 +385,12 @@ def _bbc_latest_rows(
     for article in articles:
         if article.published_at is None:
             continue
-        if not _is_market_relevant_bbc(article):
-            continue
         published = article.published_at.astimezone(TAIPEI_TZ)
         if published < cutoff:
             continue
+        # Show the latest top headlines (a morning catch-up), tagging market-relevant
+        # ones with their market category and everything else as 國際 (general).
+        category = _market_category(article.title) if _is_market_relevant_bbc(article) else "國際"
         rows.append(
             PopularNewsItem(
                 rank=len(rows) + 1,
@@ -398,9 +402,10 @@ def _bbc_latest_rows(
                 window=window,
                 rank_kind="latest",
                 source_status=policy.source_status,
-                category=_market_category(article.title),
+                category=category,
                 why="BBC RSS 在此時間窗內發布的最新新聞；這不是閱讀量排名。",
                 rights_note=policy.rights_note,
+                summary=article.summary,
             )
         )
         if len(rows) >= limit:
@@ -475,6 +480,7 @@ def _nyt_news_rows(*, articles: list[NytArticle], limit: int) -> list[PopularNew
                 category=_market_category(article.title),
                 why="NYT Most Popular API 近一日最多瀏覽文章；這是真實閱讀量資料，不是覆蓋度。",
                 rights_note=policy.rights_note,
+                summary=article.summary,
             )
         )
         if len(rows) >= limit:
@@ -686,11 +692,48 @@ def _glossary() -> list[GlossaryItem]:
     ]
 
 
+def generate_today_overview(items: list[PopularNewsItem]) -> str | None:
+    """A 2-3 sentence Traditional-Chinese morning brief synthesised from the top
+    headlines. Best-effort: returns None without an LLM key or on any failure, and
+    is strictly factual / non-advisory (no buy/sell/individual-stock guidance)."""
+    if not items or not settings.anthropic_api_key.strip():
+        return None
+    headlines = "\n".join(f"- {item.title}" for item in items[:10])
+    try:
+        import litellm  # noqa: PLC0415 — lazy import (library mode)
+
+        response = litellm.completion(
+            model=settings.generation_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "你是市場晨間新聞編輯。根據提供的頭條，用繁體中文寫 2-3 句的今日重點摘要，"
+                        "只陳述事實與主題，幫讀者快速掌握今天最重要的新聞。"
+                        "不得提供任何投資、買賣、進出場或個股建議。"
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"今日最多人閱讀與最新的新聞頭條：\n{headlines}\n\n請寫 2-3 句今日新聞重點摘要。",
+                },
+            ],
+            max_tokens=240,
+            temperature=0.3,
+        )
+        text = (response.choices[0].message.content or "").strip()
+        return text or None
+    except Exception as exc:  # noqa: BLE001 - overview is optional; never break the radar.
+        logger.info("Today overview generation failed: %s", exc)
+        return None
+
+
 def build_morning_radar(
     now: datetime | None = None,
     popular_news: list[PopularNewsItem] | None = None,
     snapshots: list[MarketSnapshotItem] | None = None,
     overnight_risk: list[OvernightRiskItem] | None = None,
+    today_overview: str | None = None,
 ) -> MorningRadarOut:
     generated_at = now or datetime.now(TAIPEI_TZ)
     market_clock = _market_clock(generated_at)
@@ -702,6 +745,7 @@ def build_morning_radar(
     return MorningRadarOut(
         generated_at=generated_at.astimezone(TAIPEI_TZ).isoformat(),
         headline="今天先看全球市場，再看台股開盤",
+        today_overview=today_overview,
         summary_points=[
             "美股與歐股收盤先決定隔夜基調。",
             "08:00 先看日本、韓國；09:00 接台股。",

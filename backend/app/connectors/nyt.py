@@ -20,6 +20,7 @@ class NytArticle:
     url: str
     published_at: str | None
     section: str | None
+    summary: str | None = None
 
 
 class NytMostPopularClient:
@@ -59,6 +60,7 @@ def parse_nyt_most_popular(payload: object, *, max_records: int) -> list[NytArti
                 url=url,
                 published_at=str(raw.get("published_date") or "").strip() or None,
                 section=str(raw.get("section") or "").strip() or None,
+                summary=str(raw.get("abstract") or "").strip() or None,
             )
         )
         if len(rows) >= max_records:

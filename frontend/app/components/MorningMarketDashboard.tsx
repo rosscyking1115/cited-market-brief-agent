@@ -264,20 +264,24 @@ function NewsGroup({
   items,
   profile,
   lang,
+  showHeader = true,
 }: {
   label: string;
   items: PopularNewsItem[];
   profile: RegionProfile;
   lang: RadarLang;
+  showHeader?: boolean;
 }) {
   if (items.length === 0) return null;
 
   return (
     <div className="rounded-(--radius-ctl) border border-hairline bg-page/50">
-      <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2">
-        <p className="th-label">{label}</p>
-        <span className="font-mono text-[10px] text-neutral-90">{items.length} rows</span>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2">
+          <p className="th-label">{label}</p>
+          <span className="font-mono text-[10px] text-neutral-90">{items.length} rows</span>
+        </div>
+      )}
       <div className="divide-y divide-hairline">
         {items.map((item, index) => {
           const why = localizedNewsWhy(lang, item.rank_kind, item.why);
@@ -311,6 +315,9 @@ function NewsGroup({
                 ) : (
                   <h3 className="reader-body mt-1 font-semibold text-neutral-40">{newsTitle(item, lang)}</h3>
                 )}
+                {item.summary && (
+                  <p className="reader-meta mt-1 line-clamp-2 text-neutral-70">{item.summary}</p>
+                )}
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   {publishedText(item.published_at, profile, lang) && (
                     <span className="reader-meta font-mono text-neutral-90" suppressHydrationWarning>
@@ -333,20 +340,32 @@ function PopularNewsRail({
   items,
   profile,
   lang,
+  overview,
 }: {
   items: PopularNewsItem[];
   profile: RegionProfile;
   lang: RadarLang;
+  overview: string | null;
 }) {
   const realItems = items.filter((item) => item.url);
   const isReadership = (item: PopularNewsItem) =>
     item.rank_kind === "most_read" || item.rank_kind === "most_viewed";
-  const readership = realItems.filter(isReadership);
   const latest = realItems.filter((item) => !isReadership(item));
-  const oneHour = latest.filter((item) => item.window === "1h");
-  const day = latest.filter((item) => item.window === "24h");
-  const sourceCount = new Set(realItems.map((item) => item.source)).size;
-  const categories = Array.from(new Set(realItems.map((item) => item.category))).slice(0, 8);
+  const groups = [
+    { key: "most", label: SECTION_LABELS.mostRead[lang], items: realItems.filter(isReadership) },
+    { key: "1h", label: profile.oneHourLabel, items: latest.filter((i) => i.window === "1h") },
+    { key: "24h", label: profile.dayLabel, items: latest.filter((i) => i.window === "24h") },
+  ].filter((group) => group.items.length > 0);
+
+  const [activeTab, setActiveTab] = useState("most");
+  const [activeCat, setActiveCat] = useState<string | null>(null);
+  const active = groups.find((group) => group.key === activeTab) ?? groups[0];
+  const cats = active ? Array.from(new Set(active.items.map((i) => i.category))) : [];
+  const shown =
+    active && activeCat && cats.includes(activeCat)
+      ? active.items.filter((i) => i.category === activeCat)
+      : (active?.items ?? []);
+  const allLabel = lang === "tw" ? "全部" : lang === "ko" ? "전체" : "All";
   const empty = emptyNewsText(lang);
 
   return (
@@ -359,37 +378,73 @@ function PopularNewsRail({
         <p className="reader-meta max-w-xl text-neutral-90">{profile.newsHelper}</p>
       </div>
 
-      {realItems.length > 0 ? (
+      {overview && (
+        <div className="mt-3 rounded-(--radius-ctl) border border-action/40 bg-action/5 px-4 py-3">
+          <p className="th-label text-action">今日重點</p>
+          <p className="reader-body mt-1 text-neutral-40">{overview}</p>
+          <p className="reader-meta mt-1 text-neutral-90">
+            AI 依今日頭條整理，僅供快速掌握，不構成投資或買賣建議。
+          </p>
+        </div>
+      )}
+
+      {groups.length > 0 && active ? (
         <>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-(--radius-ctl) border border-action/50 bg-action/10 px-2 py-1 font-mono text-[10px] text-action">
-              {realItems.length} headlines
-            </span>
-            <span className="rounded-(--radius-ctl) border border-elevated px-2 py-1 font-mono text-[10px] text-neutral-90">
-              {sourceCount} sources
-            </span>
-            {categories.map((category) => (
-              <span
-                key={category}
-                className="rounded-(--radius-ctl) border border-elevated px-2 py-1 text-[11px] text-neutral-70"
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {groups.map((group) => (
+              <button
+                key={group.key}
+                type="button"
+                onClick={() => {
+                  setActiveTab(group.key);
+                  setActiveCat(null);
+                }}
+                className={`rounded-(--radius-ctl) border px-3 py-1 text-[12px] font-semibold transition-colors ${
+                  active.key === group.key
+                    ? "border-action bg-action/10 text-action"
+                    : "border-elevated text-neutral-70 hover:text-neutral-30"
+                }`}
               >
-                {category}
-              </span>
+                {group.label}
+                <span className="ml-1.5 font-mono text-[10px] text-neutral-90">{group.items.length}</span>
+              </button>
             ))}
           </div>
-          {readership.length > 0 && (
-            <div className="mt-3">
-              <NewsGroup
-                label={SECTION_LABELS.mostRead[lang]}
-                items={readership}
-                profile={profile}
-                lang={lang}
-              />
+
+          {cats.length > 1 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveCat(null)}
+                className={`rounded-(--radius-ctl) border px-2 py-0.5 text-[11px] transition-colors ${
+                  activeCat === null ? "border-action text-action" : "border-elevated text-neutral-70"
+                }`}
+              >
+                {allLabel}
+              </button>
+              {cats.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setActiveCat(category)}
+                  className={`rounded-(--radius-ctl) border px-2 py-0.5 text-[11px] transition-colors ${
+                    activeCat === category ? "border-action text-action" : "border-elevated text-neutral-70"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
           )}
-          <div className="mt-3 grid gap-3 lg:grid-cols-2">
-            <NewsGroup label={profile.oneHourLabel} items={oneHour} profile={profile} lang={lang} />
-            <NewsGroup label={profile.dayLabel} items={day} profile={profile} lang={lang} />
+
+          <div className="mt-3">
+            <NewsGroup
+              label={active.label}
+              items={shown}
+              profile={profile}
+              lang={lang}
+              showHeader={false}
+            />
           </div>
         </>
       ) : (
@@ -459,7 +514,12 @@ export default function MorningMarketDashboard({
 
       {showContext && <OvernightRiskRail items={radar.overnight_risk} lang={lang} />}
 
-      <PopularNewsRail items={radar.popular_news} profile={profile} lang={lang} />
+      <PopularNewsRail
+        items={radar.popular_news}
+        profile={profile}
+        lang={lang}
+        overview={lang === "tw" ? (radar.today_overview ?? null) : null}
+      />
 
       {showContext && <Glossary items={glossary} lang={lang} />}
 

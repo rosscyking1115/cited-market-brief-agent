@@ -140,6 +140,7 @@ export type PopularNewsItem = {
   category: string;
   why: string;
   rights_note: string;
+  summary?: string | null;
 };
 
 export type OvernightRiskItem = {
@@ -167,6 +168,7 @@ export type MorningRadarPayload = {
   generated_at: string;
   timezone: string;
   headline: string;
+  today_overview?: string | null;
   summary_points: [string, string, string];
   current_focus: string;
   market_clock: MarketClockItem[];
