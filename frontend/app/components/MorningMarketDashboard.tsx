@@ -403,6 +403,9 @@ function PopularNewsRail({
 export default function MorningMarketDashboard({ radar }: { radar: MorningRadarPayload }) {
   const { profile } = useRegion();
   const lang = radarLang(profile.region);
+  // Taiwan is the focused consumer edition: news only. Other editions keep the
+  // morning summary, market clock, overnight-risk rail, and glossary.
+  const showContext = profile.region !== "TW";
   const glossary = localizedGlossary(lang, radar.glossary);
   const disclaimer = localizedDisclaimer(lang, radar.disclaimer);
 
@@ -428,15 +431,15 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
         </div>
       </div>
 
-      <MorningSummary radar={radar} lang={lang} />
+      {showContext && <MorningSummary radar={radar} lang={lang} />}
 
-      <MarketClock items={radar.market_clock} lang={lang} />
+      {showContext && <MarketClock items={radar.market_clock} lang={lang} />}
 
-      <OvernightRiskRail items={radar.overnight_risk} lang={lang} />
+      {showContext && <OvernightRiskRail items={radar.overnight_risk} lang={lang} />}
 
       <PopularNewsRail items={radar.popular_news} profile={profile} lang={lang} />
 
-      <Glossary items={glossary} lang={lang} />
+      {showContext && <Glossary items={glossary} lang={lang} />}
 
       {disclaimer && (
         <p className="reader-meta border-t border-hairline px-4 py-3 text-neutral-90 sm:px-5">{disclaimer}</p>

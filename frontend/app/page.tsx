@@ -9,6 +9,7 @@ import EvidenceLedger from "@/app/components/EvidenceLedger";
 import FundAttributionPanel from "@/app/components/FundAttributionPanel";
 import MorningMarketDashboard from "@/app/components/MorningMarketDashboard";
 import RepairClaimButton from "@/app/components/RepairClaimButton";
+import { HideOnTaiwan } from "@/app/components/RegionGate";
 import { RegionSwitcher } from "@/app/components/RegionProvider";
 import TextSizeToggle from "@/app/components/TextSizeToggle";
 import ThemeToggle from "@/app/components/ThemeToggle";
@@ -311,16 +312,18 @@ export default async function Page() {
             <RegionSwitcher />
             <ThemeToggle />
             <TextSizeToggle />
-            <span
-              className={`rounded-(--radius-ctl) border px-2 py-0.5 font-mono text-[10px] ${
-                isLive ? "border-up/60 text-up" : "border-elevated text-neutral-90"
-              }`}
-            >
-              {isLive ? "● LIVE" : "○ DEMO DATA"}
-            </span>
-            <span className="hidden rounded-(--radius-ctl) border border-flag/60 px-2 py-0.5 text-[11px] font-medium text-flag sm:inline">
-              INTERNAL RESEARCH DRAFT
-            </span>
+            <HideOnTaiwan>
+              <span
+                className={`rounded-(--radius-ctl) border px-2 py-0.5 font-mono text-[10px] ${
+                  isLive ? "border-up/60 text-up" : "border-elevated text-neutral-90"
+                }`}
+              >
+                {isLive ? "● LIVE" : "○ DEMO DATA"}
+              </span>
+              <span className="hidden rounded-(--radius-ctl) border border-flag/60 px-2 py-0.5 text-[11px] font-medium text-flag sm:inline">
+                INTERNAL RESEARCH DRAFT
+              </span>
+            </HideOnTaiwan>
           </div>
         </div>
       </header>
@@ -330,6 +333,7 @@ export default async function Page() {
 
         <FundAttributionPanel plan={attributionPlan} />
 
+        <HideOnTaiwan>
         <div className="flex flex-col gap-1 border-t border-hairline pt-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="th-label">Secondary module · Beta</p>
@@ -438,6 +442,7 @@ export default async function Page() {
         </div>
 
         <EvidenceLedger claims={data.claims} apiUrl={API_URL} live={isLive} />
+        </HideOnTaiwan>
 
         <footer className="reader-meta px-1 pb-6 text-[11px] leading-relaxed text-neutral-90">
           Internal research draft. Factual, cited, non-personalized. Not investment advice, not a
