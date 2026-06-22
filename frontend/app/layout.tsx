@@ -66,6 +66,18 @@ export default function RootLayout({
       className={`${inter.variable} ${sourceSerif.variable} ${plexMono.variable}`}
     >
       <body>
+        {/* Apply saved theme / text-size / region before first paint to avoid a
+            dark→light (and region/text-size) flash on load. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var d=document.documentElement;" +
+              "var t=localStorage.getItem('cmb-theme');d.dataset.theme=t==='dark'?'dark':'light';" +
+              "var s=localStorage.getItem('cmb-text-size');if(s==='large'||s==='xl')d.dataset.textSize=s;" +
+              "var r=localStorage.getItem('cmb-region-v1');if(r)d.dataset.region=String(r).toLowerCase();" +
+              "}catch(e){}})();",
+          }}
+        />
         <RegionProvider>
           {children}
           <OnboardingGuide />

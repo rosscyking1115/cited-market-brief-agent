@@ -69,6 +69,15 @@ def get_market_radar() -> MorningRadarOut:
     )
 
 
+def prewarm_news() -> None:
+    """Populate the news cache off the request path (called at app startup), so the
+    first page render shows live news instead of the demo fallback on a cold start."""
+    try:
+        _cached_popular_news(now=datetime.now(UTC))
+    except Exception as exc:  # noqa: BLE001 - startup warmup must never crash the app.
+        logger.info("News prewarm failed: %s", exc)
+
+
 def _cached_popular_news(*, now: datetime) -> list[PopularNewsItem]:
     """Serve assembled news from a short-lived cache.
 

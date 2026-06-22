@@ -5,6 +5,10 @@ no portfolio advice, no performance presentation. Advice-boundary guardrails wra
 all generation endpoints (Phase 2).
 """
 
+import threading
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,11 +27,21 @@ from app.core.config import settings
 from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import require_auth
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    # Warm the morning-radar news cache off the request path so the first page
+    # render is live, not the demo fallback, even on a freshly started container.
+    threading.Thread(target=market_radar.prewarm_news, daemon=True).start()
+    yield
+
+
 app = FastAPI(
     title="Cited Market Brief Agent API",
     version=__version__,
     description="Audit-ready public-data brief engine. Internal research drafts only; "
     "not investment advice.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
