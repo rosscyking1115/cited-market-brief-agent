@@ -273,11 +273,11 @@ export type FundAttributionPayload = {
   disclaimer: string;
 };
 
-async function fetchJson<T>(path: string): Promise<T | null> {
+async function fetchJson<T>(path: string, timeoutMs = 1500): Promise<T | null> {
   try {
     const res = await fetch(`${SERVER_API_URL}${path}`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) return null;
     return (await res.json()) as T;
@@ -305,9 +305,10 @@ export async function getLatestEvidence(): Promise<EvidencePayload | null> {
   return null;
 }
 
-/** Taiwan-morning market radar payload, or null when the API/DB isn't reachable. */
+/** Taiwan-morning market radar payload, or null when the API/DB isn't reachable.
+ * Longer timeout: the endpoint blocks on live news fetches on a cold cache. */
 export async function getMorningRadar(): Promise<MorningRadarPayload | null> {
-  return fetchJson<MorningRadarPayload>("/market-radar");
+  return fetchJson<MorningRadarPayload>("/market-radar", 6000);
 }
 
 /** Fund attribution workflow plan, or null when the API isn't reachable. */

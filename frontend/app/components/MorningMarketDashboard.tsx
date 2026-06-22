@@ -311,7 +311,7 @@ function NewsGroup({
                 )}
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   {publishedText(item.published_at, profile, lang) && (
-                    <span className="reader-meta font-mono text-neutral-90">
+                    <span className="reader-meta font-mono text-neutral-90" suppressHydrationWarning>
                       {publishedText(item.published_at, profile, lang)}
                     </span>
                   )}
@@ -421,7 +421,7 @@ export default function MorningMarketDashboard({ radar }: { radar: MorningRadarP
           </div>
           <div className="shrink-0 rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
             <p className="th-label">{SECTION_LABELS.dataTime[lang]}</p>
-            <p className="mt-1 font-mono text-[15px] font-semibold text-neutral-40">
+            <p className="mt-1 font-mono text-[15px] font-semibold text-neutral-40" suppressHydrationWarning>
               {formatInRegion(radar.generated_at, profile, lang)} {profile.marketAnchor}
             </p>
           </div>

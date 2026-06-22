@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     nyt_request_timeout_seconds: float = 8.0
     nyt_most_popular_period_days: int = 1
 
+    # Popular-news (BBC/GDELT/NYT) cache. The radar endpoint blocks on live news
+    # fetches that can exceed the frontend's server-render timeout, so cache the
+    # assembled rows briefly — a morning page doesn't need per-request news reads.
+    news_cache_ttl_seconds: int = 600
+
     # Alpha Vantage pilot feed for FX, commodities, and rates. Use only where terms permit.
     alpha_vantage_enabled: bool = False
     alpha_vantage_api_key: str = ""
