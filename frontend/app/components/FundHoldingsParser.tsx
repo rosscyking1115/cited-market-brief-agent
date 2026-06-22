@@ -6,6 +6,7 @@ import {
   type AttributionRow,
   type BenchmarkReturnPayload,
   type FundAttributionPayload,
+  type FundReturnPayload,
   type HoldingReturnFillPayload,
   type HoldingsParsePayload,
 } from "@/lib/api";
@@ -77,6 +78,7 @@ export default function FundHoldingsParser() {
   const [text, setText] = useState(SAMPLE);
   const [sourceName, setSourceName] = useState("JPM holdings paste");
   const [fundName, setFundName] = useState("主動摩根台灣鑫收益ETF");
+  const [fundSymbol, setFundSymbol] = useState("");
   const [benchmarkName, setBenchmarkName] = useState("台灣加權指數");
   const [asOf, setAsOf] = useState(new Date().toISOString().slice(0, 10));
   const [fundReturn, setFundReturn] = useState("0.42");
@@ -84,7 +86,9 @@ export default function FundHoldingsParser() {
   const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
   const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"parse" | "upload" | "fill" | "benchmark" | "analyze" | null>(null);
+  const [busy, setBusy] = useState<
+    "parse" | "upload" | "fill" | "benchmark" | "fund" | "analyze" | null
+  >(null);
 
   const totalWeight = useMemo(
     () => parseResult?.holdings.reduce((sum, row) => sum + row.weight_pct, 0) ?? 0,
@@ -175,11 +179,46 @@ export default function FundHoldingsParser() {
     }
   }
 
+  async function fetchBenchmarkReturn(): Promise<{ warning?: string }> {
+    const response = await fetch(`${API_URL}/fund-attribution/benchmark-return/twse`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ as_of: asOf, benchmark: "TAIEX" }),
+    });
+    if (!response.ok) throw new Error(`TWSE benchmark failed (${response.status})`);
+    const payload = (await response.json()) as BenchmarkReturnPayload;
+    if (payload.return_pct === null) {
+      return { warning: payload.warnings[0] ?? "沒有補到台灣加權指數漲跌幅。" };
+    }
+    setBenchmarkName(payload.name);
+    setBenchmarkReturn(String(payload.return_pct));
+    return {};
+  }
+
+  async function fetchFundReturn(): Promise<{ warning?: string }> {
+    if (!fundSymbol.trim()) return {};
+    const response = await fetch(`${API_URL}/fund-attribution/fund-return/twse`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ as_of: asOf, symbol: fundSymbol.trim() }),
+    });
+    if (!response.ok) throw new Error(`TWSE fund return failed (${response.status})`);
+    const payload = (await response.json()) as FundReturnPayload;
+    if (payload.return_pct === null) {
+      return { warning: payload.warnings[0] ?? "沒有補到基金/ETF 當日漲跌幅。" };
+    }
+    setFundReturn(String(payload.return_pct));
+    return {};
+  }
+
+  // One click after upload: fill every holding's return, the TAIEX benchmark, and
+  // (when a fund code is set) the ETF's own return — so nothing is typed by hand.
   async function fillReturnsFromTwse() {
     if (!parseResult?.holdings.length) return;
     setBusy("fill");
     setError(null);
     setAnalysis(null);
+    const notes: string[] = [];
     try {
       const response = await fetch(`${API_URL}/fund-attribution/fill-returns/twse`, {
         method: "POST",
@@ -194,6 +233,12 @@ export default function FundHoldingsParser() {
         warnings: [...parseResult.warnings, ...payload.warnings],
         source_notes: [...parseResult.source_notes, ...payload.source_notes],
       });
+
+      const benchmark = await fetchBenchmarkReturn();
+      if (benchmark.warning) notes.push(benchmark.warning);
+      const fund = await fetchFundReturn();
+      if (fund.warning) notes.push(fund.warning);
+      if (notes.length) setError(notes.join("　"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not fill returns from TWSE");
     } finally {
@@ -206,21 +251,28 @@ export default function FundHoldingsParser() {
     setError(null);
     setAnalysis(null);
     try {
-      const response = await fetch(`${API_URL}/fund-attribution/benchmark-return/twse`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ as_of: asOf, benchmark: "TAIEX" }),
-      });
-      if (!response.ok) throw new Error(`TWSE benchmark failed (${response.status})`);
-      const payload = (await response.json()) as BenchmarkReturnPayload;
-      if (payload.return_pct === null) {
-        setError(payload.warnings[0] ?? "沒有補到台灣加權指數漲跌幅。");
-        return;
-      }
-      setBenchmarkName(payload.name);
-      setBenchmarkReturn(String(payload.return_pct));
+      const result = await fetchBenchmarkReturn();
+      if (result.warning) setError(result.warning);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not fill benchmark from TWSE");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function fillFundReturnFromTwse() {
+    if (!fundSymbol.trim()) {
+      setError("請先輸入基金/ETF 在台股的代號（例：00982A）。");
+      return;
+    }
+    setBusy("fund");
+    setError(null);
+    setAnalysis(null);
+    try {
+      const result = await fetchFundReturn();
+      if (result.warning) setError(result.warning);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not fill fund return from TWSE");
     } finally {
       setBusy(null);
     }
@@ -250,7 +302,7 @@ export default function FundHoldingsParser() {
             disabled={busy !== null || !parseResult?.holdings.length}
             className={`min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
           >
-            {busy === "fill" ? "補資料中..." : "用 TWSE 補漲跌幅"}
+            {busy === "fill" ? "補資料中..." : "用 TWSE 補全部漲跌幅"}
           </button>
           <button
             type="button"
@@ -272,6 +324,15 @@ export default function FundHoldingsParser() {
                 value={fundName}
                 onChange={(event) => setFundName(event.target.value)}
                 className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 text-[13px] text-neutral-40 outline-none focus:border-action"
+              />
+            </label>
+            <label className="block">
+              <span className="th-label">基金 / ETF 代號</span>
+              <input
+                value={fundSymbol}
+                onChange={(event) => setFundSymbol(event.target.value)}
+                placeholder="例：00982A"
+                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
               />
             </label>
             <label className="block">
@@ -301,12 +362,22 @@ export default function FundHoldingsParser() {
             </label>
             <label className="block">
               <span className="th-label">基金當日漲跌幅 %</span>
-              <input
-                inputMode="decimal"
-                value={fundReturn}
-                onChange={(event) => setFundReturn(event.target.value)}
-                className="mt-1 w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
-              />
+              <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  inputMode="decimal"
+                  value={fundReturn}
+                  onChange={(event) => setFundReturn(event.target.value)}
+                  className="w-full rounded-(--radius-ctl) border border-elevated bg-page px-3 py-2 font-mono text-[13px] text-neutral-40 outline-none focus:border-action"
+                />
+                <button
+                  type="button"
+                  onClick={fillFundReturnFromTwse}
+                  disabled={busy !== null}
+                  className={`rounded-(--radius-ctl) border border-elevated bg-page px-2 py-1.5 text-[12px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
+                >
+                  {busy === "fund" ? "補中" : "TWSE"}
+                </button>
+              </div>
             </label>
             <label className="block">
               <span className="th-label">台灣加權指數漲跌幅 %</span>

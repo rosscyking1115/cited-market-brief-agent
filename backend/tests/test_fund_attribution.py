@@ -12,6 +12,7 @@ from app.fund_attribution.schemas import (
     HoldingsParseRequest,
 )
 from app.fund_attribution.service import (
+    _normalize_twse_fund_symbol,
     analyze_fund_attribution,
     parse_holdings_text,
     parse_holdings_workbook,
@@ -266,5 +267,28 @@ def test_benchmark_return_endpoint_rejects_bad_date_without_network() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["benchmark"] == "TAIEX"
+    assert body["return_pct"] is None
+    assert "YYYY-MM-DD" in body["warnings"][0]
+
+
+def test_normalize_twse_fund_symbol_keeps_active_etf_letter() -> None:
+    # Active ETF codes carry a trailing letter; plain stocks/ETFs do not.
+    assert _normalize_twse_fund_symbol("00982A") == "00982A"
+    assert _normalize_twse_fund_symbol(" 00982a ") == "00982A"
+    assert _normalize_twse_fund_symbol("00982A 主動摩根台灣鑫收益") == "00982A"
+    assert _normalize_twse_fund_symbol("2330") == "2330"
+    assert _normalize_twse_fund_symbol("0050.TW") == "0050"
+    assert _normalize_twse_fund_symbol("無代號") == ""
+
+
+def test_fund_return_endpoint_rejects_bad_date_without_network() -> None:
+    response = client.post(
+        "/fund-attribution/fund-return/twse",
+        json={"as_of": "bad-date", "symbol": "00982A"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["symbol"] == "00982A"
     assert body["return_pct"] is None
     assert "YYYY-MM-DD" in body["warnings"][0]

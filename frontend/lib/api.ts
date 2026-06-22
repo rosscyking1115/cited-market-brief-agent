@@ -243,6 +243,17 @@ export type BenchmarkReturnPayload = {
   source_notes: string[];
 };
 
+export type FundReturnPayload = {
+  as_of: string;
+  symbol: string;
+  name: string;
+  return_pct: number | null;
+  close: number | null;
+  previous_close: number | null;
+  warnings: string[];
+  source_notes: string[];
+};
+
 export type FundAttributionPayload = {
   fund_name: string;
   benchmark_name: string;

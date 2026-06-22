@@ -41,6 +41,11 @@ class BenchmarkReturnRequest(BaseModel):
     benchmark: Literal["TAIEX"] = "TAIEX"
 
 
+class FundReturnRequest(BaseModel):
+    as_of: str = Field(min_length=1)
+    symbol: str = Field(min_length=1)
+
+
 class AttributionRow(BaseModel):
     symbol: str
     name: str
@@ -110,6 +115,17 @@ class HoldingReturnFillOut(BaseModel):
 class BenchmarkReturnOut(BaseModel):
     as_of: str
     benchmark: str
+    name: str
+    return_pct: float | None
+    close: float | None
+    previous_close: float | None
+    warnings: list[str]
+    source_notes: list[str]
+
+
+class FundReturnOut(BaseModel):
+    as_of: str
+    symbol: str
     name: str
     return_pct: float | None
     close: float | None
