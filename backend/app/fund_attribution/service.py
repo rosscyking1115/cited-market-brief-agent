@@ -16,6 +16,8 @@ from app.fund_attribution.schemas import (
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
+    FundReturnOut,
+    FundReturnRequest,
     HoldingInput,
     HoldingReturnFillOut,
     HoldingReturnFillRequest,
@@ -363,6 +365,65 @@ def benchmark_return_from_twse(request: BenchmarkReturnRequest) -> BenchmarkRetu
     )
 
 
+def fund_return_from_twse(request: FundReturnRequest) -> FundReturnOut:
+    """Fetch the ETF/fund's own daily return from TWSE by its listed stock code.
+
+    Taiwan active ETFs carry a letter-suffixed code (e.g. 00982A), so the symbol
+    normaliser keeps a trailing letter. Manual entry stays available on failure.
+    """
+    as_of = _parse_iso_date(request.as_of)
+    symbol = _normalize_twse_fund_symbol(request.symbol)
+    if as_of is None or not symbol:
+        return FundReturnOut(
+            as_of=request.as_of,
+            symbol=symbol or request.symbol,
+            name=request.symbol,
+            return_pct=None,
+            close=None,
+            previous_close=None,
+            warnings=["請輸入有效日期 (YYYY-MM-DD) 與基金/ETF 在台股的代號。"],
+            source_notes=["TWSE fund return skipped"],
+        )
+
+    client = TwseClient()
+    warnings: list[str] = []
+    try:
+        try:
+            value = client.stock_daily_return(symbol=symbol, as_of=as_of)
+        except Exception as exc:  # noqa: BLE001 - keep manual fund-return fallback available.
+            value = None
+            warnings.append(f"{symbol} TWSE 取價失敗：{exc}")
+    finally:
+        client.close()
+
+    if value is None:
+        warnings.append("沒有補到基金/ETF 當日漲跌幅，請確認代號或手動填入。")
+        return FundReturnOut(
+            as_of=as_of.isoformat(),
+            symbol=symbol,
+            name=symbol,
+            return_pct=None,
+            close=None,
+            previous_close=None,
+            warnings=warnings,
+            source_notes=["source: TWSE afterTrading STOCK_DAY"],
+        )
+
+    return FundReturnOut(
+        as_of=value.trade_date,
+        symbol=value.symbol,
+        name=value.symbol,
+        return_pct=value.return_pct,
+        close=value.close,
+        previous_close=value.previous_close,
+        warnings=warnings,
+        source_notes=[
+            "source: TWSE afterTrading STOCK_DAY",
+            "fund/ETF return from latest available close vs previous close",
+        ],
+    )
+
+
 def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttributionOut:
     rows = [_row_from_holding(holding) for holding in request.holdings]
     explained_return = sum(row.contribution_pct or 0 for row in rows)
@@ -585,6 +646,13 @@ def _parse_iso_date(value: str) -> date | None:
 def _normalize_twse_symbol(value: str) -> str:
     match = re.search(r"\b[0-9]{4,6}\b", value)
     return match.group(0) if match else ""
+
+
+def _normalize_twse_fund_symbol(value: str) -> str:
+    # Active ETF codes can carry a trailing letter (e.g. 00982A); keep it. No \b
+    # after the digits because a digit→letter transition is not a word boundary.
+    match = re.search(r"[0-9]{4,6}[A-Za-z]?", value.strip())
+    return match.group(0).upper() if match else ""
 
 
 def _infer_symbol(name: str) -> str:

@@ -8,6 +8,8 @@ from app.fund_attribution.schemas import (
     FundAttributionOut,
     FundAttributionPlanOut,
     FundAttributionRequest,
+    FundReturnOut,
+    FundReturnRequest,
     HoldingReturnFillOut,
     HoldingReturnFillRequest,
     HoldingsFileParseRequest,
@@ -19,6 +21,7 @@ from app.fund_attribution.service import (
     attribution_plan,
     benchmark_return_from_twse,
     fill_holding_returns_from_twse,
+    fund_return_from_twse,
     parse_holdings_text,
     parse_holdings_workbook,
 )
@@ -54,3 +57,8 @@ def fill_returns_twse(request: HoldingReturnFillRequest) -> HoldingReturnFillOut
 @router.post("/benchmark-return/twse", response_model=BenchmarkReturnOut)
 def benchmark_return_twse(request: BenchmarkReturnRequest) -> BenchmarkReturnOut:
     return benchmark_return_from_twse(request)
+
+
+@router.post("/fund-return/twse", response_model=FundReturnOut)
+def fund_return_twse(request: FundReturnRequest) -> FundReturnOut:
+    return fund_return_from_twse(request)
