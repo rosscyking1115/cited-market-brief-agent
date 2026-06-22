@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRegion } from "@/app/components/RegionProvider";
+import { API_URL } from "@/lib/api";
 import type {
   GlossaryItem,
   MarketClockItem,
@@ -400,8 +402,28 @@ function PopularNewsRail({
   );
 }
 
-export default function MorningMarketDashboard({ radar }: { radar: MorningRadarPayload }) {
+export default function MorningMarketDashboard({
+  radar: initialRadar,
+}: {
+  radar: MorningRadarPayload;
+}) {
   const { profile } = useRegion();
+  const [radar, setRadar] = useState(initialRadar);
+  // The server render can fall back to demo data if its fetch is slow or the
+  // backend is briefly unreachable from the frontend container. Refresh from the
+  // API on the client (same-origin /api via Caddy) so live data always wins.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/market-radar`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: MorningRadarPayload | null) => {
+        if (data && !cancelled) setRadar(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const lang = radarLang(profile.region);
   // Taiwan is the focused consumer edition: news only. Other editions keep the
   // morning summary, market clock, overnight-risk rail, and glossary.
