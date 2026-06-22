@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     market_radar_value_cache_path: str = ".data/cache/market_radar_values.json"
     market_radar_value_cache_max_age_seconds: int = 604800
 
+    # Fund-attribution daily automation: where the saved holdings config and the
+    # latest computed result are persisted (one fund, family-pilot scale).
+    fund_attribution_store_path: str = ".data/fund_attribution"
+
     # TWSE after-close stock prices for Taiwan ETF attribution. This is used as
     # delayed/public after-trading data, not as an intraday market-data feed.
     twse_stock_day_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY"

@@ -2,7 +2,7 @@
 
 import FundHoldingsParser from "@/app/components/FundHoldingsParser";
 import { useRegion } from "@/app/components/RegionProvider";
-import type { FundAttributionPlanPayload } from "@/lib/api";
+import type { FundAttributionPayload, FundAttributionPlanPayload } from "@/lib/api";
 import type { UserRegion } from "@/lib/regions";
 
 const DEMO_PLAN: FundAttributionPlanPayload = {
@@ -97,8 +97,10 @@ const COPY: Record<
 
 export default function FundAttributionPanel({
   plan,
+  latest,
 }: {
   plan: FundAttributionPlanPayload | null;
+  latest: FundAttributionPayload | null;
 }) {
   const { profile } = useRegion();
   const data = plan ?? DEMO_PLAN;
@@ -129,7 +131,7 @@ export default function FundAttributionPanel({
       </div>
 
       {isTaiwan ? (
-        <FundHoldingsParser />
+        <FundHoldingsParser initialResult={latest} />
       ) : (
         <div className="border-t border-hairline px-4 py-4 sm:px-5">
           <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">

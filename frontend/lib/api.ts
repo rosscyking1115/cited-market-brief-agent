@@ -273,6 +273,12 @@ export type FundAttributionPayload = {
   disclaimer: string;
 };
 
+export type LatestAttributionPayload = {
+  configured: boolean;
+  as_of: string | null;
+  result: FundAttributionPayload | null;
+};
+
 async function fetchJson<T>(path: string, timeoutMs = 1500): Promise<T | null> {
   try {
     const res = await fetch(`${SERVER_API_URL}${path}`, {
@@ -314,4 +320,9 @@ export async function getMorningRadar(): Promise<MorningRadarPayload | null> {
 /** Fund attribution workflow plan, or null when the API isn't reachable. */
 export async function getFundAttributionPlan(): Promise<FundAttributionPlanPayload | null> {
   return fetchJson<FundAttributionPlanPayload>("/fund-attribution/plan");
+}
+
+/** Latest pre-computed daily attribution (the scheduled result), or null. */
+export async function getLatestFundAttribution(): Promise<LatestAttributionPayload | null> {
+  return fetchJson<LatestAttributionPayload>("/fund-attribution/latest");
 }

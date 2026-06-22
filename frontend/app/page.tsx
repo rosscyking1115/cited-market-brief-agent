@@ -18,6 +18,7 @@ import {
   getChanges,
   getFundAttributionPlan,
   getLatestEvidence,
+  getLatestFundAttribution,
   getMorningRadar,
   type ChangesPayload,
   type EvidencePayload,
@@ -292,6 +293,7 @@ export default async function Page() {
   const changesData = liveChanges ?? DEMO_CHANGES;
   const radarData = (await getMorningRadar()) ?? DEMO_RADAR;
   const attributionPlan = await getFundAttributionPlan();
+  const latestAttribution = await getLatestFundAttribution();
   const ts = data.created_at.slice(0, 16).replace("T", " ");
   const supported = data.claims.filter((c) => c.support_status === "supported").length;
   const flagged = data.claims.length - supported;
@@ -331,7 +333,7 @@ export default async function Page() {
       <main className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
         <MorningMarketDashboard radar={radarData} />
 
-        <FundAttributionPanel plan={attributionPlan} />
+        <FundAttributionPanel plan={attributionPlan} latest={latestAttribution?.result ?? null} />
 
         <HideOnTaiwan>
         <div className="flex flex-col gap-1 border-t border-hairline pt-5 sm:flex-row sm:items-end sm:justify-between">

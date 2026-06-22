@@ -74,20 +74,29 @@ function ResultRows({ title, rows }: { title: string; rows: AttributionRow[] }) 
   );
 }
 
-export default function FundHoldingsParser() {
+export default function FundHoldingsParser({
+  initialResult = null,
+}: {
+  initialResult?: FundAttributionPayload | null;
+}) {
   const [text, setText] = useState(SAMPLE);
   const [sourceName, setSourceName] = useState("JPM holdings paste");
-  const [fundName, setFundName] = useState("主動摩根台灣鑫收益ETF");
+  const [fundName, setFundName] = useState(initialResult?.fund_name ?? "主動摩根台灣鑫收益ETF");
   const [fundSymbol, setFundSymbol] = useState("");
-  const [benchmarkName, setBenchmarkName] = useState("台灣加權指數");
-  const [asOf, setAsOf] = useState(new Date().toISOString().slice(0, 10));
-  const [fundReturn, setFundReturn] = useState("0.42");
-  const [benchmarkReturn, setBenchmarkReturn] = useState("0.18");
+  const [benchmarkName, setBenchmarkName] = useState(initialResult?.benchmark_name ?? "台灣加權指數");
+  const [asOf, setAsOf] = useState(initialResult?.as_of ?? new Date().toISOString().slice(0, 10));
+  const [fundReturn, setFundReturn] = useState(
+    initialResult ? String(initialResult.fund_return_pct) : "0.42",
+  );
+  const [benchmarkReturn, setBenchmarkReturn] = useState(
+    initialResult ? String(initialResult.benchmark_return_pct) : "0.18",
+  );
   const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
-  const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(null);
+  const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(initialResult);
+  const [savedDaily, setSavedDaily] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<
-    "parse" | "upload" | "fill" | "benchmark" | "fund" | "analyze" | null
+    "parse" | "upload" | "fill" | "benchmark" | "fund" | "analyze" | "config" | "refresh" | null
   >(null);
 
   const totalWeight = useMemo(
@@ -278,6 +287,56 @@ export default function FundHoldingsParser() {
     }
   }
 
+  // Save this fund so the evening job recomputes it daily without an upload.
+  async function saveDailyConfig() {
+    if (!parseResult?.holdings.length) {
+      setError("請先解析持股，才能設定每日自動更新。");
+      return;
+    }
+    setBusy("config");
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/fund-attribution/config`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fund_name: fundName,
+          fund_symbol: fundSymbol.trim() || null,
+          benchmark_name: benchmarkName,
+          holdings: parseResult.holdings,
+          source_notes: parseResult.source_notes,
+        }),
+      });
+      if (!response.ok) throw new Error(`Save failed (${response.status})`);
+      setSavedDaily(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save daily config");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // Recompute now from the saved config (TWSE close) and show today's result.
+  async function refreshNow() {
+    setBusy("refresh");
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/fund-attribution/refresh`, { method: "POST" });
+      if (!response.ok) throw new Error(`Refresh failed (${response.status})`);
+      const payload = (await response.json()) as { result: FundAttributionPayload | null };
+      if (payload.result) {
+        setAnalysis(payload.result);
+        setAsOf(payload.result.as_of);
+      } else {
+        setError("尚未設定基金，請先按「設為每日自動更新」。");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="border-t border-hairline px-4 py-4 sm:px-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -312,8 +371,32 @@ export default function FundHoldingsParser() {
           >
             {busy === "analyze" ? "分析中..." : "分析差異"}
           </button>
+          <button
+            type="button"
+            onClick={saveDailyConfig}
+            disabled={busy !== null || !parseResult?.holdings.length}
+            className={`min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
+          >
+            {busy === "config" ? "設定中..." : savedDaily ? "已設定每日更新 ✓" : "設為每日自動更新"}
+          </button>
+          <button
+            type="button"
+            onClick={refreshNow}
+            disabled={busy !== null}
+            className={`min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-semibold text-neutral-40 disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
+          >
+            {busy === "refresh" ? "更新中..." : "立即更新"}
+          </button>
         </div>
       </div>
+
+      <p className="reader-meta mt-2 text-neutral-90">
+        {savedDaily
+          ? "已設定每天自動更新：台股收盤後系統會自動抓 TWSE 收盤價並重算，下次打開就直接看到當天結果。"
+          : initialResult
+            ? `目前顯示的是自動更新結果（${analysis?.as_of ?? asOf}）。上傳最新持股後可按「設為每日自動更新」更新設定。`
+            : "上傳持股並設定基金代號後，按「設為每日自動更新」，之後每天收盤後會自動計算，不必再手動上傳。"}
+      </p>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <div>
