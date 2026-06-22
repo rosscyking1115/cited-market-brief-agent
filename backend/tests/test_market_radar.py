@@ -15,6 +15,7 @@ from app.api.routes.market_radar import (
 from app.connectors.alpha_vantage import AlphaMarketValue, _provider_message, alpha_series_latest
 from app.connectors.bbc import BbcArticle, parse_bbc_rss
 from app.connectors.gdelt import GdeltArticle
+from app.connectors.nyt import NytArticle, parse_nyt_most_popular
 from app.main import app
 from app.market_radar.service import (
     _market_category,
@@ -25,6 +26,7 @@ from app.market_radar.service import (
     hydrate_snapshots_with_alpha,
     popular_news_from_bbc,
     popular_news_from_gdelt,
+    popular_news_from_nyt,
 )
 
 client = TestClient(app)
@@ -193,6 +195,56 @@ def test_bbc_news_rows_filter_non_market_headlines() -> None:
     assert "https://www.bbc.com/sport/football" not in urls
     assert "https://www.bbc.com/news/oil" in urls
     assert "https://www.bbc.com/news/chips" in urls
+
+
+def test_nyt_most_popular_parser_keeps_headline_and_link_and_dedupes() -> None:
+    articles = parse_nyt_most_popular(
+        {
+            "status": "OK",
+            "results": [
+                {
+                    "title": "Markets rally as inflation cools",
+                    "url": "https://www.nytimes.com/a",
+                    "published_date": "2026-06-21",
+                    "section": "Business",
+                },
+                {"title": "", "url": "https://www.nytimes.com/blank", "section": "U.S."},
+                {"title": "Duplicate url", "url": "https://www.nytimes.com/a", "section": "World"},
+            ],
+        },
+        max_records=10,
+    )
+
+    assert len(articles) == 1
+    assert articles[0].title == "Markets rally as inflation cools"
+    assert articles[0].url == "https://www.nytimes.com/a"
+    assert articles[0].section == "Business"
+
+
+def test_popular_news_from_nyt_labels_most_viewed_and_skips_lifestyle() -> None:
+    rows = popular_news_from_nyt(
+        articles=[
+            NytArticle(
+                title="Fed signals patience on rate cuts",
+                url="https://www.nytimes.com/fed",
+                published_at="2026-06-21",
+                section="Business",
+            ),
+            NytArticle(
+                title="A great new pasta recipe",
+                url="https://www.nytimes.com/food",
+                published_at="2026-06-21",
+                section="Food",
+            ),
+        ]
+    )
+
+    assert len(rows) == 1
+    assert rows[0].rank_kind == "most_viewed"
+    assert rows[0].source == "NYT"
+    assert rows[0].source_status == "official_api"
+    assert rows[0].url == "https://www.nytimes.com/fed"
+    assert {row.rank_kind for row in rows}.isdisjoint({"latest", "trending", "most_covered"})
 
 
 def test_market_category_does_not_match_ai_inside_words() -> None:

@@ -8,7 +8,7 @@ use in the family pilot.
 from dataclasses import dataclass
 from typing import Literal
 
-SourceKey = Literal["bbc_rss", "gdelt_doc"]
+SourceKey = Literal["bbc_rss", "gdelt_doc", "nyt_most_popular"]
 
 
 @dataclass(frozen=True)
@@ -39,6 +39,17 @@ SOURCE_POLICIES: dict[SourceKey, SourcePolicy] = {
         allowed_label="Trending / Most covered",
         forbidden_label="Most read",
         rights_note="GDELT discovery row: link to publisher; do not republish article text.",
+    ),
+    "nyt_most_popular": SourcePolicy(
+        key="nyt_most_popular",
+        display_name="NYT",
+        source_status="official_api",
+        allowed_label="Most viewed (NYT)",
+        forbidden_label="Reproduce article text",
+        rights_note=(
+            "NYT Most Popular API: genuine most-viewed; display headline + link and link "
+            "back to nytimes.com. Do not reproduce article body text."
+        ),
     ),
 }
 

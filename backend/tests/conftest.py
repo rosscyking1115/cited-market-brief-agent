@@ -18,6 +18,7 @@ from app.core.config import settings
 def _offline_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "bbc_rss_enabled", False)
     monkeypatch.setattr(settings, "gdelt_enabled", False)
+    monkeypatch.setattr(settings, "nyt_enabled", False)
     monkeypatch.setattr(settings, "alpha_vantage_enabled", False)
     monkeypatch.setattr(settings, "fred_api_key", "")
     monkeypatch.setattr(settings, "anthropic_api_key", "")

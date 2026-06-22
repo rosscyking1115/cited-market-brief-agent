@@ -62,6 +62,14 @@ class Settings(BaseSettings):
     bbc_rss_url: str = "https://feeds.bbci.co.uk/news/rss.xml"
     bbc_request_timeout_seconds: float = 8.0
 
+    # NYT Most Popular: genuine readership (most-viewed). Headlines + links only,
+    # linking back to nytimes.com per NYT developer terms; window is daily (1/7/30).
+    nyt_enabled: bool = False
+    nyt_api_key: str = ""
+    nyt_base_url: str = "https://api.nytimes.com/svc/mostpopular/v2"
+    nyt_request_timeout_seconds: float = 8.0
+    nyt_most_popular_period_days: int = 1
+
     # Alpha Vantage pilot feed for FX, commodities, and rates. Use only where terms permit.
     alpha_vantage_enabled: bool = False
     alpha_vantage_api_key: str = ""
