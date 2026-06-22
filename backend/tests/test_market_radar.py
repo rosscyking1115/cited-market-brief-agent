@@ -151,7 +151,7 @@ def test_bbc_news_rows_are_latest_and_time_filtered() -> None:
     assert all(row.url != "https://www.bbc.com/news/old" for row in rows)
 
 
-def test_bbc_news_rows_filter_non_market_headlines() -> None:
+def test_bbc_rows_include_general_headlines_with_categories() -> None:
     now = datetime(2026, 6, 21, 8, 30, tzinfo=ZoneInfo("Asia/Taipei"))
     rows = popular_news_from_bbc(
         now=now,
@@ -189,12 +189,15 @@ def test_bbc_news_rows_filter_non_market_headlines() -> None:
         ],
     )
 
-    urls = {row.url for row in rows}
-    assert "https://www.bbc.com/news/train" not in urls
-    assert "https://www.bbc.com/news/ai-apartment" not in urls
-    assert "https://www.bbc.com/sport/football" not in urls
-    assert "https://www.bbc.com/news/oil" in urls
-    assert "https://www.bbc.com/news/chips" in urls
+    by_url = {row.url: row for row in rows}
+    # Broadened to a morning catch-up: all in-window headlines show, not market-only.
+    assert "https://www.bbc.com/news/train" in by_url
+    assert "https://www.bbc.com/news/oil" in by_url
+    assert "https://www.bbc.com/news/chips" in by_url
+    # Market headlines keep a market category; general ones are tagged 國際.
+    assert by_url["https://www.bbc.com/news/oil"].category == "商品"
+    assert by_url["https://www.bbc.com/news/chips"].category == "半導體"
+    assert by_url["https://www.bbc.com/news/train"].category == "國際"
 
 
 def test_nyt_most_popular_parser_keeps_headline_and_link_and_dedupes() -> None:
@@ -245,6 +248,39 @@ def test_popular_news_from_nyt_labels_most_viewed_and_skips_lifestyle() -> None:
     assert rows[0].source_status == "official_api"
     assert rows[0].url == "https://www.nytimes.com/fed"
     assert {row.rank_kind for row in rows}.isdisjoint({"latest", "trending", "most_covered"})
+
+
+def test_today_overview_is_none_without_llm_key() -> None:
+    from app.market_radar.service import generate_today_overview
+
+    items = popular_news_from_nyt(
+        articles=[
+            NytArticle(
+                title="Markets steady as inflation cools",
+                url="https://www.nytimes.com/a",
+                published_at="2026-06-21",
+                section="Business",
+            )
+        ]
+    )
+    # conftest blanks the Anthropic key, so the overview is skipped (no network).
+    assert generate_today_overview(items) is None
+
+
+def test_nyt_rows_carry_the_abstract_as_summary() -> None:
+    rows = popular_news_from_nyt(
+        articles=[
+            NytArticle(
+                title="Fed holds rates",
+                url="https://www.nytimes.com/fed",
+                published_at="2026-06-21",
+                section="Business",
+                summary="The central bank kept its benchmark rate unchanged.",
+            )
+        ]
+    )
+
+    assert rows[0].summary == "The central bank kept its benchmark rate unchanged."
 
 
 def test_market_category_does_not_match_ai_inside_words() -> None:

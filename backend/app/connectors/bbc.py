@@ -21,6 +21,7 @@ class BbcArticle:
     url: str | None
     published_at: datetime | None
     category: str | None
+    summary: str | None = None
 
 
 def _parse_pub_date(value: str | None) -> datetime | None:
@@ -66,6 +67,7 @@ def parse_bbc_rss(content: bytes, *, max_records: int = 20) -> list[BbcArticle]:
                 url=url,
                 published_at=_parse_pub_date(item.findtext("pubDate")),
                 category=(item.findtext("category") or "").strip() or None,
+                summary=(item.findtext("description") or "").strip() or None,
             )
         )
         if len(rows) >= max_records:

@@ -45,6 +45,7 @@ class PopularNewsItem(BaseModel):
     category: str
     why: str
     rights_note: str
+    summary: str | None = None
 
 
 class OvernightRiskItem(BaseModel):
@@ -72,6 +73,7 @@ class MorningRadarOut(BaseModel):
     generated_at: str
     timezone: str = "Asia/Taipei"
     headline: str
+    today_overview: str | None = None
     summary_points: list[str] = Field(min_length=3, max_length=3)
     current_focus: str
     market_clock: list[MarketClockItem]
