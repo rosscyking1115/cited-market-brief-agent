@@ -7,11 +7,14 @@ data feed.
 """
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 import httpx
 
 from app.core.config import settings
+
+_INDUSTRY_CACHE: dict[str, str] = {}
+_INDUSTRY_CACHE_AT: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -93,6 +96,42 @@ class TwseClient:
 
     def close(self) -> None:
         self._client.close()
+
+
+def parse_listed_industry(payload: object) -> dict[str, str]:
+    """Build code → 產業別 from the TWSE listed-company OpenAPI payload."""
+    if not isinstance(payload, list):
+        return {}
+    out: dict[str, str] = {}
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("公司代號") or item.get("Code") or "").strip()
+        sector = str(item.get("產業別") or item.get("Industry") or "").strip()
+        if code and sector:
+            out[code] = sector
+    return out
+
+
+def fetch_listed_industry_map() -> dict[str, str]:
+    """Code → 產業別 for TWSE-listed companies (public OpenAPI), cached for a day.
+    Best-effort: returns the last good map (or empty) on any failure."""
+    global _INDUSTRY_CACHE, _INDUSTRY_CACHE_AT
+    now = datetime.now(UTC)
+    ttl = timedelta(seconds=max(settings.twse_industry_cache_ttl_seconds, 0))
+    if _INDUSTRY_CACHE and _INDUSTRY_CACHE_AT and now - _INDUSTRY_CACHE_AT <= ttl:
+        return _INDUSTRY_CACHE
+    try:
+        with httpx.Client(timeout=settings.twse_request_timeout_seconds) as client:
+            response = client.get(settings.twse_industry_url)
+            response.raise_for_status()
+            parsed = parse_listed_industry(response.json())
+    except Exception:  # noqa: BLE001 - classification is best-effort.
+        return _INDUSTRY_CACHE
+    if parsed:
+        _INDUSTRY_CACHE = parsed
+        _INDUSTRY_CACHE_AT = now
+    return _INDUSTRY_CACHE
 
 
 def twse_sector_returns_from_payload(payload: dict[str, object]) -> dict[str, float]:

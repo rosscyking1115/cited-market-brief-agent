@@ -151,7 +151,7 @@ def test_bbc_news_rows_are_latest_and_time_filtered() -> None:
     assert all(row.url != "https://www.bbc.com/news/old" for row in rows)
 
 
-def test_bbc_rows_include_general_headlines_with_categories() -> None:
+def test_bbc_news_rows_keep_finance_only() -> None:
     now = datetime(2026, 6, 21, 8, 30, tzinfo=ZoneInfo("Asia/Taipei"))
     rows = popular_news_from_bbc(
         now=now,
@@ -189,15 +189,16 @@ def test_bbc_rows_include_general_headlines_with_categories() -> None:
         ],
     )
 
+    urls = {row.url for row in rows}
+    # Finance-only: non-market headlines are dropped, market ones kept and categorised.
+    assert "https://www.bbc.com/news/train" not in urls
+    assert "https://www.bbc.com/news/ai-apartment" not in urls
+    assert "https://www.bbc.com/sport/football" not in urls
+    assert "https://www.bbc.com/news/oil" in urls
+    assert "https://www.bbc.com/news/chips" in urls
     by_url = {row.url: row for row in rows}
-    # Broadened to a morning catch-up: all in-window headlines show, not market-only.
-    assert "https://www.bbc.com/news/train" in by_url
-    assert "https://www.bbc.com/news/oil" in by_url
-    assert "https://www.bbc.com/news/chips" in by_url
-    # Market headlines keep a market category; general ones are tagged 國際.
     assert by_url["https://www.bbc.com/news/oil"].category == "商品"
     assert by_url["https://www.bbc.com/news/chips"].category == "半導體"
-    assert by_url["https://www.bbc.com/news/train"].category == "國際"
 
 
 def test_nyt_most_popular_parser_keeps_headline_and_link_and_dedupes() -> None:
