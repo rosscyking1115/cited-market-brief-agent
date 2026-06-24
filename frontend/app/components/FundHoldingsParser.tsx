@@ -94,6 +94,8 @@ export default function FundHoldingsParser({
   const [parseResult, setParseResult] = useState<HoldingsParsePayload | null>(null);
   const [analysis, setAnalysis] = useState<FundAttributionPayload | null>(initialResult);
   const [savedDaily, setSavedDaily] = useState(false);
+  // Two-state: lead with the result; collapse the setup once a result exists.
+  const [setupOpen, setSetupOpen] = useState(!initialResult);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<
     "parse" | "upload" | "fill" | "benchmark" | "fund" | "analyze" | "config" | "refresh" | null
@@ -338,13 +340,11 @@ export default function FundHoldingsParser({
   }
 
   return (
-    <div className="border-t border-hairline px-4 py-4 sm:px-5">
+    <section className="mt-10 scroll-mt-20">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="th-label">持股歸因試算</p>
-          <h3 className="reader-heading mt-1 font-semibold text-neutral-30">
-            貼上持股後，直接看基金和台灣加權指數差在哪裡
-          </h3>
+          <h2 className="font-serif text-[20px] font-semibold text-neutral-30">ETF 歸因分析</h2>
+          <p className="reader-meta mt-0.5 text-neutral-70">基金相對加權指數的每日歸因</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -387,6 +387,13 @@ export default function FundHoldingsParser({
           >
             {busy === "refresh" ? "更新中..." : "立即更新"}
           </button>
+          <button
+            type="button"
+            onClick={() => setSetupOpen((v) => !v)}
+            className={`min-h-9 rounded-(--radius-ctl) border border-elevated bg-page px-3 py-1.5 text-[13px] font-medium text-neutral-50 ${buttonMotion}`}
+          >
+            {setupOpen ? "收合設定" : "設定 / 更新持股"}
+          </button>
         </div>
       </div>
 
@@ -398,6 +405,7 @@ export default function FundHoldingsParser({
             : "上傳持股並設定基金代號後，按「設為每日自動更新」，之後每天收盤後會自動計算，不必再手動上傳。"}
       </p>
 
+      {setupOpen && (
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -566,6 +574,7 @@ export default function FundHoldingsParser({
           </div>
         </div>
       </div>
+      )}
 
       {analysis && (
         <section className="mt-4 border-t border-hairline pt-4">
@@ -611,6 +620,6 @@ export default function FundHoldingsParser({
           </div>
         </section>
       )}
-    </div>
+    </section>
   );
 }
