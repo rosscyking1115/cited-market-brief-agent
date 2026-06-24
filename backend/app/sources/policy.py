@@ -8,7 +8,7 @@ use in the family pilot.
 from dataclasses import dataclass
 from typing import Literal
 
-SourceKey = Literal["bbc_rss", "gdelt_doc", "nyt_most_popular"]
+SourceKey = Literal["bbc_rss", "finance_rss", "gdelt_doc", "nyt_most_popular"]
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,17 @@ SOURCE_POLICIES: dict[SourceKey, SourcePolicy] = {
         forbidden_label="BBC Most Read",
         rights_note=(
             "BBC RSS/latest only after terms review; do not scrape or label as Most Read."
+        ),
+    ),
+    "finance_rss": SourcePolicy(
+        key="finance_rss",
+        display_name="Finance RSS",
+        source_status="rss",
+        allowed_label="Latest finance headlines",
+        forbidden_label="Most read",
+        rights_note=(
+            "Public finance RSS (CNBC, MarketWatch, NYT, Guardian, BBC): headline + "
+            "link only; link to the publisher, do not republish article text."
         ),
     ),
     "gdelt_doc": SourcePolicy(

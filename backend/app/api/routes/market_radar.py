@@ -11,7 +11,7 @@ import httpx
 from fastapi import APIRouter
 
 from app.connectors.alpha_vantage import AlphaMarketValue, AlphaVantageClient
-from app.connectors.bbc import BbcRssClient
+from app.connectors.finance_rss import fetch_finance_feeds
 from app.connectors.gdelt import GdeltClient
 from app.connectors.nyt import NytMostPopularClient
 from app.core.config import settings
@@ -22,7 +22,7 @@ from app.market_radar.service import (
     build_snapshots,
     generate_today_overview,
     normalize_popular_news_ranks,
-    popular_news_from_bbc,
+    popular_news_from_finance_rss,
     popular_news_from_gdelt,
     popular_news_from_nyt,
 )
@@ -106,13 +106,10 @@ def _fetch_popular_news() -> list[PopularNewsItem]:
     popular_news: list[PopularNewsItem] = []
 
     if settings.bbc_rss_enabled:
-        client = BbcRssClient()
         try:
-            popular_news.extend(popular_news_from_bbc(articles=client.latest(max_records=40)))
+            popular_news.extend(popular_news_from_finance_rss(articles=fetch_finance_feeds()))
         except Exception as exc:
-            logger.info("BBC RSS latest-headline fetch failed: %s", exc)
-        finally:
-            client.close()
+            logger.info("Finance RSS fetch failed: %s", exc)
 
     if settings.gdelt_enabled:
         client = GdeltClient()
