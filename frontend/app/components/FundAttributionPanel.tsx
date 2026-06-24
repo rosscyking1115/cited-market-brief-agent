@@ -104,46 +104,45 @@ export default function FundAttributionPanel({
   latest: FundAttributionPayload | null;
 }) {
   const { profile } = useRegion();
-  const data = plan ?? DEMO_PLAN;
   const copy = COPY[profile.region];
   const isTaiwan = profile.region === "TW";
 
+  // Taiwan: the fund + sector tools are self-contained sections (no wrapper card).
+  if (isTaiwan) {
+    return (
+      <>
+        <FundHoldingsParser initialResult={latest} />
+        <SectorAttributionPanel />
+      </>
+    );
+  }
+
+  // Other editions: the pilot card (fund attribution queued after Taiwan).
   return (
     <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card">
       <div className="border-b border-hairline px-4 py-4 sm:px-5">
         <p className="th-label">{copy.eyebrow}</p>
-        <div className={isTaiwan ? "mt-2" : "mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"}>
+        <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
           <div>
             <h2 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
               {copy.title}
             </h2>
-            <p className="reader-body mt-2 max-w-3xl text-neutral-70">
-              {isTaiwan ? data.target_use_case : copy.pilotBody}
-            </p>
+            <p className="reader-body mt-2 max-w-3xl text-neutral-70">{copy.pilotBody}</p>
           </div>
-          {!isTaiwan && (
-            <div className="rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
-              <p className="th-label">{copy.firstMarket}</p>
-              <p className="reader-body mt-1 font-semibold text-neutral-40">{profile.label}</p>
-              <p className="reader-meta mt-1 text-neutral-90">{copy.pilotTitle}</p>
-            </div>
-          )}
+          <div className="rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
+            <p className="th-label">{copy.firstMarket}</p>
+            <p className="reader-body mt-1 font-semibold text-neutral-40">{profile.label}</p>
+            <p className="reader-meta mt-1 text-neutral-90">{copy.pilotTitle}</p>
+          </div>
         </div>
       </div>
 
-      {isTaiwan ? (
-        <>
-          <FundHoldingsParser initialResult={latest} />
-          <SectorAttributionPanel />
-        </>
-      ) : (
-        <div className="border-t border-hairline px-4 py-4 sm:px-5">
-          <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">
-            <p className="reader-body font-semibold text-neutral-40">{copy.pilotTitle}</p>
-            <p className="reader-meta mt-2 max-w-3xl text-neutral-90">{copy.pilotBody}</p>
-          </div>
+      <div className="border-t border-hairline px-4 py-4 sm:px-5">
+        <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">
+          <p className="reader-body font-semibold text-neutral-40">{copy.pilotTitle}</p>
+          <p className="reader-meta mt-2 max-w-3xl text-neutral-90">{copy.pilotBody}</p>
         </div>
-      )}
+      </div>
     </section>
   );
 }
