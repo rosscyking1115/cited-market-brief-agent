@@ -201,6 +201,42 @@ def test_bbc_news_rows_keep_finance_only() -> None:
     assert by_url["https://www.bbc.com/news/chips"].category == "半導體"
 
 
+def test_finance_rss_windows_dedupes_and_keeps_source_and_summary() -> None:
+    from app.connectors.finance_rss import RssArticle
+    from app.market_radar.service import popular_news_from_finance_rss
+
+    now = datetime(2026, 6, 15, 8, 30, tzinfo=ZoneInfo("Asia/Taipei"))
+    rows = popular_news_from_finance_rss(
+        now=now,
+        articles=[
+            RssArticle(
+                source="CNBC",
+                title="Stocks fall as Treasury yields rise",
+                url="https://www.cnbc.com/a",
+                published_at=datetime(2026, 6, 15, 0, 10, tzinfo=ZoneInfo("UTC")),
+                category="markets",
+                summary="Equities dropped as yields climbed.",
+            ),
+            RssArticle(
+                source="MarketWatch",
+                title="Old oil headline",
+                url="https://www.marketwatch.com/b",
+                published_at=datetime(2026, 6, 12, 0, 0, tzinfo=ZoneInfo("UTC")),
+                category=None,
+                summary=None,
+            ),
+        ],
+    )
+
+    sources = {row.source for row in rows}
+    assert "CNBC" in sources
+    assert "https://www.marketwatch.com/b" not in {row.url for row in rows}  # >24h, dropped
+    cnbc = next(row for row in rows if row.source == "CNBC")
+    assert cnbc.rank_kind == "latest"
+    assert cnbc.source_status == "rss"
+    assert cnbc.summary == "Equities dropped as yields climbed."
+
+
 def test_nyt_most_popular_parser_keeps_headline_and_link_and_dedupes() -> None:
     articles = parse_nyt_most_popular(
         {

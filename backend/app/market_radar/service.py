@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from app.connectors.alpha_vantage import AlphaMarketValue
 from app.connectors.bbc import BbcArticle
+from app.connectors.finance_rss import RssArticle
 from app.connectors.gdelt import GdeltArticle
 from app.connectors.nyt import NytArticle
 from app.core.config import settings
@@ -425,6 +426,61 @@ def popular_news_from_bbc(
         for row in _bbc_latest_rows(articles=articles, now=local_now, window="24h", limit=14)
         if not row.url or row.url not in one_hour_urls
     ][:8]
+    return [*one_hour, *day]
+
+
+def _rss_rows(
+    *,
+    articles: list[RssArticle],
+    now: datetime,
+    window: Literal["1h", "24h"],
+    limit: int,
+) -> list[PopularNewsItem]:
+    policy = source_policy("finance_rss")
+    window_delta = timedelta(hours=1) if window == "1h" else timedelta(hours=24)
+    cutoff = now.astimezone(TAIPEI_TZ) - window_delta
+    rows: list[PopularNewsItem] = []
+    for article in articles:
+        if article.published_at is None or not article.url:
+            continue
+        published = article.published_at.astimezone(TAIPEI_TZ)
+        if published < cutoff:
+            continue
+        rows.append(
+            PopularNewsItem(
+                rank=len(rows) + 1,
+                title=article.title,
+                title_zh_hant=article.title,
+                source=article.source,
+                url=article.url,
+                published_at=published.isoformat(),
+                window=window,
+                rank_kind="latest",
+                source_status=policy.source_status,
+                category=_market_category(article.title),
+                why="財經媒體 RSS 在此時間窗內發布的最新新聞；這不是閱讀量排名。",
+                rights_note=policy.rights_note,
+                summary=article.summary,
+            )
+        )
+        if len(rows) >= limit:
+            break
+    return rows
+
+
+def popular_news_from_finance_rss(
+    *,
+    articles: list[RssArticle],
+    now: datetime | None = None,
+) -> list[PopularNewsItem]:
+    local_now = now or datetime.now(TAIPEI_TZ)
+    one_hour = _rss_rows(articles=articles, now=local_now, window="1h", limit=10)
+    one_hour_urls = {row.url for row in one_hour if row.url}
+    day = [
+        row
+        for row in _rss_rows(articles=articles, now=local_now, window="24h", limit=30)
+        if not row.url or row.url not in one_hour_urls
+    ][:20]
     return [*one_hour, *day]
 
 
