@@ -159,6 +159,14 @@ section {
   text-align: right;
 }
 
+/* Horizontal chip rows: scroll without a visible scrollbar */
+.hide-scroll {
+  scrollbar-width: none;
+}
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Sticky data-table header label style: 11px uppercase, letter-spaced, muted */
 .th-label {
   font-size: 11px;
