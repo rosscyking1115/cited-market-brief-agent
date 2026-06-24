@@ -98,8 +98,58 @@ class TwseClient:
         self._client.close()
 
 
+# TWSE 產業別 codes → names that line up (after canonical_sector) with the TWSE
+# sector class indices (e.g. 24 → 半導體, matching 半導體類指數).
+TWSE_INDUSTRY_CODES = {
+    "01": "水泥",
+    "02": "食品",
+    "03": "塑膠",
+    "04": "紡織纖維",
+    "05": "電機機械",
+    "06": "電器電纜",
+    "08": "玻璃陶瓷",
+    "09": "造紙",
+    "10": "鋼鐵",
+    "11": "橡膠",
+    "12": "汽車",
+    "14": "建材營造",
+    "15": "航運",
+    "16": "觀光餐旅",
+    "17": "金融保險",
+    "18": "貿易百貨",
+    "19": "綜合",
+    "20": "其他",
+    "21": "化學",
+    "22": "生技醫療",
+    "23": "油電燃氣",
+    "24": "半導體",
+    "25": "電腦及週邊設備",
+    "26": "光電",
+    "27": "通信網路",
+    "28": "電子零組件",
+    "29": "電子通路",
+    "30": "資訊服務",
+    "31": "其他電子",
+    "32": "文化創意",
+    "33": "農業科技",
+    "34": "電子商務",
+    "35": "綠能環保",
+    "36": "數位雲端",
+    "37": "運動休閒",
+    "38": "居家生活",
+}
+
+
+def _industry_name(value: str) -> str:
+    cleaned = value.strip()
+    if cleaned.isdigit():
+        return TWSE_INDUSTRY_CODES.get(cleaned.zfill(2), cleaned)
+    return cleaned
+
+
 def parse_listed_industry(payload: object) -> dict[str, str]:
-    """Build code → 產業別 from the TWSE listed-company OpenAPI payload."""
+    """Build code → 產業別 name from the TWSE listed-company OpenAPI payload, mapping
+    numeric industry codes to names so they match the TWSE sector indices."""
     if not isinstance(payload, list):
         return {}
     out: dict[str, str] = {}
@@ -109,7 +159,7 @@ def parse_listed_industry(payload: object) -> dict[str, str]:
         code = str(item.get("公司代號") or item.get("Code") or "").strip()
         sector = str(item.get("產業別") or item.get("Industry") or "").strip()
         if code and sector:
-            out[code] = sector
+            out[code] = _industry_name(sector)
     return out
 
 
