@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from app.core.config import settings
-from app.fund_attribution.schemas import FundAttributionOut, FundConfig
+from app.fund_attribution.schemas import FundAttributionOut, FundConfig, SectorConfig
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,21 @@ def load_config() -> FundConfig | None:
     except (OSError, ValueError) as exc:
         logger.warning("Fund config read failed: %s", exc)
         return None
+
+
+def save_sector_config(config: SectorConfig) -> None:
+    _write(_store_dir() / "sector_config.json", config.model_dump_json(indent=2))
+
+
+def load_sector_config() -> SectorConfig:
+    path = _store_dir() / "sector_config.json"
+    if not path.exists():
+        return SectorConfig()
+    try:
+        return SectorConfig.model_validate_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        logger.warning("Sector config read failed: %s", exc)
+        return SectorConfig()
 
 
 def save_result(result: FundAttributionOut) -> None:

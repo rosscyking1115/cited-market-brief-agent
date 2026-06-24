@@ -76,8 +76,59 @@ class TwseClient:
             as_of=as_of,
         )
 
+    def sector_returns(self, *, as_of: date) -> dict[str, float]:
+        response = self._client.get(
+            settings.twse_mi_index_url,
+            params={
+                "response": "json",
+                "date": as_of.strftime("%Y%m%d"),
+                "type": "IND",
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict):
+            return {}
+        return twse_sector_returns_from_payload(payload)
+
     def close(self) -> None:
         self._client.close()
+
+
+def twse_sector_returns_from_payload(payload: dict[str, object]) -> dict[str, float]:
+    """Pull every TWSE sector class index (e.g. 半導體類指數, 金融保險類指數) and its
+    daily % change from the same MI_INDEX after-close report used for the TAIEX."""
+    out: dict[str, float] = {}
+    tables = payload.get("tables")
+    candidates = tables if isinstance(tables, list) else [payload]
+    for table in candidates:
+        if isinstance(table, dict):
+            _collect_sector_returns(out, fields=table.get("fields"), rows=table.get("data"))
+    return out
+
+
+def _collect_sector_returns(
+    out: dict[str, float], *, fields: object, rows: object
+) -> None:
+    if not isinstance(fields, list) or not isinstance(rows, list):
+        return
+    field_map = {_normalize_header(str(field)): index for index, field in enumerate(fields)}
+    name_index = _first_index(field_map, ("指數", "index", "name", "指數名稱"))
+    change_pct_index = _first_index(
+        field_map,
+        ("漲跌百分比", "漲跌幅", "change_percent", "change_pct"),
+    )
+    if name_index is None or change_pct_index is None:
+        return
+    for row in rows:
+        if not isinstance(row, list) or max(name_index, change_pct_index) >= len(row):
+            continue
+        name = str(row[name_index]).strip()
+        if not name.endswith("類指數"):
+            continue
+        pct = _parse_float(row[change_pct_index])
+        if pct is not None:
+            out[name] = round(pct, 4)
 
 
 def twse_daily_return_from_payload(

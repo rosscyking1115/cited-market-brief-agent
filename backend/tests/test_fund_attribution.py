@@ -5,15 +5,24 @@ from io import BytesIO
 from fastapi.testclient import TestClient
 from openpyxl import Workbook
 
-from app.connectors.twse import twse_benchmark_return_from_payload, twse_daily_return_from_payload
+from app.connectors.twse import (
+    twse_benchmark_return_from_payload,
+    twse_daily_return_from_payload,
+    twse_sector_returns_from_payload,
+)
 from app.fund_attribution.schemas import (
     FundAttributionRequest,
+    HoldingInput,
     HoldingsFileParseRequest,
     HoldingsParseRequest,
+    SectorConfig,
+    SectorWeight,
 )
 from app.fund_attribution.service import (
     _normalize_twse_fund_symbol,
     analyze_fund_attribution,
+    build_sector_attribution,
+    canonical_sector,
     parse_holdings_text,
     parse_holdings_workbook,
 )
@@ -332,3 +341,101 @@ def test_refresh_is_noop_without_config(tmp_path, monkeypatch) -> None:
 
     monkeypatch.setattr(settings, "fund_attribution_store_path", str(tmp_path / "empty"))
     assert refresh_latest_attribution() is None
+
+
+def test_canonical_sector_collapses_index_and_industry_suffixes() -> None:
+    assert canonical_sector("半導體類指數") == "半導體"
+    assert canonical_sector("半導體業") == "半導體"
+    assert canonical_sector("金融保險類指數") == "金融保險"
+    assert canonical_sector(" 半導體 ") == "半導體"
+
+
+def test_twse_sector_returns_parser_keeps_only_class_indices() -> None:
+    out = twse_sector_returns_from_payload(
+        {
+            "tables": [
+                {
+                    "fields": ["指數", "收盤指數", "漲跌(+/-)", "漲跌點數", "漲跌百分比"],
+                    "data": [
+                        ["發行量加權股價指數", "20,000", "+", "100", "0.50"],
+                        ["半導體類指數", "500", "-", "10", "-2.00"],
+                        ["金融保險類指數", "1,800", "+", "18", "1.00"],
+                    ],
+                }
+            ]
+        }
+    )
+
+    assert out["半導體類指數"] == -2.0
+    assert out["金融保險類指數"] == 1.0
+    assert "發行量加權股價指數" not in out  # only sector class indices
+
+
+def test_sector_attribution_allocation_effect_underweight_falling_sector() -> None:
+    out = build_sector_attribution(
+        holdings=[
+            HoldingInput(symbol="2330", name="台積電", weight_pct=40.0, sector="半導體"),
+            HoldingInput(symbol="2454", name="聯發科", weight_pct=10.0, sector="半導體業"),
+            HoldingInput(symbol="2882", name="國泰金", weight_pct=20.0, sector="金融保險"),
+            HoldingInput(symbol="9999", name="未分類", weight_pct=5.0),
+        ],
+        sector_returns={"半導體類指數": -2.0, "金融保險類指數": 1.0},
+        config=SectorConfig(
+            taiex_weights=[
+                SectorWeight(sector="半導體", weight_pct=60.0),
+                SectorWeight(sector="金融保險", weight_pct=15.0),
+            ]
+        ),
+        fund_name="主動摩根台灣鑫收益",
+        benchmark_name="台灣加權指數",
+        as_of="2026-06-23",
+    )
+
+    assert out.has_benchmark is True
+    assert out.unmapped_weight_pct == 5.0
+    semi = next(r for r in out.rows if r.sector == "半導體")
+    assert semi.etf_weight_pct == 50.0  # 40 + 10 merged across suffix variants
+    assert semi.benchmark_weight_pct == 60.0
+    assert semi.weight_diff_pct == -10.0  # underweight
+    assert semi.allocation_effect_pct == 0.2  # (50-60)*-2/100 -> underweight a faller helps
+    fin = next(r for r in out.rows if r.sector == "金融保險")
+    assert fin.allocation_effect_pct == 0.05  # (20-15)*1/100 -> overweight a riser helps
+    assert out.allocation_total_pct == 0.25
+
+
+def test_sector_attribution_without_benchmark_weights() -> None:
+    out = build_sector_attribution(
+        holdings=[HoldingInput(symbol="2330", name="台積電", weight_pct=40.0, sector="半導體")],
+        sector_returns={"半導體類指數": -2.0},
+        config=SectorConfig(),
+        fund_name="X",
+        benchmark_name="台灣加權指數",
+        as_of="2026-06-23",
+    )
+
+    assert out.has_benchmark is False
+    assert out.allocation_total_pct is None
+    assert out.rows[0].benchmark_weight_pct is None
+    assert out.rows[0].etf_contribution_pct == -0.8  # 40*-2/100
+
+
+def test_sector_attribution_endpoint_empty_without_fund(tmp_path, monkeypatch) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "fund_attribution_store_path", str(tmp_path / "fa"))
+    response = client.get("/fund-attribution/sector-attribution")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["rows"] == []
+    assert body["has_benchmark"] is False
+
+
+def test_parse_holdings_captures_and_canonicalises_sector() -> None:
+    result = parse_holdings_text(
+        HoldingsParseRequest(
+            text="股票代號,股票名稱,持股比重,產業別\n2330,台積電,20.5%,半導體業\n",
+        )
+    )
+
+    assert result.holdings[0].sector == "半導體"

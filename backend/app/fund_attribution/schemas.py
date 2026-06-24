@@ -8,6 +8,7 @@ class HoldingInput(BaseModel):
     name: str = Field(min_length=1)
     weight_pct: float = Field(ge=0)
     return_pct: float | None = None
+    sector: str | None = None
 
 
 class FundAttributionRequest(BaseModel):
@@ -44,6 +45,43 @@ class BenchmarkReturnRequest(BaseModel):
 class FundReturnRequest(BaseModel):
     as_of: str = Field(min_length=1)
     symbol: str = Field(min_length=1)
+
+
+class SectorWeight(BaseModel):
+    sector: str = Field(min_length=1)
+    weight_pct: float = Field(ge=0)
+
+
+class SectorConfig(BaseModel):
+    """Set-once references for sector attribution: the TAIEX's (slowly-changing)
+    sector weights, and an optional stock→sector map to fill holdings whose file
+    didn't carry a 產業 column."""
+
+    taiex_weights: list[SectorWeight] = Field(default_factory=list)
+    sector_map: dict[str, str] = Field(default_factory=dict)  # symbol -> sector
+
+
+class SectorAttributionRow(BaseModel):
+    sector: str
+    etf_weight_pct: float
+    benchmark_weight_pct: float | None
+    weight_diff_pct: float | None
+    sector_return_pct: float | None
+    etf_contribution_pct: float | None  # etf_weight * sector_return
+    allocation_effect_pct: float | None  # (etf_weight - bm_weight) * sector_return
+
+
+class SectorAttributionOut(BaseModel):
+    as_of: str
+    fund_name: str
+    benchmark_name: str
+    has_benchmark: bool
+    rows: list[SectorAttributionRow]
+    allocation_total_pct: float | None  # sum of allocation effects (active from allocation)
+    unmapped_weight_pct: float  # ETF weight with no sector assigned
+    summary_zh_hant: str
+    source_notes: list[str]
+    disclaimer: str
 
 
 class FundConfig(BaseModel):

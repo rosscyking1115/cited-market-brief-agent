@@ -328,3 +328,36 @@ export async function getFundAttributionPlan(): Promise<FundAttributionPlanPaylo
 export async function getLatestFundAttribution(): Promise<LatestAttributionPayload | null> {
   return fetchJson<LatestAttributionPayload>("/fund-attribution/latest");
 }
+
+export type SectorAttributionRow = {
+  sector: string;
+  etf_weight_pct: number;
+  benchmark_weight_pct: number | null;
+  weight_diff_pct: number | null;
+  sector_return_pct: number | null;
+  etf_contribution_pct: number | null;
+  allocation_effect_pct: number | null;
+};
+
+export type SectorAttributionPayload = {
+  as_of: string;
+  fund_name: string;
+  benchmark_name: string;
+  has_benchmark: boolean;
+  rows: SectorAttributionRow[];
+  allocation_total_pct: number | null;
+  unmapped_weight_pct: number;
+  summary_zh_hant: string;
+  source_notes: string[];
+  disclaimer: string;
+};
+
+export type SectorConfigPayload = {
+  taiex_weights: { sector: string; weight_pct: number }[];
+  sector_map: Record<string, string>;
+};
+
+/** Live sector (產業) attribution of the fund vs the TAIEX, or null. */
+export async function getSectorAttribution(): Promise<SectorAttributionPayload | null> {
+  return fetchJson<SectorAttributionPayload>("/fund-attribution/sector-attribution", 6000);
+}

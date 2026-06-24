@@ -1,6 +1,7 @@
 "use client";
 
 import FundHoldingsParser from "@/app/components/FundHoldingsParser";
+import SectorAttributionPanel from "@/app/components/SectorAttributionPanel";
 import { useRegion } from "@/app/components/RegionProvider";
 import type { FundAttributionPayload, FundAttributionPlanPayload } from "@/lib/api";
 import type { UserRegion } from "@/lib/regions";
@@ -131,7 +132,10 @@ export default function FundAttributionPanel({
       </div>
 
       {isTaiwan ? (
-        <FundHoldingsParser initialResult={latest} />
+        <>
+          <FundHoldingsParser initialResult={latest} />
+          <SectorAttributionPanel />
+        </>
       ) : (
         <div className="border-t border-hairline px-4 py-4 sm:px-5">
           <div className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-4 py-4">

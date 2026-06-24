@@ -26,8 +26,11 @@ from app.fund_attribution.schemas import (
     HoldingsFileParseRequest,
     HoldingsParseOut,
     HoldingsParseRequest,
+    SectorAttributionOut,
+    SectorAttributionRow,
+    SectorConfig,
 )
-from app.fund_attribution.store import load_config, save_result
+from app.fund_attribution.store import load_config, load_sector_config, save_result
 
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
 
@@ -91,6 +94,16 @@ COLUMN_ALIASES = {
         "報酬率",
         "日報酬",
         "當日報酬",
+    },
+    "sector": {
+        "sector",
+        "industry",
+        "gics_sector",
+        "產業",
+        "產業別",
+        "類股",
+        "類別",
+        "產業類別",
     },
 }
 
@@ -225,6 +238,7 @@ def _holdings_out_from_rows(
         name = _clean_text(row.get("name"))
         weight = _parse_percent(row.get("weight_pct"))
         return_pct = _parse_percent(row.get("return_pct"))
+        sector = _clean_text(row.get("sector")) or None
 
         if not symbol and name:
             symbol = _infer_symbol(name)
@@ -240,6 +254,7 @@ def _holdings_out_from_rows(
                 name=name,
                 weight_pct=weight,
                 return_pct=return_pct,
+                sector=canonical_sector(sector) if sector else None,
             )
         )
 
@@ -534,6 +549,182 @@ def save_fund_config(config: FundConfig) -> FundConfig:
 
     save_config(config)
     return config
+
+
+# --- Sector (產業) attribution -------------------------------------------------
+
+_SECTOR_SUFFIXES = ("類股價指數", "類報酬指數", "類指數", "類股指數", "類股", "類", "業")
+
+
+def canonical_sector(name: str) -> str:
+    """Normalise a sector label so the same sector matches across sources: the
+    holdings file (e.g. 半導體業), the TWSE sector index (半導體類指數), and the
+    stored TAIEX weights (半導體) all collapse to one key."""
+    cleaned = (name or "").strip().replace(" ", "")
+    for suffix in _SECTOR_SUFFIXES:
+        if len(cleaned) > len(suffix) and cleaned.endswith(suffix):
+            cleaned = cleaned[: -len(suffix)]
+            break
+    return cleaned or name.strip()
+
+
+def _holding_sector(holding: HoldingInput, sector_map: dict[str, str]) -> str | None:
+    if holding.sector and holding.sector.strip():
+        return canonical_sector(holding.sector)
+    mapped = sector_map.get(holding.symbol)
+    return canonical_sector(mapped) if mapped and mapped.strip() else None
+
+
+def aggregate_etf_sectors(
+    holdings: list[HoldingInput], sector_map: dict[str, str]
+) -> tuple[dict[str, float], float]:
+    weights: dict[str, float] = {}
+    unmapped = 0.0
+    for holding in holdings:
+        sector = _holding_sector(holding, sector_map)
+        if sector is None:
+            unmapped += holding.weight_pct
+        else:
+            weights[sector] = weights.get(sector, 0.0) + holding.weight_pct
+    return weights, round(unmapped, 4)
+
+
+def build_sector_attribution(
+    *,
+    holdings: list[HoldingInput],
+    sector_returns: dict[str, float],
+    config: SectorConfig,
+    fund_name: str,
+    benchmark_name: str,
+    as_of: str,
+    source_notes: list[str] | None = None,
+) -> SectorAttributionOut:
+    etf_weights, unmapped = aggregate_etf_sectors(holdings, config.sector_map)
+    taiex = {canonical_sector(w.sector): w.weight_pct for w in config.taiex_weights}
+    returns = {canonical_sector(name): value for name, value in sector_returns.items()}
+    has_benchmark = bool(taiex)
+
+    sectors = sorted(
+        set(etf_weights) | set(taiex),
+        key=lambda s: etf_weights.get(s, 0.0),
+        reverse=True,
+    )
+    rows: list[SectorAttributionRow] = []
+    alloc_total: float | None = 0.0 if has_benchmark else None
+    for sector in sectors:
+        ew = round(etf_weights.get(sector, 0.0), 4)
+        bw = taiex.get(sector)
+        ret = returns.get(sector)
+        diff = round(ew - bw, 4) if bw is not None else None
+        etf_contrib = round(ew * ret / 100, 4) if ret is not None else None
+        alloc = round((ew - bw) * ret / 100, 4) if (bw is not None and ret is not None) else None
+        if alloc is not None and alloc_total is not None:
+            alloc_total += alloc
+        rows.append(
+            SectorAttributionRow(
+                sector=sector,
+                etf_weight_pct=ew,
+                benchmark_weight_pct=bw,
+                weight_diff_pct=diff,
+                sector_return_pct=ret,
+                etf_contribution_pct=etf_contrib,
+                allocation_effect_pct=alloc,
+            )
+        )
+    if alloc_total is not None:
+        alloc_total = round(alloc_total, 4)
+
+    return SectorAttributionOut(
+        as_of=as_of,
+        fund_name=fund_name,
+        benchmark_name=benchmark_name,
+        has_benchmark=has_benchmark,
+        rows=rows,
+        allocation_total_pct=alloc_total,
+        unmapped_weight_pct=unmapped,
+        summary_zh_hant=_sector_summary_zh(
+            rows=rows,
+            benchmark_name=benchmark_name,
+            has_benchmark=has_benchmark,
+            alloc_total=alloc_total,
+        ),
+        source_notes=source_notes or [],
+        disclaimer=DISCLAIMER,
+    )
+
+
+def compute_sector_attribution(as_of: date | None = None) -> SectorAttributionOut:
+    """Live sector attribution from the saved fund holdings + sector config and
+    today's TWSE sector-index returns. Returns an empty (but valid) result when no
+    fund has been configured yet."""
+    day = as_of or datetime.now(TAIPEI_TZ).date()
+    iso = day.isoformat()
+    fund = load_config()
+    if fund is None or not fund.holdings:
+        return SectorAttributionOut(
+            as_of=iso,
+            fund_name="",
+            benchmark_name="台灣加權指數",
+            has_benchmark=False,
+            rows=[],
+            allocation_total_pct=None,
+            unmapped_weight_pct=0.0,
+            summary_zh_hant="尚未設定基金；請先在持股工具按「設為每日自動更新」。",
+            source_notes=[],
+            disclaimer=DISCLAIMER,
+        )
+
+    notes: list[str] = []
+    sector_returns: dict[str, float] = {}
+    client = TwseClient()
+    try:
+        sector_returns = client.sector_returns(as_of=day)
+    except Exception as exc:  # noqa: BLE001 - keep the breakdown usable without returns.
+        notes.append(f"TWSE 產業指數取得失敗：{exc}")
+    finally:
+        client.close()
+    if sector_returns:
+        notes.append("source: TWSE afterTrading MI_INDEX 類股指數")
+
+    return build_sector_attribution(
+        holdings=fund.holdings,
+        sector_returns=sector_returns,
+        config=load_sector_config(),
+        fund_name=fund.fund_name,
+        benchmark_name=fund.benchmark_name,
+        as_of=iso,
+        source_notes=notes,
+    )
+
+
+def _sector_summary_zh(
+    *,
+    rows: list[SectorAttributionRow],
+    benchmark_name: str,
+    has_benchmark: bool,
+    alloc_total: float | None,
+) -> str:
+    if not has_benchmark or alloc_total is None:
+        scored = [r for r in rows if r.etf_contribution_pct is not None]
+        if not scored:
+            return "已彙整基金產業配置；補上各產業當日漲跌幅後即可看到每個產業的貢獻。"
+        top = max(scored, key=lambda r: r.etf_contribution_pct or 0)
+        bottom = min(scored, key=lambda r: r.etf_contribution_pct or 0)
+        return (
+            f"本日基金產業貢獻：{top.sector} 最為正貢獻、{bottom.sector} 最為拖累。"
+            f"設定加權指數產業權重後，可進一步比較配置差異。"
+        )
+    effects = [r for r in rows if r.allocation_effect_pct is not None]
+    relation = "贏過" if alloc_total >= 0 else "落後"
+    if not effects:
+        return f"產業配置對相對表現的影響約 {alloc_total:+.2f} 個百分點。"
+    best = max(effects, key=lambda r: r.allocation_effect_pct or 0)
+    worst = min(effects, key=lambda r: r.allocation_effect_pct or 0)
+    return (
+        f"光看產業配置差異，今天{relation}{benchmark_name} {alloc_total:+.2f} 個百分點。"
+        f"最有利的是 {best.sector}（配置差異 {best.weight_diff_pct:+.1f}%、"
+        f"當日 {best.sector_return_pct:+.2f}%）；最不利的是 {worst.sector}。"
+    )
 
 
 def _read_tabular_text(text: str) -> tuple[list[dict[str, str]], list[str]]:

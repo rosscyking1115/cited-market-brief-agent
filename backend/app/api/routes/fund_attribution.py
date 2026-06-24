@@ -17,11 +17,14 @@ from app.fund_attribution.schemas import (
     HoldingsParseOut,
     HoldingsParseRequest,
     LatestAttributionOut,
+    SectorAttributionOut,
+    SectorConfig,
 )
 from app.fund_attribution.service import (
     analyze_fund_attribution,
     attribution_plan,
     benchmark_return_from_twse,
+    compute_sector_attribution,
     fill_holding_returns_from_twse,
     fund_return_from_twse,
     parse_holdings_text,
@@ -29,7 +32,12 @@ from app.fund_attribution.service import (
     refresh_latest_attribution,
     save_fund_config,
 )
-from app.fund_attribution.store import load_config, load_result
+from app.fund_attribution.store import (
+    load_config,
+    load_result,
+    load_sector_config,
+    save_sector_config,
+)
 
 router = APIRouter(prefix="/fund-attribution", tags=["fund-attribution"])
 
@@ -95,3 +103,21 @@ def post_refresh() -> LatestAttributionOut:
         as_of=result.as_of if result else None,
         result=result,
     )
+
+
+@router.put("/sector-config", response_model=SectorConfig)
+def put_sector_config(config: SectorConfig) -> SectorConfig:
+    """Save the set-once TAIEX sector weights (+ optional stock→sector map)."""
+    save_sector_config(config)
+    return config
+
+
+@router.get("/sector-config", response_model=SectorConfig)
+def get_sector_config() -> SectorConfig:
+    return load_sector_config()
+
+
+@router.get("/sector-attribution", response_model=SectorAttributionOut)
+def get_sector_attribution() -> SectorAttributionOut:
+    """Sector (產業) breakdown of the fund vs the TAIEX, with today's sector returns."""
+    return compute_sector_attribution()
