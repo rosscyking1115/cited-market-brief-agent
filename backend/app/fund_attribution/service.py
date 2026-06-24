@@ -3,7 +3,7 @@ import binascii
 import csv
 import io
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from openpyxl import load_workbook
@@ -348,12 +348,18 @@ def benchmark_return_from_twse(request: BenchmarkReturnRequest) -> BenchmarkRetu
 
     client = TwseClient()
     warnings: list[str] = []
+    value = None
     try:
-        try:
-            value = client.taiex_return(as_of=as_of)
-        except Exception as exc:  # noqa: BLE001 - keep manual benchmark fallback available.
-            value = None
-            warnings.append(f"TAIEX TWSE 取價失敗：{exc}")
+        # Walk back to the latest trading day with data (today may not have closed).
+        for back in range(7):
+            try:
+                value = client.taiex_return(as_of=as_of - timedelta(days=back))
+            except Exception as exc:  # noqa: BLE001 - keep manual benchmark fallback.
+                value = None
+                if back == 0:
+                    warnings.append(f"TAIEX TWSE 取價失敗：{exc}")
+            if value is not None:
+                break
     finally:
         client.close()
 
@@ -564,12 +570,19 @@ def _cached_sector_returns(day: date) -> dict[str, float]:
     iso = day.isoformat()
     if _SECTOR_RETURNS_CACHE and _SECTOR_RETURNS_CACHE_DAY == iso:
         return _SECTOR_RETURNS_CACHE
+    # MI_INDEX has no data for a day that hasn't closed (or weekends/holidays), so
+    # walk back to the latest trading day that actually has sector data.
+    fetched: dict[str, float] = {}
     client = TwseClient()
     try:
-        fetched = client.sector_returns(as_of=day)
-    except Exception as exc:  # noqa: BLE001 - keep the breakdown usable without returns.
-        logger.info("TWSE sector returns fetch failed: %s", exc)
-        fetched = {}
+        for back in range(7):
+            try:
+                fetched = client.sector_returns(as_of=day - timedelta(days=back))
+            except Exception as exc:  # noqa: BLE001 - keep the breakdown usable.
+                logger.info("TWSE sector returns fetch failed: %s", exc)
+                fetched = {}
+            if fetched:
+                break
     finally:
         client.close()
     if fetched:
