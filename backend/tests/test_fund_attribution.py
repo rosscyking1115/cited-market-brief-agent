@@ -436,15 +436,17 @@ def test_parse_listed_industry_builds_code_to_sector_map() -> None:
 
     out = parse_listed_industry(
         [
-            {"公司代號": "2330", "公司名稱": "台積電", "產業別": "半導體業"},
-            {"公司代號": "2882", "公司名稱": "國泰金", "產業別": "金融保險業"},
+            {"公司代號": "2330", "公司名稱": "台積電", "產業別": "24"},  # code -> name
+            {"公司代號": "2882", "公司名稱": "國泰金", "產業別": "17"},
+            {"公司代號": "9999", "公司名稱": "某公司", "產業別": "半導體業"},  # already a name
             {"unexpected": "shape"},
         ]
     )
 
-    assert out["2330"] == "半導體業"
-    assert out["2882"] == "金融保險業"
-    assert len(out) == 2
+    assert out["2330"] == "半導體"  # 24 -> 半導體 (matches 半導體類指數)
+    assert out["2882"] == "金融保險"
+    assert out["9999"] == "半導體業"  # non-numeric kept as-is (canonicalised downstream)
+    assert len(out) == 3
 
 
 def test_parse_holdings_captures_and_canonicalises_sector() -> None:
