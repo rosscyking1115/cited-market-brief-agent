@@ -59,7 +59,7 @@ class Settings(BaseSettings):
 
     # BBC RSS is latest-headline discovery only. BBC does not expose public read-rank data.
     bbc_rss_enabled: bool = False
-    bbc_rss_url: str = "https://feeds.bbci.co.uk/news/rss.xml"
+    bbc_rss_url: str = "https://feeds.bbci.co.uk/news/business/rss.xml"
     bbc_request_timeout_seconds: float = 8.0
 
     # NYT Most Popular: genuine readership (most-viewed). Headlines + links only,
@@ -98,6 +98,10 @@ class Settings(BaseSettings):
     # delayed/public after-trading data, not as an intraday market-data feed.
     twse_stock_day_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY"
     twse_mi_index_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX"
+    # Public listed-company industry classification (產業別), to auto-map holdings to
+    # sectors when the holdings file has no 產業別 column.
+    twse_industry_url: str = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
+    twse_industry_cache_ttl_seconds: int = 86400
     twse_request_timeout_seconds: float = 8.0
 
     # LLM providers (LiteLLM library mode; two providers at MVP)

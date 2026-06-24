@@ -385,12 +385,11 @@ def _bbc_latest_rows(
     for article in articles:
         if article.published_at is None:
             continue
+        if not _is_market_relevant_bbc(article):
+            continue
         published = article.published_at.astimezone(TAIPEI_TZ)
         if published < cutoff:
             continue
-        # Show the latest top headlines (a morning catch-up), tagging market-relevant
-        # ones with their market category and everything else as 國際 (general).
-        category = _market_category(article.title) if _is_market_relevant_bbc(article) else "國際"
         rows.append(
             PopularNewsItem(
                 rank=len(rows) + 1,
@@ -402,8 +401,8 @@ def _bbc_latest_rows(
                 window=window,
                 rank_kind="latest",
                 source_status=policy.source_status,
-                category=category,
-                why="BBC RSS 在此時間窗內發布的最新新聞；這不是閱讀量排名。",
+                category=_market_category(article.title),
+                why="BBC RSS 在此時間窗內發布的最新財經新聞；這不是閱讀量排名。",
                 rights_note=policy.rights_note,
                 summary=article.summary,
             )
@@ -438,24 +437,15 @@ def normalize_popular_news_ranks(items: list[PopularNewsItem]) -> list[PopularNe
     return normalized
 
 
-# NYT most-viewed mixes hard news with lifestyle; drop the clearly non-news
-# sections so a market-morning reader still gets a news-weighted "most read" list.
-NYT_SKIP_SECTIONS = {
-    "arts",
-    "automobiles",
-    "books",
-    "fashion",
-    "food",
-    "magazine",
-    "movies",
-    "music",
-    "real estate",
-    "sports",
-    "style",
-    "t magazine",
-    "theater",
-    "travel",
-    "well",
+# Finance-only: keep only NYT most-viewed articles from business/markets sections
+# so the rail helps an investment decision, not general/politics/lifestyle reads.
+NYT_FINANCE_SECTIONS = {
+    "business",
+    "business day",
+    "dealbook",
+    "economy",
+    "technology",
+    "your money",
 }
 
 
@@ -464,7 +454,7 @@ def _nyt_news_rows(*, articles: list[NytArticle], limit: int) -> list[PopularNew
     rows: list[PopularNewsItem] = []
     for article in articles:
         section = (article.section or "").strip().lower()
-        if section in NYT_SKIP_SECTIONS:
+        if section not in NYT_FINANCE_SECTIONS:
             continue
         rows.append(
             PopularNewsItem(

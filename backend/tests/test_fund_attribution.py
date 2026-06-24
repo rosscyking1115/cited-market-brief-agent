@@ -431,6 +431,22 @@ def test_sector_attribution_endpoint_empty_without_fund(tmp_path, monkeypatch) -
     assert body["has_benchmark"] is False
 
 
+def test_parse_listed_industry_builds_code_to_sector_map() -> None:
+    from app.connectors.twse import parse_listed_industry
+
+    out = parse_listed_industry(
+        [
+            {"公司代號": "2330", "公司名稱": "台積電", "產業別": "半導體業"},
+            {"公司代號": "2882", "公司名稱": "國泰金", "產業別": "金融保險業"},
+            {"unexpected": "shape"},
+        ]
+    )
+
+    assert out["2330"] == "半導體業"
+    assert out["2882"] == "金融保險業"
+    assert len(out) == 2
+
+
 def test_parse_holdings_captures_and_canonicalises_sector() -> None:
     result = parse_holdings_text(
         HoldingsParseRequest(

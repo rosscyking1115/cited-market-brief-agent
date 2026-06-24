@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from openpyxl import load_workbook
 
-from app.connectors.twse import TwseClient
+from app.connectors.twse import TwseClient, fetch_listed_industry_map
 from app.fund_attribution.schemas import (
     AttributionRow,
     AutomationPolicyItem,
@@ -686,10 +686,21 @@ def compute_sector_attribution(as_of: date | None = None) -> SectorAttributionOu
     if sector_returns:
         notes.append("source: TWSE afterTrading MI_INDEX 類股指數")
 
+    # Auto-classify holdings via TWSE's public industry data; the stored map (and
+    # any 產業別 column already on a holding) takes precedence.
+    stored = load_sector_config()
+    auto_map = fetch_listed_industry_map()
+    if auto_map:
+        notes.append("產業分類：TWSE 上市公司產業別")
+    config = SectorConfig(
+        taiex_weights=stored.taiex_weights,
+        sector_map={**auto_map, **stored.sector_map},
+    )
+
     return build_sector_attribution(
         holdings=fund.holdings,
         sector_returns=sector_returns,
-        config=load_sector_config(),
+        config=config,
         fund_name=fund.fund_name,
         benchmark_name=fund.benchmark_name,
         as_of=iso,
