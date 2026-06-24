@@ -553,6 +553,31 @@ def save_fund_config(config: FundConfig) -> FundConfig:
 
 # --- Sector (產業) attribution -------------------------------------------------
 
+# After-close sector index returns change once a day; cache the day's good fetch so
+# a transient TWSE failure on a later call doesn't blank the whole breakdown.
+_SECTOR_RETURNS_CACHE: dict[str, float] = {}
+_SECTOR_RETURNS_CACHE_DAY: str | None = None
+
+
+def _cached_sector_returns(day: date) -> dict[str, float]:
+    global _SECTOR_RETURNS_CACHE, _SECTOR_RETURNS_CACHE_DAY
+    iso = day.isoformat()
+    if _SECTOR_RETURNS_CACHE and _SECTOR_RETURNS_CACHE_DAY == iso:
+        return _SECTOR_RETURNS_CACHE
+    client = TwseClient()
+    try:
+        fetched = client.sector_returns(as_of=day)
+    except Exception as exc:  # noqa: BLE001 - keep the breakdown usable without returns.
+        logger.info("TWSE sector returns fetch failed: %s", exc)
+        fetched = {}
+    finally:
+        client.close()
+    if fetched:
+        _SECTOR_RETURNS_CACHE = fetched
+        _SECTOR_RETURNS_CACHE_DAY = iso
+        return fetched
+    return _SECTOR_RETURNS_CACHE
+
 _SECTOR_SUFFIXES = ("類股價指數", "類報酬指數", "類指數", "類股指數", "類股", "類", "業")
 
 
@@ -675,16 +700,11 @@ def compute_sector_attribution(as_of: date | None = None) -> SectorAttributionOu
         )
 
     notes: list[str] = []
-    sector_returns: dict[str, float] = {}
-    client = TwseClient()
-    try:
-        sector_returns = client.sector_returns(as_of=day)
-    except Exception as exc:  # noqa: BLE001 - keep the breakdown usable without returns.
-        notes.append(f"TWSE 產業指數取得失敗：{exc}")
-    finally:
-        client.close()
+    sector_returns = _cached_sector_returns(day)
     if sector_returns:
         notes.append("source: TWSE afterTrading MI_INDEX 類股指數")
+    else:
+        notes.append("尚未取得 TWSE 產業指數當日漲跌，稍後重試。")
 
     # Auto-classify holdings via TWSE's public industry data; the stored map (and
     # any 產業別 column already on a holding) takes precedence.
