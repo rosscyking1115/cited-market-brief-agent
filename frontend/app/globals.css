@@ -43,6 +43,11 @@
   --radius-ctl: 4px;   /* inputs, buttons, tags */
   --radius-card: 8px;  /* cards, popovers */
   --radius-modal: 12px;
+
+  /* Soft, ultra-diffuse shadows (minimalist-ui: depth without weight, ≤0.06 alpha) */
+  --shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.04);
+  --shadow-md: 0 2px 10px -3px rgb(28 25 23 / 0.05);
+  --shadow-lg: 0 8px 24px -8px rgb(28 25 23 / 0.06);
 }
 
 :root {
@@ -58,17 +63,19 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --color-page: #e8edf3;
-  --color-bar: #eef2f6;
-  --color-card: #f3f6f9;
-  --color-hairline: #c4ceda;
-  --color-elevated: #94a4b6;
+  /* Warm monochrome (minimalist-ui): bone surfaces + off-black text for a calm,
+     document-like consumer read, instead of the cool institutional blue-grey. */
+  --color-page: #f4f1ea;     /* warm bone background */
+  --color-bar: #faf8f3;      /* warm near-white bar */
+  --color-card: #fdfcf8;     /* warm white card */
+  --color-hairline: #e5ddcf; /* warm hairline */
+  --color-elevated: #cabfac; /* warm mid border */
 
-  --color-neutral-30: #111c29;
-  --color-neutral-40: #1d2a3a;
-  --color-neutral-50: #28394c;
-  --color-neutral-70: #4b5d70;
-  --color-neutral-90: #637387;
+  --color-neutral-30: #211d17; /* warm off-black (primary text) */
+  --color-neutral-40: #2f2a22;
+  --color-neutral-50: #433c31;
+  --color-neutral-70: #61594c;
+  --color-neutral-90: #8a8173; /* warm muted (meta) */
 
   --color-up: var(--color-up-light);
   --color-down: var(--color-down-light);
