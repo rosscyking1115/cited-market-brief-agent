@@ -98,10 +98,16 @@ def _cached_news(
     fetched = _fetch_popular_news()
     if fetched:
         fetched = translate_news_items_zh(fetched)
+        # Windows are cumulative time ranges: this week's report covers today + the
+        # week's most-read finance, this month's covers all of it. A single
+        # publisher's week-only most-read finance is often empty, so summarizing the
+        # rolling window keeps the weekly/monthly digests substantive.
+        day_items = [i for i in fetched if i.window == "1d"]
+        week_items = [i for i in fetched if i.window in ("1d", "1w")]
         overviews = (
-            generate_news_overview([i for i in fetched if i.window == "1d"], "今日"),
-            generate_news_overview([i for i in fetched if i.window == "1w"], "本週"),
-            generate_news_overview([i for i in fetched if i.window == "1m"], "本月"),
+            generate_news_overview(day_items, "今日"),
+            generate_news_overview(week_items, "本週"),
+            generate_news_overview(fetched, "本月"),
         )
         _NEWS_CACHE = _NewsCache(items=fetched, overviews=overviews, fetched_at=now)
         return fetched, overviews

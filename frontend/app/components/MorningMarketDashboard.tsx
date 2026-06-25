@@ -113,6 +113,12 @@ function emptyNewsText(lang: RadarLang) {
   };
 }
 
+function periodNoteText(lang: RadarLang, label: string) {
+  if (lang === "tw") return `本期單篇熱門文章較少；以上為 AI 整理的${label}重點，個別新聞可參考今日列表。`;
+  if (lang === "ko") return `이 기간의 개별 인기 기사는 적습니다. 위 ${label} 요약을 참고하고, 개별 기사는 오늘 탭을 확인하세요.`;
+  return `Few standout articles for this window — see the ${label} summary above; individual reads are on the Today tab.`;
+}
+
 function StarIcon({ className }: { className?: string }) {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
@@ -204,9 +210,12 @@ function NewsRail({
       : lang === "ko"
         ? { "1d": "오늘", "1w": "이번 주", "1m": "이번 달" }
         : { "1d": "Today", "1w": "This week", "1m": "This month" };
+  // Windows are cumulative ranges; a single publisher's week-only most-read finance
+  // is often empty, so a window earns a tab when it has its own most-read articles
+  // OR a rolling period report to show.
   const groups = (["1d", "1w", "1m"] as const)
     .map((key) => ({ key, label: periodLabels[key], items: realItems.filter((i) => i.window === key) }))
-    .filter((group) => group.items.length > 0);
+    .filter((group) => group.items.length > 0 || Boolean(overviews?.[group.key]));
 
   const [activeTab, setActiveTab] = useState("1d");
   const [activeCat, setActiveCat] = useState<string | null>(null);
@@ -295,7 +304,7 @@ function NewsRail({
         </div>
       )}
 
-      {groups.length > 0 && active ? (
+      {active && shown.length > 0 ? (
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {shown.map((item, index) => (
             <NewsCard
@@ -307,6 +316,8 @@ function NewsRail({
             />
           ))}
         </div>
+      ) : active && overviews?.[active.key] ? (
+        <p className="reader-meta mt-3 text-neutral-70">{periodNoteText(lang, active.label)}</p>
       ) : (
         <div className="mt-3 rounded-(--radius-card) border border-hairline bg-card px-4 py-5 shadow-[var(--shadow-soft)]">
           <p className="reader-body font-semibold text-neutral-30">{empty.title}</p>
