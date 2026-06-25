@@ -269,6 +269,7 @@ export type FundAttributionPayload = {
   contributors: AttributionRow[];
   drags: AttributionRow[];
   missing_returns: AttributionRow[];
+  all_rows: AttributionRow[];
   source_notes: string[];
   automation_policy: AutomationPolicyItem[];
   summary_zh_hant: string;

@@ -28,6 +28,11 @@ function signed(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
+function tokenColor(value: number | null) {
+  if (value === null || value === 0) return "var(--color-neutral-70)";
+  return value > 0 ? "var(--color-up)" : "var(--color-down)";
+}
+
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer);
   let binary = "";
@@ -618,6 +623,44 @@ export default function FundHoldingsParser({
             <ResultRows title="最大拖累" rows={analysis.drags} />
             <ResultRows title="缺少漲跌幅" rows={analysis.missing_returns.slice(0, 5)} />
           </div>
+
+          {analysis.all_rows.length > 0 && (
+            <div className="mt-3 overflow-hidden rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
+              <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
+                <p className="th-label">全部持股 · 依貢獻排序</p>
+                <span className="reader-meta text-neutral-90">{analysis.all_rows.length} 檔</span>
+              </div>
+              <div className="max-h-96 overflow-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-card">
+                    <tr className="border-b border-hairline">
+                      <th className="th-label px-4 py-2 text-left font-normal">持股</th>
+                      <th className="th-label px-4 py-2 text-right font-normal">權重</th>
+                      <th className="th-label px-4 py-2 text-right font-normal">當日</th>
+                      <th className="th-label px-4 py-2 text-right font-normal">貢獻</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-hairline">
+                    {analysis.all_rows.map((r) => (
+                      <tr key={`${r.symbol}-${r.name}`} className="transition-colors hover:bg-action/[0.05]">
+                        <td className="px-4 py-2">
+                          <span className="reader-body text-neutral-30">{r.name}</span>
+                          <span className="ml-1.5 font-mono text-[11px] text-neutral-90">{r.symbol}</span>
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono text-[13px] text-neutral-50">{fmt(r.weight_pct)}</td>
+                        <td className="px-4 py-2 text-right font-mono text-[13px]" style={{ color: tokenColor(r.return_pct) }}>
+                          {r.return_pct === null ? "缺" : signed(r.return_pct)}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono text-[13px] font-semibold" style={{ color: tokenColor(r.contribution_pct) }}>
+                          {r.contribution_pct === null ? "—" : signed(r.contribution_pct)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
       )}
     </section>

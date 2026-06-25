@@ -466,6 +466,11 @@ def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttribution
         key=lambda row: row.contribution_pct or 0,
     )[:5]
     missing = [row for row in rows if row.direction == "missing"]
+    all_rows = sorted(
+        rows,
+        key=lambda row: row.contribution_pct if row.contribution_pct is not None else float("-inf"),
+        reverse=True,
+    )
 
     return FundAttributionOut(
         fund_name=request.fund_name,
@@ -480,6 +485,7 @@ def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttribution
         contributors=contributors,
         drags=drags,
         missing_returns=missing,
+        all_rows=all_rows,
         source_notes=request.source_notes,
         automation_policy=automation_policy(),
         summary_zh_hant=_summary_zh(
