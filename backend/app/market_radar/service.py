@@ -343,13 +343,7 @@ def _is_market_relevant_bbc(article: BbcArticle) -> bool:
     return bool(tokens & MARKET_TOKENS) or _has_phrase(article.title, MARKET_PHRASES)
 
 
-def _gdelt_news_rows(
-    *,
-    articles: list[GdeltArticle],
-    window: Literal["1h", "24h"],
-    rank_kind: Literal["most_covered", "trending"],
-    limit: int,
-) -> list[PopularNewsItem]:
+def _gdelt_news_rows(*, articles: list[GdeltArticle], limit: int) -> list[PopularNewsItem]:
     rows: list[PopularNewsItem] = []
     policy = source_policy("gdelt_doc")
     for rank, article in enumerate(articles[:limit], start=1):
@@ -361,11 +355,11 @@ def _gdelt_news_rows(
                 source=article.domain,
                 url=article.url,
                 published_at=article.seendate,
-                window=window,
-                rank_kind=rank_kind,
+                window="1d",
+                rank_kind="most_covered",
                 source_status=policy.source_status,
                 category=_market_category(article.title),
-                why="GDELT 在此時間窗找到的市場相關新聞；這是趨勢/覆蓋度訊號，不是閱讀量。",
+                why="GDELT 今日找到的市場相關新聞；這是趨勢/覆蓋度訊號，不是閱讀量。",
                 rights_note=policy.rights_note,
             )
         )
@@ -429,16 +423,9 @@ def popular_news_from_bbc(
     return [*one_hour, *day]
 
 
-def _rss_rows(
-    *,
-    articles: list[RssArticle],
-    now: datetime,
-    window: Literal["1h", "24h"],
-    limit: int,
-) -> list[PopularNewsItem]:
+def _rss_rows(*, articles: list[RssArticle], now: datetime, limit: int) -> list[PopularNewsItem]:
     policy = source_policy("finance_rss")
-    window_delta = timedelta(hours=1) if window == "1h" else timedelta(hours=24)
-    cutoff = now.astimezone(TAIPEI_TZ) - window_delta
+    cutoff = now.astimezone(TAIPEI_TZ) - timedelta(hours=24)
     rows: list[PopularNewsItem] = []
     for article in articles:
         if article.published_at is None or not article.url:
@@ -454,11 +441,11 @@ def _rss_rows(
                 source=article.source,
                 url=article.url,
                 published_at=published.isoformat(),
-                window=window,
+                window="1d",
                 rank_kind="latest",
                 source_status=policy.source_status,
                 category=_market_category(article.title),
-                why="財經媒體 RSS 在此時間窗內發布的最新新聞；這不是閱讀量排名。",
+                why="財經媒體 RSS 今日發布的最新新聞；這不是閱讀量排名。",
                 rights_note=policy.rights_note,
                 summary=article.summary,
             )
@@ -473,22 +460,14 @@ def popular_news_from_finance_rss(
     articles: list[RssArticle],
     now: datetime | None = None,
 ) -> list[PopularNewsItem]:
-    local_now = now or datetime.now(TAIPEI_TZ)
-    one_hour = _rss_rows(articles=articles, now=local_now, window="1h", limit=10)
-    one_hour_urls = {row.url for row in one_hour if row.url}
-    day = [
-        row
-        for row in _rss_rows(articles=articles, now=local_now, window="24h", limit=30)
-        if not row.url or row.url not in one_hour_urls
-    ][:20]
-    return [*one_hour, *day]
+    return _rss_rows(articles=articles, now=now or datetime.now(TAIPEI_TZ), limit=24)
 
 
 def normalize_popular_news_ranks(items: list[PopularNewsItem]) -> list[PopularNewsItem]:
-    counters = {"1h": 0, "24h": 0}
+    counters: dict[str, int] = {}
     normalized: list[PopularNewsItem] = []
     for item in items:
-        counters[item.window] += 1
+        counters[item.window] = counters.get(item.window, 0) + 1
         normalized.append(item.model_copy(update={"rank": counters[item.window]}))
     return normalized
 
@@ -505,8 +484,14 @@ NYT_FINANCE_SECTIONS = {
 }
 
 
-def _nyt_news_rows(*, articles: list[NytArticle], limit: int) -> list[PopularNewsItem]:
+_NYT_PERIOD_LABEL = {"1d": "近一日", "1w": "近一週", "1m": "近一月"}
+
+
+def _nyt_news_rows(
+    *, articles: list[NytArticle], window: Literal["1d", "1w", "1m"], limit: int
+) -> list[PopularNewsItem]:
     policy = source_policy("nyt_most_popular")
+    label = _NYT_PERIOD_LABEL.get(window, "近期")
     rows: list[PopularNewsItem] = []
     for article in articles:
         section = (article.section or "").strip().lower()
@@ -520,11 +505,11 @@ def _nyt_news_rows(*, articles: list[NytArticle], limit: int) -> list[PopularNew
                 source=policy.display_name,
                 url=article.url,
                 published_at=article.published_at,
-                window="24h",
+                window=window,
                 rank_kind="most_viewed",
                 source_status=policy.source_status,
                 category=_market_category(article.title),
-                why="NYT Most Popular API 近一日最多瀏覽文章；這是真實閱讀量資料，不是覆蓋度。",
+                why=f"NYT Most Popular API {label}最多瀏覽文章；這是真實閱讀量資料，不是覆蓋度。",
                 rights_note=policy.rights_note,
                 summary=article.summary,
             )
@@ -534,30 +519,14 @@ def _nyt_news_rows(*, articles: list[NytArticle], limit: int) -> list[PopularNew
     return rows
 
 
-def popular_news_from_nyt(*, articles: list[NytArticle]) -> list[PopularNewsItem]:
-    return _nyt_news_rows(articles=articles, limit=8)
-
-
-def popular_news_from_gdelt(
-    *,
-    last_hour: list[GdeltArticle],
-    last_day: list[GdeltArticle],
+def popular_news_from_nyt(
+    *, articles: list[NytArticle], window: Literal["1d", "1w", "1m"] = "1d"
 ) -> list[PopularNewsItem]:
-    rows = [
-        *_gdelt_news_rows(
-            articles=last_hour,
-            window="1h",
-            rank_kind="trending",
-            limit=12,
-        ),
-        *_gdelt_news_rows(
-            articles=last_day,
-            window="24h",
-            rank_kind="most_covered",
-            limit=24,
-        ),
-    ]
-    return rows
+    return _nyt_news_rows(articles=articles, window=window, limit=8)
+
+
+def popular_news_from_gdelt(*, last_day: list[GdeltArticle]) -> list[PopularNewsItem]:
+    return _gdelt_news_rows(articles=last_day, limit=24)
 
 
 def _overnight_risk() -> list[OvernightRiskItem]:

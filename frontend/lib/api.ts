@@ -134,7 +134,7 @@ export type PopularNewsItem = {
   source: string;
   url: string | null;
   published_at: string | null;
-  window: "1h" | "24h";
+  window: "1h" | "24h" | "1d" | "1w" | "1m";
   rank_kind: NewsRankKind;
   source_status: NewsSourceStatus;
   category: string;

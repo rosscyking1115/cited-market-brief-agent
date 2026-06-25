@@ -195,16 +195,17 @@ function NewsRail({
   framed?: boolean; // non-TW renders inside the dashboard card with a top divider
 }) {
   const realItems = items.filter((item) => item.url);
-  const isReadership = (item: PopularNewsItem) =>
-    item.rank_kind === "most_read" || item.rank_kind === "most_viewed";
-  const latest = realItems.filter((item) => !isReadership(item));
-  const groups = [
-    { key: "most", label: SECTION_LABELS.mostRead[lang], items: realItems.filter(isReadership) },
-    { key: "1h", label: profile.oneHourLabel, items: latest.filter((i) => i.window === "1h") },
-    { key: "24h", label: profile.dayLabel, items: latest.filter((i) => i.window === "24h") },
-  ].filter((group) => group.items.length > 0);
+  const periodLabels: Record<string, string> =
+    lang === "tw"
+      ? { "1d": "今日", "1w": "本週", "1m": "本月" }
+      : lang === "ko"
+        ? { "1d": "오늘", "1w": "이번 주", "1m": "이번 달" }
+        : { "1d": "Today", "1w": "This week", "1m": "This month" };
+  const groups = (["1d", "1w", "1m"] as const)
+    .map((key) => ({ key, label: periodLabels[key], items: realItems.filter((i) => i.window === key) }))
+    .filter((group) => group.items.length > 0);
 
-  const [activeTab, setActiveTab] = useState("most");
+  const [activeTab, setActiveTab] = useState("1d");
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const active = groups.find((group) => group.key === activeTab) ?? groups[0];
   const cats = active ? Array.from(new Set(active.items.map((i) => i.category))) : [];
