@@ -39,7 +39,7 @@ class PopularNewsItem(BaseModel):
     source: str
     url: str | None = None
     published_at: str | None = None
-    window: Literal["1h", "24h"]
+    window: Literal["1h", "24h", "1d", "1w", "1m"]
     rank_kind: NewsRankKind
     source_status: SourceStatus
     category: str

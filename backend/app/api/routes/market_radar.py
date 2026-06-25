@@ -115,10 +115,7 @@ def _fetch_popular_news() -> list[PopularNewsItem]:
         client = GdeltClient()
         try:
             popular_news.extend(
-                popular_news_from_gdelt(
-                    last_hour=client.article_list(timespan="1h", max_records=40),
-                    last_day=client.article_list(timespan="24h", max_records=80),
-                ),
+                popular_news_from_gdelt(last_day=client.article_list(timespan="24h", max_records=80)),
             )
         except Exception as exc:
             logger.info("GDELT news discovery fetch failed: %s", exc)
@@ -128,14 +125,14 @@ def _fetch_popular_news() -> list[PopularNewsItem]:
     if settings.nyt_enabled and settings.nyt_api_key.strip():
         client = NytMostPopularClient()
         try:
-            popular_news.extend(
-                popular_news_from_nyt(
-                    articles=client.most_viewed(
-                        period=settings.nyt_most_popular_period_days,
-                        max_records=20,
+            # Most-viewed over the day / week / month (NYT Most Popular periods 1/7/30).
+            for period, window in ((1, "1d"), (7, "1w"), (30, "1m")):
+                popular_news.extend(
+                    popular_news_from_nyt(
+                        articles=client.most_viewed(period=period, max_records=20),
+                        window=window,
                     ),
-                ),
-            )
+                )
         except Exception as exc:
             logger.info("NYT Most Popular fetch failed: %s", exc)
         finally:

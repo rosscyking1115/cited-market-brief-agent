@@ -72,7 +72,7 @@ def test_gdelt_news_rows_are_not_labeled_most_read() -> None:
     radar = build_morning_radar(
         datetime(2026, 6, 15, 8, 30, tzinfo=ZoneInfo("Asia/Taipei")),
         popular_news=popular_news_from_gdelt(
-            last_hour=[
+            last_day=[
                 GdeltArticle(
                     title="Global stocks rise as chip shares gain",
                     url="https://example.com/markets",
@@ -80,9 +80,7 @@ def test_gdelt_news_rows_are_not_labeled_most_read() -> None:
                     seendate="20260615001500",
                     source_country="US",
                     language="English",
-                )
-            ],
-            last_day=[
+                ),
                 GdeltArticle(
                     title="Oil prices move higher after supply warning",
                     url="https://example.com/oil",
@@ -90,16 +88,16 @@ def test_gdelt_news_rows_are_not_labeled_most_read() -> None:
                     seendate="20260614230000",
                     source_country="GB",
                     language="English",
-                )
+                ),
             ],
         ),
     )
     rows = radar.popular_news
 
-    assert rows[0].rank_kind == "trending"
+    assert rows[0].rank_kind == "most_covered"
     assert rows[0].source_status == "official_api"
+    assert rows[0].window == "1d"
     assert rows[0].url == "https://example.com/markets"
-    assert rows[1].rank_kind == "most_covered"
     assert {row.rank_kind for row in rows}.isdisjoint({"most_read", "most_viewed"})
 
 
