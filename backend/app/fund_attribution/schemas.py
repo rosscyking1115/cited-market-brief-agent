@@ -123,6 +123,7 @@ class FundAttributionOut(BaseModel):
     contributors: list[AttributionRow]
     drags: list[AttributionRow]
     missing_returns: list[AttributionRow]
+    all_rows: list[AttributionRow]
     source_notes: list[str]
     automation_policy: list[AutomationPolicyItem]
     summary_zh_hant: str

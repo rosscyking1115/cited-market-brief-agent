@@ -303,7 +303,8 @@ export default function SectorAttributionPanel() {
 
       <p className="reader-meta mt-2 text-neutral-90">
         「配置效果」= (基金權重 − 指數權重) × 該產業當日漲跌。正值代表配置相對指數有利（少配跌的、多配漲的）。
-        產業漲跌來自 TWSE 類股指數；本頁為教育性績效歸因，不構成投資建議。
+        產業漲跌來自 TWSE 類股指數。指數產業權重目前為概略預設值，可在右上「編輯指數權重」依 TAIFEX 校準。
+        本頁為教育性績效歸因，不構成投資建議。
       </p>
 
       {!hasBenchmark && rows.length > 0 && (
