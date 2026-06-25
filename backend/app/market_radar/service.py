@@ -472,8 +472,16 @@ def normalize_popular_news_ranks(items: list[PopularNewsItem]) -> list[PopularNe
     return normalized
 
 
-# Finance-only: keep only NYT most-viewed articles from business/markets sections
-# so the rail helps an investment decision, not general/politics/lifestyle reads.
+def _title_is_market_relevant(title: str) -> bool:
+    tokens = _tokens(title)
+    if "ai" in tokens and tokens & AI_CONTEXT_TOKENS:
+        return True
+    return bool(tokens & MARKET_TOKENS) or _has_phrase(title, MARKET_PHRASES)
+
+
+# Finance-only: keep NYT most-viewed articles from business/markets sections OR whose
+# headline is market-relevant (catches finance stories filed elsewhere), so the
+# weekly/monthly most-read tabs fill in — not general/politics/lifestyle reads.
 NYT_FINANCE_SECTIONS = {
     "business",
     "business day",
@@ -495,7 +503,7 @@ def _nyt_news_rows(
     rows: list[PopularNewsItem] = []
     for article in articles:
         section = (article.section or "").strip().lower()
-        if section not in NYT_FINANCE_SECTIONS:
+        if section not in NYT_FINANCE_SECTIONS and not _title_is_market_relevant(article.title):
             continue
         rows.append(
             PopularNewsItem(
