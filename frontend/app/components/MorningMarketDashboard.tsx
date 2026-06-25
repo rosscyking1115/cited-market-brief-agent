@@ -141,6 +141,7 @@ function NewsCard({
 }) {
   const why = localizedNewsWhy(lang, item.rank_kind, item.why);
   const published = publishedText(item.published_at, profile, lang);
+  const summary = lang === "tw" ? (item.summary_zh ?? item.summary) : item.summary;
   const Wrapper = item.url ? "a" : "div";
   return (
     <Wrapper
@@ -166,8 +167,8 @@ function NewsCard({
           <h3 className="reader-heading mt-1.5 text-[16px] text-neutral-30 [text-underline-offset:3px] group-hover:underline">
             {newsTitle(item, lang)}
           </h3>
-          {item.summary && (
-            <p className="reader-body mt-1 line-clamp-2 text-[13.5px] text-neutral-50">{item.summary}</p>
+          {summary && (
+            <p className="reader-body mt-1 line-clamp-2 text-[13.5px] text-neutral-50">{summary}</p>
           )}
           {why && (
             <div className="mt-2 flex items-center gap-1.5">
@@ -188,11 +189,13 @@ function NewsRail({
   profile,
   lang,
   framed,
+  overviews,
 }: {
   items: PopularNewsItem[];
   profile: RegionProfile;
   lang: RadarLang;
   framed?: boolean; // non-TW renders inside the dashboard card with a top divider
+  overviews?: Record<string, string | null>; // window key -> period report (TW)
 }) {
   const realItems = items.filter((item) => item.url);
   const periodLabels: Record<string, string> =
@@ -281,6 +284,14 @@ function NewsRail({
               {category}
             </button>
           ))}
+        </div>
+      )}
+
+      {active && overviews?.[active.key] && (
+        <div className="mt-3 rounded-(--radius-card) border border-action/30 bg-action-soft px-4 py-3">
+          <p className="th-label text-action">{active.label}重點 · AI 摘要</p>
+          <p className="reader-body mt-1 text-neutral-50">{overviews[active.key]}</p>
+          <p className="reader-meta mt-1 text-neutral-90">AI 依{active.label}頭條整理，僅供快速掌握，不構成投資建議。</p>
         </div>
       )}
 
@@ -448,8 +459,16 @@ export default function MorningMarketDashboard({ radar: initialRadar }: { radar:
   }, []);
 
   // Taiwan consumer edition: a clean standalone news section (hero is above it).
+  // The 今日 report is in the hero; the 本週/本月 reports surface in their tabs.
   if (isTW) {
-    return <NewsRail items={radar.popular_news} profile={profile} lang={lang} />;
+    return (
+      <NewsRail
+        items={radar.popular_news}
+        profile={profile}
+        lang={lang}
+        overviews={{ "1w": radar.week_overview ?? null, "1m": radar.month_overview ?? null }}
+      />
+    );
   }
 
   // Other editions keep the full analyst layout (summary, clock, risk, news, glossary).

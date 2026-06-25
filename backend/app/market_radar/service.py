@@ -707,8 +707,8 @@ def _glossary() -> list[GlossaryItem]:
     ]
 
 
-def generate_today_overview(items: list[PopularNewsItem]) -> str | None:
-    """A 2-3 sentence Traditional-Chinese morning brief synthesised from the top
+def generate_news_overview(items: list[PopularNewsItem], period_label: str = "今日") -> str | None:
+    """A 2-3 sentence Traditional-Chinese brief synthesised from the period's top
     headlines. Best-effort: returns None without an LLM key or on any failure, and
     is strictly factual / non-advisory (no buy/sell/individual-stock guidance)."""
     if not items or not settings.anthropic_api_key.strip():
@@ -723,24 +723,79 @@ def generate_today_overview(items: list[PopularNewsItem]) -> str | None:
                 {
                     "role": "system",
                     "content": (
-                        "你是市場晨間新聞編輯。根據提供的頭條，用繁體中文寫 2-3 句的今日重點摘要，"
-                        "只陳述事實與主題，幫讀者快速掌握今天最重要的新聞。"
+                        "你是市場晨間新聞編輯。根據提供的頭條，用繁體中文寫 2-3 句重點摘要，"
+                        "只陳述事實與主題，幫讀者快速掌握最重要的財經新聞。"
                         "不得提供任何投資、買賣、進出場或個股建議。"
                     ),
                 },
                 {
                     "role": "user",
-                    "content": f"今日最多人閱讀與最新的新聞頭條：\n{headlines}\n\n請寫 2-3 句今日新聞重點摘要。",
+                    "content": f"{period_label}的財經新聞頭條：\n{headlines}\n\n請寫 2-3 句{period_label}的重點摘要。",
                 },
             ],
-            max_tokens=240,
+            max_tokens=260,
             temperature=0.3,
         )
         text = (response.choices[0].message.content or "").strip()
         return text or None
     except Exception as exc:  # noqa: BLE001 - overview is optional; never break the radar.
-        logger.info("Today overview generation failed: %s", exc)
+        logger.info("News overview generation failed: %s", exc)
         return None
+
+
+def generate_today_overview(items: list[PopularNewsItem]) -> str | None:
+    return generate_news_overview(items, "今日")
+
+
+def translate_news_items_zh(items: list[PopularNewsItem]) -> list[PopularNewsItem]:
+    """Batch-translate each headline + summary to Traditional Chinese key points in a
+    single LLM call. Best-effort: items unchanged without a key or on any failure."""
+    if not items or not settings.anthropic_api_key.strip():
+        return items
+    payload = [
+        {"i": idx, "title": item.title, "summary": (item.summary or "")[:400]}
+        for idx, item in enumerate(items)
+    ]
+    try:
+        import json  # noqa: PLC0415
+        import litellm  # noqa: PLC0415
+
+        response = litellm.completion(
+            model=settings.generation_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "你是財經新聞編譯。把每則新聞翻成繁體中文：t = 精簡中文標題，"
+                        "s = 1-2 句重點摘要（擷取重點，不是全文翻譯）。只輸出 JSON 陣列，"
+                        '每個元素為 {"i":原序號, "t":"中文標題", "s":"中文重點"}，不要任何其他文字。'
+                    ),
+                },
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+            ],
+            max_tokens=4000,
+            temperature=0.2,
+        )
+        text = response.choices[0].message.content or ""
+        start, end = text.find("["), text.rfind("]")
+        data = json.loads(text[start : end + 1]) if 0 <= start < end else []
+    except Exception as exc:  # noqa: BLE001 - translation is optional.
+        logger.info("News translation failed: %s", exc)
+        return items
+
+    by_index = {int(d["i"]): d for d in data if isinstance(d, dict) and "i" in d}
+    translated: list[PopularNewsItem] = []
+    for idx, item in enumerate(items):
+        entry = by_index.get(idx)
+        if not entry:
+            translated.append(item)
+            continue
+        title_zh = str(entry.get("t") or "").strip() or item.title
+        summary_zh = str(entry.get("s") or "").strip() or None
+        translated.append(
+            item.model_copy(update={"title_zh_hant": title_zh, "summary_zh": summary_zh})
+        )
+    return translated
 
 
 def build_morning_radar(
@@ -749,6 +804,8 @@ def build_morning_radar(
     snapshots: list[MarketSnapshotItem] | None = None,
     overnight_risk: list[OvernightRiskItem] | None = None,
     today_overview: str | None = None,
+    week_overview: str | None = None,
+    month_overview: str | None = None,
 ) -> MorningRadarOut:
     generated_at = now or datetime.now(TAIPEI_TZ)
     market_clock = _market_clock(generated_at)
@@ -761,6 +818,8 @@ def build_morning_radar(
         generated_at=generated_at.astimezone(TAIPEI_TZ).isoformat(),
         headline="今天先看全球市場，再看台股開盤",
         today_overview=today_overview,
+        week_overview=week_overview,
+        month_overview=month_overview,
         summary_points=[
             "美股與歐股收盤先決定隔夜基調。",
             "08:00 先看日本、韓國；09:00 接台股。",

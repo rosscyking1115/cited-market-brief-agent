@@ -20,11 +20,12 @@ from app.market_radar.service import (
     build_morning_radar,
     build_overnight_risk,
     build_snapshots,
-    generate_today_overview,
+    generate_news_overview,
     normalize_popular_news_ranks,
     popular_news_from_finance_rss,
     popular_news_from_gdelt,
     popular_news_from_nyt,
+    translate_news_items_zh,
 )
 
 router = APIRouter(prefix="/market-radar", tags=["market-radar"])
@@ -45,7 +46,7 @@ _PERSISTED_CACHE_LOADED = False
 @dataclass
 class _NewsCache:
     items: list[PopularNewsItem]
-    overview: str | None
+    overviews: tuple[str | None, str | None, str | None]  # today, week, month
     fetched_at: datetime
 
 
@@ -55,7 +56,7 @@ _NEWS_CACHE: _NewsCache | None = None
 @router.get("", response_model=MorningRadarOut)
 def get_market_radar() -> MorningRadarOut:
     now = datetime.now(UTC)
-    popular_news, overview = _cached_news(now=now)
+    popular_news, (today_ov, week_ov, month_ov) = _cached_news(now=now)
 
     snapshots = None
     overnight_risk: list[OvernightRiskItem] | None = None
@@ -68,7 +69,9 @@ def get_market_radar() -> MorningRadarOut:
         popular_news=popular_news or None,
         snapshots=snapshots,
         overnight_risk=overnight_risk,
-        today_overview=overview,
+        today_overview=today_ov,
+        week_overview=week_ov,
+        month_overview=month_ov,
     )
 
 
@@ -81,25 +84,30 @@ def prewarm_news() -> None:
         logger.info("News prewarm failed: %s", exc)
 
 
-def _cached_news(*, now: datetime) -> tuple[list[PopularNewsItem], str | None]:
-    """Serve assembled news + the AI overview from a short-lived cache.
-
-    The endpoint blocks on live BBC/GDELT/NYT fetches and an LLM overview call
-    that can exceed the frontend server-render timeout. A brief TTL keeps the page
-    fast; a transient empty result falls back to the last good set.
-    """
+def _cached_news(
+    *, now: datetime
+) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
+    """Serve assembled + translated news and the day/week/month overviews from a
+    short-lived cache. The endpoint blocks on live fetches + LLM translation/overview
+    calls that can exceed the frontend server-render timeout; a brief TTL keeps the
+    page fast and a transient empty result falls back to the last good set."""
     global _NEWS_CACHE
     ttl = timedelta(seconds=max(settings.news_cache_ttl_seconds, 0))
     if _NEWS_CACHE is not None and now - _NEWS_CACHE.fetched_at <= ttl:
-        return _NEWS_CACHE.items, _NEWS_CACHE.overview
+        return _NEWS_CACHE.items, _NEWS_CACHE.overviews
     fetched = _fetch_popular_news()
     if fetched:
-        overview = generate_today_overview(fetched)
-        _NEWS_CACHE = _NewsCache(items=fetched, overview=overview, fetched_at=now)
-        return fetched, overview
+        fetched = translate_news_items_zh(fetched)
+        overviews = (
+            generate_news_overview([i for i in fetched if i.window == "1d"], "今日"),
+            generate_news_overview([i for i in fetched if i.window == "1w"], "本週"),
+            generate_news_overview([i for i in fetched if i.window == "1m"], "本月"),
+        )
+        _NEWS_CACHE = _NewsCache(items=fetched, overviews=overviews, fetched_at=now)
+        return fetched, overviews
     if _NEWS_CACHE is not None:
-        return _NEWS_CACHE.items, _NEWS_CACHE.overview
-    return [], None
+        return _NEWS_CACHE.items, _NEWS_CACHE.overviews
+    return [], (None, None, None)
 
 
 def _fetch_popular_news() -> list[PopularNewsItem]:
