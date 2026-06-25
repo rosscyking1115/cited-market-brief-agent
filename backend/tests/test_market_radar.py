@@ -285,6 +285,29 @@ def test_popular_news_from_nyt_labels_most_viewed_and_skips_lifestyle() -> None:
     assert {row.rank_kind for row in rows}.isdisjoint({"latest", "trending", "most_covered"})
 
 
+def test_popular_news_from_nyt_keeps_market_headline_outside_business_section() -> None:
+    # Most-viewed over a week/month is dominated by non-business sections; keep the
+    # finance stories filed elsewhere so the weekly/monthly tabs are not empty.
+    rows = popular_news_from_nyt(
+        articles=[
+            NytArticle(
+                title="Nvidia earnings send the stock market to a record",
+                url="https://www.nytimes.com/tech-rally",
+                published_at="2026-06-21",
+                section="Technology",
+            ),
+            NytArticle(
+                title="A profile of a championship-winning coach",
+                url="https://www.nytimes.com/sports",
+                published_at="2026-06-21",
+                section="Sports",
+            ),
+        ]
+    )
+
+    assert [row.url for row in rows] == ["https://www.nytimes.com/tech-rally"]
+
+
 def test_today_overview_is_none_without_llm_key() -> None:
     from app.market_radar.service import generate_today_overview
 
