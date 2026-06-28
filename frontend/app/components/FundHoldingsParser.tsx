@@ -346,6 +346,13 @@ export default function FundHoldingsParser({
 
   return (
     <section className="mt-10 scroll-mt-20">
+      {process.env.NEXT_PUBLIC_DEMO_MODE === "1" && (
+        <div className="mb-3 rounded-(--radius-ctl) border border-action/30 bg-action-soft px-3 py-2">
+          <p className="reader-meta text-action">
+            示範資料 · 互動功能（解析、TWSE 補值、儲存）需連線後端；公開展示版僅供瀏覽介面。
+          </p>
+        </div>
+      )}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="font-serif text-[20px] font-semibold text-neutral-30">ETF 歸因分析</h2>

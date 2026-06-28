@@ -23,6 +23,7 @@ import {
   getMorningRadar,
   type ChangesPayload,
   type EvidencePayload,
+  type FundAttributionPayload,
   type MorningRadarPayload,
 } from "@/lib/api";
 
@@ -285,16 +286,55 @@ const DEMO_RADAR: MorningRadarPayload = {
   disclaimer: "本頁提供市場資訊與教育內容，不構成個人化投資建議或買賣建議。",
 };
 
+// Public showcase deploys (no backend) set NEXT_PUBLIC_DEMO_MODE=1: the page then
+// renders the demo data below as a complete, no-login walkthrough.
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "1";
+
+const DEMO_ATTRIBUTION: FundAttributionPayload = {
+  fund_name: "示範 ETF（範例資料）",
+  benchmark_name: "台灣加權指數",
+  as_of: "2026-06-28",
+  fund_return_pct: -1.15,
+  benchmark_return_pct: -3.64,
+  active_return_pct: 2.49,
+  explained_return_pct: -1.15,
+  residual_pct: 0.0,
+  holdings_count: 4,
+  contributors: [
+    { symbol: "2412", name: "中華電", weight_pct: 6.0, return_pct: 0.82, contribution_pct: 0.05, direction: "positive" },
+  ],
+  drags: [
+    { symbol: "2454", name: "聯發科", weight_pct: 5.25, return_pct: -9.98, contribution_pct: -0.52, direction: "negative" },
+    { symbol: "2330", name: "台積電", weight_pct: 20.5, return_pct: -2.09, contribution_pct: -0.43, direction: "negative" },
+    { symbol: "2882", name: "國泰金", weight_pct: 4.0, return_pct: -4.93, contribution_pct: -0.2, direction: "negative" },
+  ],
+  missing_returns: [],
+  all_rows: [
+    { symbol: "2412", name: "中華電", weight_pct: 6.0, return_pct: 0.82, contribution_pct: 0.05, direction: "positive" },
+    { symbol: "2882", name: "國泰金", weight_pct: 4.0, return_pct: -4.93, contribution_pct: -0.2, direction: "negative" },
+    { symbol: "2330", name: "台積電", weight_pct: 20.5, return_pct: -2.09, contribution_pct: -0.43, direction: "negative" },
+    { symbol: "2454", name: "聯發科", weight_pct: 5.25, return_pct: -9.98, contribution_pct: -0.52, direction: "negative" },
+  ],
+  source_notes: ["示範資料，僅供展示介面。"],
+  automation_policy: [],
+  summary_zh_hant:
+    "示範資料：基金當日 −1.15%，加權指數 −3.64%，相對表現 +2.49 個百分點；今日持股多數下跌，贏過指數主要來自跌幅較小與產業配置。",
+  disclaimer: "本頁提供績效歸因與教育資訊，不構成投資建議。",
+};
+
 export default async function Page() {
-  const live = await getLatestEvidence();
+  // On the backend-less public demo, skip the live fetches entirely and render the
+  // demo data directly — fast and clean, no failing requests per render.
+  const live = DEMO_MODE ? null : await getLatestEvidence();
   const data = live ?? DEMO;
   const isLive = live !== null;
   const liveChanges =
     isLive && data.watchlist_id ? await getChanges(data.watchlist_id) : null;
   const changesData = liveChanges ?? DEMO_CHANGES;
-  const radarData = (await getMorningRadar()) ?? DEMO_RADAR;
-  const attributionPlan = await getFundAttributionPlan();
-  const latestAttribution = await getLatestFundAttribution();
+  const radarData = (DEMO_MODE ? null : await getMorningRadar()) ?? DEMO_RADAR;
+  const attributionPlan = DEMO_MODE ? null : await getFundAttributionPlan();
+  const latestAttribution = DEMO_MODE ? null : await getLatestFundAttribution();
+  const attribution = latestAttribution?.result ?? (DEMO_MODE ? DEMO_ATTRIBUTION : null);
   const ts = data.created_at.slice(0, 16).replace("T", " ");
   const supported = data.claims.filter((c) => c.support_status === "supported").length;
   const flagged = data.claims.length - supported;
@@ -332,13 +372,13 @@ export default async function Page() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
-        <TodayHero radar={radarData} attribution={latestAttribution?.result ?? null} />
+        <TodayHero radar={radarData} attribution={attribution} />
 
         <MorningMarketDashboard radar={radarData} />
 
         <ShowOnTaiwan>
           <div id="fund" className="scroll-mt-20">
-            <FundAttributionPanel plan={attributionPlan} latest={latestAttribution?.result ?? null} />
+            <FundAttributionPanel plan={attributionPlan} latest={attribution} />
           </div>
         </ShowOnTaiwan>
 

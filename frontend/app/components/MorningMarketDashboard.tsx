@@ -428,8 +428,10 @@ export default function MorningMarketDashboard({ radar: initialRadar }: { radar:
   const [radar, setRadar] = useState(initialRadar);
 
   // Refresh from the API on the client (same-origin /api) so live data always wins
-  // even if the server render fell back to demo data.
+  // even if the server render fell back to demo data. Skipped on the backend-less
+  // public demo so it doesn't fire failing requests.
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === "1") return;
     let cancelled = false;
     fetch(`${API_URL}/market-radar`, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
