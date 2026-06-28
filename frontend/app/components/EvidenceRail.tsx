@@ -37,7 +37,7 @@ export default function EvidenceRail({
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-      <section className="rounded-(--radius-card) border border-hairline bg-card">
+      <section className="rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
         <div className="border-b border-hairline px-4 py-3">
           <p className="th-label">Audit status</p>
           <h2 className="reader-heading mt-1 text-[15px] font-semibold text-neutral-30">
@@ -63,7 +63,7 @@ export default function EvidenceRail({
       </section>
 
       {flagged.length > 0 && (
-        <section className="rounded-(--radius-card) border border-flag/40 bg-card">
+        <section className="rounded-(--radius-card) border border-flag/40 bg-card shadow-[var(--shadow-soft)]">
           <div className="border-b border-flag/30 px-4 py-3">
             <p className="th-label text-flag">Needs review</p>
           </div>
@@ -86,7 +86,7 @@ export default function EvidenceRail({
         </section>
       )}
 
-      <section className="rounded-(--radius-card) border border-hairline bg-card">
+      <section className="rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
         <div className="border-b border-hairline px-4 py-3">
           <p className="th-label">Source tape</p>
         </div>

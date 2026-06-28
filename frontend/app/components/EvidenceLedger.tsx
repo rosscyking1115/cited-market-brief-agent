@@ -97,7 +97,7 @@ export default function EvidenceLedger({
   }, [claims]);
 
   return (
-    <section id="ledger" className="rounded-(--radius-card) border border-hairline bg-card">
+    <section id="ledger" className="rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
       <h2 className="th-label flex flex-wrap items-center justify-between gap-1 border-b border-hairline px-4 py-2.5">
         <span>Evidence ledger — click a claim for the proof</span>
         <span>{claims.filter((c) => c.support_status === "supported").length}/{claims.length} validated</span>

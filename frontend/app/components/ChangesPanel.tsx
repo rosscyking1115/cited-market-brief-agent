@@ -44,7 +44,7 @@ export default function ChangesPanel({ changes }: { changes: ChangesPayload }) {
     changes.macro_deltas.length === 0;
 
   return (
-    <section className="rounded-(--radius-card) border border-hairline bg-card">
+    <section className="rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
       <h2 className="th-label flex flex-wrap items-center justify-between gap-1 border-b border-hairline px-4 py-2.5">
         <span>Since last brief</span>
         <span className="font-mono">{since}</span>
