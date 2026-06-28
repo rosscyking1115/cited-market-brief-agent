@@ -3,10 +3,8 @@ persist -> export. Synchronous in Phase 1; Hatchet-wrapped when schedules land.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
-UTC = timezone.utc
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,6 +13,7 @@ from app.briefs.generator import generate_brief_json, llm_available
 from app.briefs.guardrails import apply_guardrails
 from app.briefs.markdown import build_citation_manifest, render_markdown
 from app.briefs.schemas import EvidenceItem
+from app.briefs.translation import prewarm_brief_translations, translation_model
 from app.briefs.validator import validate_claims
 from app.core.config import settings
 from app.db.models import (
@@ -164,13 +163,15 @@ def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
 
         for cit in validation.citations:
             chunk = chunks_by_id.get(cit.span_id)
+            if chunk is None:
+                continue
             db.add(
                 Citation(
                     org_id=watchlist.org_id,
                     claim_id=claim.id,
-                    chunk_id=chunk.chunk_id if chunk else uuid.UUID(int=0),
-                    span_start=chunk.span_start if chunk else None,
-                    span_end=chunk.span_end if chunk else None,
+                    chunk_id=chunk.chunk_id,
+                    span_start=chunk.span_start,
+                    span_end=chunk.span_end,
                     source_url="",
                     evidence_quote=gen_claim.evidence_quote,
                     validator_status=cit.status,
@@ -197,6 +198,26 @@ def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
     )
     db.commit()
     return brief
+
+
+def prewarm_and_store_brief_translations(db: Session, brief: Brief) -> None:
+    draft = dict(brief.generated_draft or {})
+    translated_draft = prewarm_brief_translations(draft)
+    if translated_draft == draft:
+        return
+
+    brief.generated_draft = translated_draft
+    record_event(
+        db,
+        org_id=brief.org_id,
+        action="brief.translations_prewarmed",
+        object_type="brief",
+        object_id=str(brief.id),
+        model_provider="litellm",
+        model_version=translation_model(),
+        detail={"locales": sorted(translated_draft.get("_translations", {}).keys())},
+    )
+    db.commit()
 
 
 def _stored_spans(

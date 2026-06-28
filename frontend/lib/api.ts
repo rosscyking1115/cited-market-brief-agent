@@ -1,7 +1,9 @@
 // Server-side API client with graceful degradation: every helper returns null on
 // failure so the dashboard falls back to demo data instead of erroring.
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const SERVER_API_URL =
+  process.env.API_URL ?? (API_URL.startsWith("http") ? API_URL : "http://localhost:8000");
 
 export type CitationDetail = {
   span_id: string;
@@ -32,6 +34,16 @@ export type ClaimRow = {
 
 export type BriefSectionData = { title: string; content_markdown: string };
 
+export type BriefLocale = "original" | "zh-Hant" | "ko";
+
+export type BriefTranslation = {
+  locale: Exclude<BriefLocale, "original">;
+  label: string;
+  disclaimer: string;
+  sections: BriefSectionData[];
+  open_questions: string[];
+};
+
 export type SectionEdit = {
   action: "accept" | "reject" | "edit" | "needs_source";
   content: string | null;
@@ -47,6 +59,7 @@ export type EvidencePayload = {
   created_at: string;
   sections: BriefSectionData[];
   open_questions: string[];
+  translations?: Partial<Record<Exclude<BriefLocale, "original">, BriefTranslation>>;
   claims: ClaimRow[];
   user_edits?: { sections?: Record<string, SectionEdit> };
 };
@@ -85,11 +98,198 @@ export type ChangesPayload = {
   }[];
 };
 
-async function fetchJson<T>(path: string): Promise<T | null> {
+export type MarketStatus = "not_open" | "open" | "lunch" | "closed" | "weekend";
+export type SnapshotTone = "up" | "down" | "flat" | "pending";
+export type NewsRankKind = "most_read" | "most_viewed" | "most_covered" | "trending" | "latest";
+export type NewsSourceStatus = "official_api" | "rss" | "licensed" | "planned" | "manual_reference";
+
+export type MarketClockItem = {
+  market: string;
+  label: string;
+  window: string;
+  status: MarketStatus;
+  note: string;
+};
+
+export type MarketSnapshotItem = {
+  label: string;
+  local_name: string;
+  value: string;
+  change: string;
+  tone: SnapshotTone;
+  source: string;
+  source_status: "live" | "delayed" | "eod" | "planned";
+};
+
+export type MarketStoryItem = {
+  title: string;
+  why: string;
+  tag: string;
+};
+
+export type PopularNewsItem = {
+  rank: number;
+  title: string;
+  title_zh_hant: string;
+  source: string;
+  url: string | null;
+  published_at: string | null;
+  window: "1h" | "24h" | "1d" | "1w" | "1m";
+  rank_kind: NewsRankKind;
+  source_status: NewsSourceStatus;
+  category: string;
+  why: string;
+  rights_note: string;
+  summary?: string | null;
+  summary_zh?: string | null;
+};
+
+export type OvernightRiskItem = {
+  rank: number;
+  symbol: string;
+  name: string;
+  local_name: string;
+  group: "futures" | "volatility" | "fx" | "commodities" | "rates";
+  value: string;
+  change: string;
+  tone: SnapshotTone;
+  source: string;
+  source_status: "live" | "delayed" | "eod" | "planned";
+  why: string;
+  rights_note: string;
+};
+
+export type GlossaryItem = {
+  term: string;
+  english: string;
+  meaning: string;
+};
+
+export type MorningRadarPayload = {
+  generated_at: string;
+  timezone: string;
+  headline: string;
+  today_overview?: string | null;
+  week_overview?: string | null;
+  month_overview?: string | null;
+  summary_points: [string, string, string];
+  current_focus: string;
+  market_clock: MarketClockItem[];
+  snapshots: MarketSnapshotItem[];
+  popular_news: PopularNewsItem[];
+  overnight_risk: OvernightRiskItem[];
+  stories: MarketStoryItem[];
+  glossary: GlossaryItem[];
+  disclaimer: string;
+};
+
+export type AutomationPolicyItem = {
+  label: string;
+  status: "allowed" | "manual_first" | "needs_review" | "blocked";
+  note: string;
+};
+
+export type FundAttributionPlanPayload = {
+  title: string;
+  target_use_case: string;
+  first_region: string;
+  daily_trigger: string;
+  required_inputs: string[];
+  first_supported_workflow: string[];
+  automation_policy: AutomationPolicyItem[];
+  disclaimer: string;
+};
+
+export type HoldingInput = {
+  symbol: string;
+  name: string;
+  weight_pct: number;
+  return_pct: number | null;
+};
+
+export type AttributionRow = {
+  symbol: string;
+  name: string;
+  weight_pct: number;
+  return_pct: number | null;
+  contribution_pct: number | null;
+  direction: "positive" | "negative" | "flat" | "missing";
+};
+
+export type HoldingsParsePayload = {
+  source_name: string;
+  as_of: string | null;
+  fund_name: string | null;
+  parsed_count: number;
+  skipped_rows: number;
+  detected_columns: string[];
+  holdings: HoldingInput[];
+  warnings: string[];
+  source_notes: string[];
+};
+
+export type HoldingReturnFillPayload = {
+  as_of: string;
+  filled_count: number;
+  missing_symbols: string[];
+  holdings: HoldingInput[];
+  warnings: string[];
+  source_notes: string[];
+};
+
+export type BenchmarkReturnPayload = {
+  as_of: string;
+  benchmark: string;
+  name: string;
+  return_pct: number | null;
+  close: number | null;
+  previous_close: number | null;
+  warnings: string[];
+  source_notes: string[];
+};
+
+export type FundReturnPayload = {
+  as_of: string;
+  symbol: string;
+  name: string;
+  return_pct: number | null;
+  close: number | null;
+  previous_close: number | null;
+  warnings: string[];
+  source_notes: string[];
+};
+
+export type FundAttributionPayload = {
+  fund_name: string;
+  benchmark_name: string;
+  as_of: string;
+  fund_return_pct: number;
+  benchmark_return_pct: number;
+  active_return_pct: number;
+  explained_return_pct: number;
+  residual_pct: number;
+  holdings_count: number;
+  contributors: AttributionRow[];
+  drags: AttributionRow[];
+  missing_returns: AttributionRow[];
+  all_rows: AttributionRow[];
+  source_notes: string[];
+  automation_policy: AutomationPolicyItem[];
+  summary_zh_hant: string;
+  disclaimer: string;
+};
+
+export type LatestAttributionPayload = {
+  configured: boolean;
+  as_of: string | null;
+  result: FundAttributionPayload | null;
+};
+
+async function fetchJson<T>(path: string, timeoutMs = 1500): Promise<T | null> {
   try {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${SERVER_API_URL}${path}`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) return null;
     return (await res.json()) as T;
@@ -116,3 +316,51 @@ export async function getLatestEvidence(): Promise<EvidencePayload | null> {
   }
   return null;
 }
+
+/** Taiwan-morning market radar payload, or null when the API/DB isn't reachable.
+ * Longer timeout: the endpoint blocks on live news fetches on a cold cache. */
+export async function getMorningRadar(): Promise<MorningRadarPayload | null> {
+  return fetchJson<MorningRadarPayload>("/market-radar", 6000);
+}
+
+/** Fund attribution workflow plan, or null when the API isn't reachable. */
+export async function getFundAttributionPlan(): Promise<FundAttributionPlanPayload | null> {
+  return fetchJson<FundAttributionPlanPayload>("/fund-attribution/plan");
+}
+
+/** Latest pre-computed daily attribution (the scheduled result), or null. */
+export async function getLatestFundAttribution(): Promise<LatestAttributionPayload | null> {
+  return fetchJson<LatestAttributionPayload>("/fund-attribution/latest");
+}
+
+export type SectorAttributionRow = {
+  sector: string;
+  etf_weight_pct: number;
+  benchmark_weight_pct: number | null;
+  weight_diff_pct: number | null;
+  sector_return_pct: number | null;
+  etf_contribution_pct: number | null;
+  allocation_effect_pct: number | null;
+};
+
+export type SectorAttributionPayload = {
+  as_of: string;
+  fund_name: string;
+  benchmark_name: string;
+  has_benchmark: boolean;
+  rows: SectorAttributionRow[];
+  allocation_total_pct: number | null;
+  unmapped_weight_pct: number;
+  summary_zh_hant: string;
+  source_notes: string[];
+  disclaimer: string;
+};
+
+export type SectorConfigPayload = {
+  taiex_weights: { sector: string; weight_pct: number }[];
+  sector_map: Record<string, string>;
+};
+
+// Sector (產業) attribution is fetched client-side in SectorAttributionPanel via the
+// same-origin /api proxy, so it has no server-side helper here (the server API origin
+// would point at localhost from the viewer's browser).

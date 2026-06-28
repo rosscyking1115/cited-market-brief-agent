@@ -58,3 +58,43 @@ def all_sections_resolved(user_edits: dict, section_count: int) -> bool:
         if entry is None or entry.get("action") == "needs_source":
             return False
     return True
+
+
+def approval_readiness(user_edits: dict, section_count: int, claims: list) -> dict:
+    """Approval gate summary shared by API and tests.
+
+    Claims can be ORM rows or dict-like objects. A brief is approval-ready only
+    when all sections are resolved and every claim is supported with at least
+    one citation.
+    """
+    sections_ok = all_sections_resolved(user_edits, section_count)
+    flagged = []
+    citationless = []
+
+    for i, claim in enumerate(claims):
+        status = claim.get("support_status") if isinstance(claim, dict) else getattr(claim, "support_status")
+        if hasattr(status, "value"):
+            status = status.value
+        citations = claim.get("citations", []) if isinstance(claim, dict) else getattr(claim, "citations", [])
+        if status != "supported":
+            flagged.append(i)
+        if not citations:
+            citationless.append(i)
+
+    blockers = []
+    if not sections_ok:
+        blockers.append("All sections must be accepted, edited, or rejected")
+    if flagged:
+        blockers.append("All claims must be supported")
+    if citationless:
+        blockers.append("Every claim must have at least one citation")
+
+    return {
+        "ready": not blockers,
+        "sections_resolved": sections_ok,
+        "claims_supported": len(flagged) == 0,
+        "claims_cited": len(citationless) == 0,
+        "flagged_claim_indexes": flagged,
+        "citationless_claim_indexes": citationless,
+        "blockers": blockers,
+    }

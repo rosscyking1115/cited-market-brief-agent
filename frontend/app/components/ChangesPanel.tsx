@@ -21,7 +21,7 @@ function DiffSample({
       <span className="text-flag">~</span>
     );
   return (
-    <li className="flex gap-2 py-1 text-[12px] leading-relaxed">
+    <li className="reader-body grid grid-cols-[16px_56px_1fr] gap-2 py-1 text-[12px] leading-relaxed">
       <span className="w-3 shrink-0 text-center font-mono">{mark}</span>
       <span className="font-mono text-[10px] text-neutral-90 shrink-0 mt-0.5 w-14">{section}</span>
       <span
@@ -44,14 +44,14 @@ export default function ChangesPanel({ changes }: { changes: ChangesPayload }) {
     changes.macro_deltas.length === 0;
 
   return (
-    <section className="rounded-(--radius-card) border border-hairline bg-card">
-      <h2 className="th-label flex items-center justify-between border-b border-hairline px-4 py-2.5">
+    <section className="rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
+      <h2 className="th-label flex flex-wrap items-center justify-between gap-1 border-b border-hairline px-4 py-2.5">
         <span>Since last brief</span>
         <span className="font-mono">{since}</span>
       </h2>
 
       {empty && (
-        <p className="px-4 py-3 text-[13px] text-neutral-90">
+        <p className="reader-body px-4 py-3 text-[13px] text-neutral-90">
           No new filings, diffs, or macro changes detected.
         </p>
       )}
@@ -59,10 +59,10 @@ export default function ChangesPanel({ changes }: { changes: ChangesPayload }) {
       {changes.filing_diffs.map((diff) => (
         <div key={`${diff.cik}-${diff.form}`} className="border-t border-hairline px-4 py-3 first:border-t-0">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-[13px] font-semibold text-neutral-30">
+            <span className="reader-heading text-[13px] font-semibold text-neutral-30">
               {diff.publisher} {diff.form} — filing diff
             </span>
-            <span className="font-mono text-[10px] text-neutral-90">
+            <span className="break-all font-mono text-[10px] text-neutral-90">
               {diff.accession_old} → {diff.accession_new}
             </span>
             {diff.sections.map((s) => (
@@ -83,59 +83,61 @@ export default function ChangesPanel({ changes }: { changes: ChangesPayload }) {
 
       {changes.macro_deltas.length > 0 && (
         <div className="border-t border-hairline px-4 py-3">
-          <p className="text-[13px] font-semibold text-neutral-30">Macro deltas</p>
-          <table className="mt-1.5 w-full text-[12px]">
-            <thead>
-              <tr className="th-label">
-                <th scope="col" className="py-1 text-left font-semibold">Series</th>
-                <th scope="col" className="py-1 text-right font-semibold">Latest</th>
-                <th scope="col" className="py-1 text-right font-semibold">Δ period</th>
-                <th scope="col" className="py-1 text-right font-semibold">Revisions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.macro_deltas.map((d) => (
-                <tr key={d.series_id} className="h-7 border-t border-hairline">
-                  <td className="font-mono text-neutral-30">{d.series_id}</td>
-                  <td className="num text-neutral-50">
-                    {d.latest_value ?? "—"}{" "}
-                    <span className="font-mono text-[10px] text-neutral-90">{d.latest_date}</span>
-                  </td>
-                  <td className="num">
-                    {d.change == null ? (
-                      <span className="text-neutral-90">—</span>
-                    ) : (
-                      <span className={d.change >= 0 ? "text-up" : "text-down"}>
-                        {d.change >= 0 ? "▲" : "▼"} {d.change >= 0 ? "+" : "−"}
-                        {Math.abs(d.change)}
-                        {d.change_pct != null && ` (${Math.abs(d.change_pct).toFixed(2)}%)`}
-                      </span>
-                    )}
-                  </td>
-                  <td className="num">
-                    {d.revisions.length === 0 ? (
-                      <span className="text-neutral-90">none</span>
-                    ) : (
-                      <span className="text-flag" title={d.revisions.map((r) => `${r.date}: ${r.old_value} → ${r.new_value}`).join("\n")}>
-                        ⚑ {d.revisions.length} vintage revision{d.revisions.length > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </td>
+          <p className="reader-heading text-[13px] font-semibold text-neutral-30">Macro deltas</p>
+          <div className="mt-1.5 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-[12px]">
+              <thead>
+                <tr className="th-label">
+                  <th scope="col" className="py-1 text-left font-semibold">Series</th>
+                  <th scope="col" className="py-1 text-right font-semibold">Latest</th>
+                  <th scope="col" className="py-1 text-right font-semibold">Δ period</th>
+                  <th scope="col" className="py-1 text-right font-semibold">Revisions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {changes.macro_deltas.map((d) => (
+                  <tr key={d.series_id} className="h-7 border-t border-hairline">
+                    <td className="font-mono text-neutral-30">{d.series_id}</td>
+                    <td className="num text-neutral-50">
+                      {d.latest_value ?? "—"}{" "}
+                      <span className="font-mono text-[10px] text-neutral-90">{d.latest_date}</span>
+                    </td>
+                    <td className="num">
+                      {d.change == null ? (
+                        <span className="text-neutral-90">—</span>
+                      ) : (
+                        <span className={d.change >= 0 ? "text-up" : "text-down"}>
+                          {d.change >= 0 ? "▲" : "▼"} {d.change >= 0 ? "+" : "−"}
+                          {Math.abs(d.change)}
+                          {d.change_pct != null && ` (${Math.abs(d.change_pct).toFixed(2)}%)`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="num">
+                      {d.revisions.length === 0 ? (
+                        <span className="text-neutral-90">none</span>
+                      ) : (
+                        <span className="text-flag" title={d.revisions.map((r) => `${r.date}: ${r.old_value} → ${r.new_value}`).join("\n")}>
+                          ⚑ {d.revisions.length} vintage revision{d.revisions.length > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {changes.new_documents.length > 0 && (
         <div className="border-t border-hairline px-4 py-3">
-          <p className="text-[13px] font-semibold text-neutral-30">
+          <p className="reader-heading text-[13px] font-semibold text-neutral-30">
             New sources ingested ({changes.new_documents.length})
           </p>
           <ul className="mt-1">
             {changes.new_documents.slice(0, 8).map((doc) => (
-              <li key={doc.document_id} className="flex items-baseline gap-2 py-0.5 text-[12px]">
+              <li key={doc.document_id} className="flex flex-wrap items-baseline gap-2 py-0.5 text-[12px]">
                 <span className="rounded-(--radius-ctl) bg-navy-900 px-1.5 py-0.5 font-mono text-[10px] text-neutral-50">
                   {doc.doc_type}
                 </span>

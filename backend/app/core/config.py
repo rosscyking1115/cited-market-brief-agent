@@ -1,12 +1,21 @@
 """Application settings (pydantic-settings). All secrets come from env, never the repo."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Resolve the repo-root .env regardless of the process CWD, so the documented
+# quickstart (`cd backend && uvicorn app.main:app`) still loads keys and feature
+# flags. Docker/staging inject config via real environment variables, which take
+# precedence over the file and don't depend on this path existing.
+_ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=str(_ROOT_ENV), env_file_encoding="utf-8", extra="ignore"
+    )
 
     environment: str = "development"
     log_level: str = "INFO"
@@ -40,6 +49,60 @@ class Settings(BaseSettings):
 
     # FRED
     fred_api_key: str = ""
+    fred_market_cache_ttl_seconds: int = 3600
+    fred_market_max_refreshes_per_request: int = 6
+
+    # GDELT news discovery. This is not readership data; use for trending/coverage only.
+    gdelt_enabled: bool = False
+    gdelt_base_url: str = "https://api.gdeltproject.org/api/v2/doc/doc"
+    gdelt_request_timeout_seconds: float = 8.0
+
+    # BBC RSS is latest-headline discovery only. BBC does not expose public read-rank data.
+    bbc_rss_enabled: bool = False
+    bbc_rss_url: str = "https://feeds.bbci.co.uk/news/business/rss.xml"
+    bbc_request_timeout_seconds: float = 8.0
+
+    # NYT Most Popular: genuine readership (most-viewed). Headlines + links only,
+    # linking back to nytimes.com per NYT developer terms; window is daily (1/7/30).
+    nyt_enabled: bool = False
+    nyt_api_key: str = ""
+    nyt_base_url: str = "https://api.nytimes.com/svc/mostpopular/v2"
+    nyt_request_timeout_seconds: float = 8.0
+    nyt_most_popular_period_days: int = 1
+
+    # Popular-news (BBC/GDELT/NYT) cache. The radar endpoint blocks on live news
+    # fetches that can exceed the frontend's server-render timeout, so cache the
+    # assembled rows briefly — a morning page doesn't need per-request news reads.
+    news_cache_ttl_seconds: int = 600
+
+    # Alpha Vantage pilot feed for FX, commodities, and rates. Use only where terms permit.
+    alpha_vantage_enabled: bool = False
+    alpha_vantage_api_key: str = ""
+    alpha_vantage_base_url: str = "https://www.alphavantage.co/query"
+    alpha_vantage_request_timeout_seconds: float = 8.0
+    alpha_vantage_cache_ttl_seconds: int = 900
+    alpha_vantage_cache_max_age_seconds: int = 43200
+    alpha_vantage_max_refreshes_per_request: int = 2
+    alpha_vantage_failure_cooldown_seconds: int = 600
+
+    # Persisted morning-radar market values. This prevents deploys/restarts from
+    # blanking the page when a free provider is temporarily rate-limited.
+    market_radar_value_cache_path: str = ".data/cache/market_radar_values.json"
+    market_radar_value_cache_max_age_seconds: int = 604800
+
+    # Fund-attribution daily automation: where the saved holdings config and the
+    # latest computed result are persisted (one fund, family-pilot scale).
+    fund_attribution_store_path: str = ".data/fund_attribution"
+
+    # TWSE after-close stock prices for Taiwan ETF attribution. This is used as
+    # delayed/public after-trading data, not as an intraday market-data feed.
+    twse_stock_day_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY"
+    twse_mi_index_url: str = "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX"
+    # Public listed-company industry classification (產業別), to auto-map holdings to
+    # sectors when the holdings file has no 產業別 column.
+    twse_industry_url: str = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
+    twse_industry_cache_ttl_seconds: int = 86400
+    twse_request_timeout_seconds: float = 8.0
 
     # LLM providers (LiteLLM library mode; two providers at MVP)
     anthropic_api_key: str = ""
@@ -47,8 +110,10 @@ class Settings(BaseSettings):
 
     # Models (LiteLLM identifiers) and prompt versioning (audit log requires both)
     generation_model: str = "anthropic/claude-sonnet-4-6"
+    translation_model: str = "openai/gpt-4o-mini"
     embedding_model: str = "openai/text-embedding-3-small"
     prompt_version: str = "p1.0"
+    translation_request_timeout_seconds: int = 90
 
     # Embeddings
     embedding_dimensions: int = 1536

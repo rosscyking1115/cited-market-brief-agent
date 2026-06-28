@@ -5,58 +5,152 @@
   design system, @salt-ds/theme). See docs/DESIGN_SYSTEM.md.
 */
 @theme {
-  /* Brand / action (Salt JPM blue ramp) */
-  --color-navy-700: #00477b;
-  --color-navy-800: #273c4d;
-  --color-navy-900: #232f38;
-  --color-action: #2670a9;
-  --color-action-hover: #155c93;
+  /* Brand / action (harbor blue). @theme holds the DARK (default) values; light +
+     region (Taiwan) overrides live in the :root[...] blocks below. Neutral ramp keeps
+     our convention: 30 = strongest text, 90 = muted (opposite of Tailwind's default). */
+  --color-navy-700: #1f5c8f;
+  --color-navy-800: #17456c;
+  --color-navy-900: #102f49;
+  --color-action: #4e9bd6;
+  --color-action-hover: #6fb0e0;
+  --color-action-soft: #10202e;
 
   /* Dark surfaces (app default) */
-  --color-page: #161616;
-  --color-bar: #242526;
-  --color-card: #2a2c2f;
-  --color-hairline: #2f3136;
-  --color-elevated: #3b3f46;
+  --color-page: #0a0e14;
+  --color-bar: #0e141c;
+  --color-card: #121a24;
+  --color-hairline: #233040;
+  --color-elevated: #2e3d4e;   /* control / input border */
 
-  /* Light neutrals */
-  --color-neutral-30: #e0e4e9;
-  --color-neutral-40: #d9dde3;
-  --color-neutral-50: #ced2d9;
-  --color-neutral-70: #b4b7be;
-  --color-neutral-90: #84878e;
+  /* Neutral ink ramp (dark) */
+  --color-neutral-30: #eaeff5; /* strongest text */
+  --color-neutral-40: #cdd6e0;
+  --color-neutral-50: #b4c0ce; /* body */
+  --color-neutral-70: #7e8d9e; /* meta */
+  --color-neutral-90: #586472; /* faint / labels */
 
-  /* Semantic — always paired with glyphs/signs, never color alone (WCAG 1.4.1) */
-  --color-up: #309c5a;          /* dark-mode green-400, 5.2:1 on #161616 */
-  --color-up-light: #24874b;    /* light-mode green-500 */
-  --color-down: #ed412a;        /* dark-mode red-400, 4.6:1 on #161616 */
-  --color-down-light: #e32b16;  /* light-mode red-500 */
-  --color-flag: #ea7319;        /* amber — flagged claims, 6.0:1 on #161616 */
-  --color-flag-deep: #d65513;
+  /* Semantic — Western default (green up / red down); Taiwan view flips below.
+     Always paired with +/- and ▲/▼, never color alone (WCAG 1.4.1). */
+  --color-up: #2ea877;
+  --color-down: #e5564b;
+  --color-up-soft: #11261d;
+  --color-down-soft: #2a1714;
+  --color-flag: #d79a2b;
+  --color-flag-deep: #b07514;
+
+  /* Signature 今日重點 hero block */
+  --hero-bg: #0c1622;
+  --hero-bg-2: #11283f;
+  --hero-fg: #ecf2f8;
+  --hero-muted: #8aa4be;
+  --hero-line: #21405e;
 
   /* Type */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif), ui-serif, Georgia, serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
 
-  /* Shape — institutional = sharp */
+  /* Shape */
   --radius-ctl: 4px;   /* inputs, buttons, tags */
   --radius-card: 8px;  /* cards, popovers */
   --radius-modal: 12px;
+
+  /* Layered shadows (dark) */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 6px 18px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 12px 30px rgb(0 0 0 / 0.55);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-lift: 0 6px 18px rgb(0 0 0 / 0.5);
+  --shadow-hero: 0 18px 44px -16px rgb(0 0 0 / 0.7);
 }
 
 :root {
   color-scheme: dark;
+  --reader-body-size: 13px;
+  --reader-body-line: 1.45;
+  --reader-heading-size: 16px;
+  --reader-prose-size: 15px;
+  --reader-prose-line: 1.48;
+  --reader-meta-size: 11px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Cool porcelain (redesign): calm, trustworthy, document-like — distinct from a
+     generic SaaS dashboard. Replaces the earlier warm cream. */
+  --color-action: #1f5c8f;     /* harbor blue */
+  --color-action-hover: #184b76;
+  --color-action-soft: #e9f1f8;
+
+  --color-page: #f4f6f8;       /* cool porcelain */
+  --color-bar: #ffffff;
+  --color-card: #ffffff;
+  --color-hairline: #e2e6ec;
+  --color-elevated: #c7d0db;   /* visible control border */
+
+  --color-neutral-30: #0e1b2a; /* strongest text */
+  --color-neutral-40: #22303f;
+  --color-neutral-50: #36465a; /* body */
+  --color-neutral-70: #67768a; /* meta */
+  --color-neutral-90: #9aa6b6; /* faint / labels */
+
+  --color-up: #1c7a50;         /* green (Western up) */
+  --color-down: #c5362e;       /* red (Western down) */
+  --color-up-soft: #e8f3ee;
+  --color-down-soft: #fbedec;
+  --color-flag: #b07514;
+
+  --hero-bg: #0e2742;
+  --hero-bg-2: #133358;
+  --hero-fg: #f2f5f8;
+  --hero-muted: #9eb5cc;
+  --hero-line: #234868;
+
+  --shadow-sm: 0 1px 2px rgb(14 27 42 / 0.06);
+  --shadow-md: 0 4px 14px rgb(14 27 42 / 0.08);
+  --shadow-lg: 0 12px 30px -8px rgb(14 27 42 / 0.12);
+  --shadow-soft: 0 1px 2px rgb(14 27 42 / 0.06), 0 1px 3px rgb(14 27 42 / 0.05);
+  --shadow-lift: 0 4px 14px rgb(14 27 42 / 0.08), 0 1px 3px rgb(14 27 42 / 0.06);
+  --shadow-hero: 0 18px 40px -16px rgb(14 39 66 / 0.45);
+}
+
+/* Taiwan market convention: 漲/up = RED, 跌/down = GREEN — Taiwan edition only.
+   Every directional number still carries +/- and ▲/▼ so meaning is never color-only. */
+:root[data-region="tw"] {
+  --color-up: #e5564b;         /* red (dark) */
+  --color-down: #2ea877;       /* green (dark) */
+  --color-up-soft: #2a1714;
+  --color-down-soft: #11261d;
+}
+
+:root[data-theme="light"][data-region="tw"] {
+  --color-up: #c5362e;         /* red (light) */
+  --color-down: #1c7a50;       /* green (light) */
+  --color-up-soft: #fbedec;
+  --color-down-soft: #e8f3ee;
 }
 
 body {
   background: var(--color-page);
   color: var(--color-neutral-30);
   font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.3;
+  font-size: 14px;
+  line-height: 1.45;
   font-feature-settings: "cv05";
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+html,
+body {
+  max-width: 100%;
+}
+
+main,
+article,
+section {
+  min-width: 0;
 }
 
 /* Numbers in tables: tabular figures, mandatory */
@@ -65,18 +159,124 @@ body {
   text-align: right;
 }
 
+/* Horizontal chip rows: scroll without a visible scrollbar */
+.hide-scroll {
+  scrollbar-width: none;
+}
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Sticky data-table header label style: 11px uppercase, letter-spaced, muted */
 .th-label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-neutral-90);
+  overflow-wrap: anywhere;
 }
 
-/* Visible 2px focus ring (WCAG 2.2) — amber on dark */
+.brief-prose {
+  color: var(--color-neutral-50);
+  font-size: var(--reader-prose-size);
+  line-height: var(--reader-prose-line);
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.reader-body {
+  font-size: var(--reader-body-size);
+  line-height: var(--reader-body-line);
+  overflow-wrap: anywhere;
+}
+
+.reader-heading {
+  font-size: var(--reader-heading-size);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.reader-meta {
+  font-size: var(--reader-meta-size);
+  overflow-wrap: anywhere;
+}
+
+.brief-prose p + p {
+  margin-top: 0.7rem;
+}
+
+.brief-prose strong {
+  color: var(--color-neutral-30);
+  font-weight: 650;
+}
+
+.reader-translation {
+  font-family:
+    var(--font-sans),
+    "Noto Sans TC",
+    "Microsoft JhengHei",
+    "PingFang TC",
+    "Noto Sans KR",
+    "Malgun Gothic",
+    sans-serif;
+}
+
+.reader-translation .brief-prose {
+  font-size: var(--reader-prose-size);
+  line-height: calc(var(--reader-prose-line) + 0.05);
+}
+
+[data-text-size="large"] {
+  --reader-body-size: 15px;
+  --reader-body-line: 1.48;
+  --reader-heading-size: 18px;
+  --reader-prose-size: 18px;
+  --reader-prose-line: 1.5;
+  --reader-meta-size: 12px;
+}
+
+[data-text-size="xl"] {
+  --reader-body-size: 17px;
+  --reader-body-line: 1.5;
+  --reader-heading-size: 20px;
+  --reader-prose-size: 21px;
+  --reader-prose-line: 1.5;
+  --reader-meta-size: 13px;
+}
+
+.analyst-highlight {
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  color: inherit;
+  padding: 0.01em 0.16em;
+  background: rgba(255, 222, 88, 0.5);
+  box-shadow: inset 0 -1px 0 rgba(255, 235, 130, 0.98);
+}
+
+:root[data-theme="light"] .analyst-highlight {
+  background: rgba(222, 171, 43, 0.32);
+  box-shadow: inset 0 -1px 0 rgba(153, 111, 16, 0.72);
+}
+
+@media (max-width: 640px) {
+  [data-text-size="large"] {
+    --reader-body-size: 16px;
+    --reader-heading-size: 19px;
+    --reader-prose-size: 19px;
+  }
+
+  [data-text-size="xl"] {
+    --reader-body-size: 18px;
+    --reader-heading-size: 22px;
+    --reader-prose-size: 23px;
+  }
+}
+
+/* Visible 2px focus ring (WCAG 2.2) */
 :focus-visible {
-  outline: 2px solid var(--color-flag);
+  outline: 2px solid var(--color-action);
   outline-offset: 2px;
 }
 

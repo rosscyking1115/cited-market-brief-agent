@@ -1,0 +1,33 @@
+{$STAGING_DOMAIN} {
+	encode zstd gzip
+
+	handle /manifest.webmanifest {
+		reverse_proxy frontend:3000
+	}
+
+	handle /sw.js {
+		reverse_proxy frontend:3000
+	}
+
+	handle /icons/* {
+		reverse_proxy frontend:3000
+	}
+
+	handle /favicon.ico {
+		reverse_proxy frontend:3000
+	}
+
+	handle_path /api/* {
+		basicauth {
+			{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+		}
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		basicauth {
+			{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+		}
+		reverse_proxy frontend:3000
+	}
+}

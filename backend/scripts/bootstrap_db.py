@@ -17,6 +17,12 @@ def main() -> None:
     engine = get_engine()
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.execute(
+            text(
+                "ALTER TABLE IF EXISTS time_series "
+                "ALTER COLUMN frequency TYPE varchar(120)"
+            )
+        )
         conn.commit()
     Base.metadata.create_all(engine)
     print(f"Created {len(Base.metadata.tables)} tables:")

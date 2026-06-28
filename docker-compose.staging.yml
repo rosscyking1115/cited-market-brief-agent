@@ -1,0 +1,101 @@
+name: cited-market-brief-agent-staging
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    env_file: .env.staging
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/staging/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_URL: http://backend:8000
+      NEXT_PUBLIC_API_URL: https://${STAGING_DOMAIN}/api
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env.staging
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      VALKEY_URL: redis://valkey:6379/0
+      ENVIRONMENT: production
+      RAW_STORE_BACKEND: local
+      RAW_STORE_PATH: /srv/.data/raw
+      EXPORTS_PATH: /srv/.data/exports
+    volumes:
+      - backend-data:/srv/.data
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+
+  scheduler:
+    build: ./backend
+    profiles: ["scheduler"]
+    env_file: .env.staging
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      VALKEY_URL: redis://valkey:6379/0
+      ENVIRONMENT: production
+      RAW_STORE_BACKEND: local
+      RAW_STORE_PATH: /srv/.data/raw
+      EXPORTS_PATH: /srv/.data/exports
+    volumes:
+      - backend-data:/srv/.data
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "scripts/run_scheduled.py"]
+
+  bootstrap:
+    build: ./backend
+    profiles: ["tools"]
+    env_file: .env.staging
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      ENVIRONMENT: production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-lc", "python scripts/bootstrap_db.py && python scripts/apply_rls.py --apply && python scripts/seed_watchlists.py"]
+
+  db:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+  pg-data:
+  caddy-data:
+  caddy-config:

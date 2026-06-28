@@ -43,16 +43,17 @@ To let a remote pilot user try it without deploying: a Cloudflare Tunnel / Tails
 
 ## 2. Deployment plan
 
-### Stage A — Staging on a single VM (days, ~$20–40/mo)
+### Stage A — AWS Lightsail staging on a single VM (days, ~$24/mo)
 
 Goal: the pilot reachable at `staging.cited-market-brief-agent.app` for 1–5 trusted users.
 
-- One small VM (EC2 t4g.medium / Lightsail / Hetzner), Docker Compose `--profile full`
+- One AWS Lightsail Ubuntu instance in Singapore (4 GB RAM / 2 vCPU / 80 GB SSD), Docker Compose, Caddy TLS
 - Caddy or Traefik for TLS; `ENVIRONMENT=production`, `AUTH_REQUIRED=true`
 - Identity provider: Auth0 / WorkOS / Cognito free tier → fill `OIDC_*` vars; MFA on
 - Postgres still in compose with volume backups (`scripts/backup_restore_test.sh` weekly)
 - Cron on the VM runs `scripts/run_scheduled.py` (the runner already isolates per-watchlist failures and audits them)
 - This is the cheapest credible way to satisfy two SECURITY.md gates: staging environment + live cross-tenant leakage test (create two orgs, verify zero bleed with RLS applied)
+- Guide: `docs/STAGING_DEPLOY_AWS_LIGHTSAIL.md`
 
 ### Stage B — Production on AWS (the plan's target, when there are paying users)
 
