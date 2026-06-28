@@ -361,7 +361,6 @@ export type SectorConfigPayload = {
   sector_map: Record<string, string>;
 };
 
-/** Live sector (產業) attribution of the fund vs the TAIEX, or null. */
-export async function getSectorAttribution(): Promise<SectorAttributionPayload | null> {
-  return fetchJson<SectorAttributionPayload>("/fund-attribution/sector-attribution", 6000);
-}
+// Sector (產業) attribution is fetched client-side in SectorAttributionPanel via the
+// same-origin /api proxy, so it has no server-side helper here (the server API origin
+// would point at localhost from the viewer's browser).
