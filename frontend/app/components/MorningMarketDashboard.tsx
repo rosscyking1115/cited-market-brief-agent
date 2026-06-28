@@ -20,10 +20,8 @@ import {
   localizedClockNote,
   localizedDisclaimer,
   localizedGlossary,
-  localizedHeadline,
   localizedNewsWhy,
   localizedRiskWhy,
-  localizedSummary,
   radarLang,
   type RadarLang,
 } from "@/lib/radar-i18n";
@@ -59,15 +57,6 @@ function valueTone(tone: SnapshotTone) {
 
 function marketLabel(market: string, lang: RadarLang) {
   return MARKET_LABELS[market]?.[lang] ?? market;
-}
-
-function currentFocus(items: MarketClockItem[], lang: RadarLang): string {
-  const pick =
-    items.find((item) => item.status === "open") ??
-    items.find((item) => item.status === "not_open") ??
-    items[0];
-  if (!pick) return "";
-  return `${marketLabel(pick.market, lang)} · ${STATUS_LABELS[pick.status][lang]}`;
 }
 
 function formatInRegion(value: string, profile: RegionProfile, lang: RadarLang) {
@@ -343,34 +332,6 @@ function NewsRail({
 
 // --- Non-TW context sections (analyst editions) ----------------------------
 
-function MorningSummary({ radar, lang }: { radar: MorningRadarPayload; lang: RadarLang }) {
-  const headline = localizedHeadline(lang, radar.headline);
-  const points = localizedSummary(lang, radar.summary_points);
-  const focus = lang === "tw" ? radar.current_focus : currentFocus(radar.market_clock, lang);
-
-  return (
-    <div className="border-b border-hairline px-4 py-4 sm:px-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <h2 className="font-serif text-lg font-semibold leading-tight text-neutral-30 sm:text-xl">{headline}</h2>
-          <ul className="mt-2 grid gap-1.5">
-            {points.map((point) => (
-              <li key={point} className="reader-body grid grid-cols-[14px_1fr] gap-2 text-neutral-50">
-                <span className="mt-2 block h-1 w-1 rounded-full bg-action" aria-hidden />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="shrink-0 rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
-          <p className="th-label">{SECTION_LABELS.focus[lang]}</p>
-          <p className="mt-1 font-mono text-[14px] font-semibold text-neutral-40">{focus}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MarketClock({ items, lang }: { items: MarketClockItem[]; lang: RadarLang }) {
   if (items.length === 0) return null;
   return (
@@ -464,7 +425,6 @@ function Glossary({ items, lang }: { items: GlossaryItem[]; lang: RadarLang }) {
 export default function MorningMarketDashboard({ radar: initialRadar }: { radar: MorningRadarPayload }) {
   const { profile } = useRegion();
   const lang = radarLang(profile.region);
-  const isTW = profile.region === "TW";
   const [radar, setRadar] = useState(initialRadar);
 
   // Refresh from the API on the client (same-origin /api) so live data always wins
@@ -482,48 +442,29 @@ export default function MorningMarketDashboard({ radar: initialRadar }: { radar:
     };
   }, []);
 
-  // Taiwan consumer edition: a clean standalone news section (hero is above it).
-  // The 今日 report is in the hero; the 本週/本月 reports surface in their tabs.
-  if (isTW) {
-    return (
-      <NewsRail
-        items={radar.popular_news}
-        profile={profile}
-        lang={lang}
-        overviews={{ "1w": radar.week_overview ?? null, "1m": radar.month_overview ?? null }}
-      />
-    );
-  }
-
-  // Other editions keep the full analyst layout (summary, clock, risk, news, glossary).
+  // One identical layout for every region (the localized hero sits above this card):
+  // market clock → overnight risk → news → glossary. The 本週/本月 AI report cards are
+  // generated in Chinese, so they ride along only on the Taiwan edition; every region
+  // gets the same article list (each card already localizes its own summary/why).
   const glossary = localizedGlossary(lang, radar.glossary);
   const disclaimer = localizedDisclaimer(lang, radar.disclaimer);
+  const newsOverviews =
+    lang === "tw" ? { "1w": radar.week_overview ?? null, "1m": radar.month_overview ?? null } : undefined;
+
   return (
-    <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card">
-      <div className="border-b border-hairline px-4 py-4 sm:px-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="th-label">
-              {profile.label} morning radar · {profile.marketAnchor}
-            </p>
-            <h1 className="mt-2 font-serif text-2xl font-semibold leading-tight text-neutral-30 sm:text-3xl">
-              {profile.editionTitle}
-            </h1>
-            <p className="reader-body mt-2 max-w-3xl text-neutral-70">{profile.editionSubtitle}</p>
-          </div>
-          <div className="shrink-0 rounded-(--radius-ctl) border border-elevated bg-page/60 px-3 py-2">
-            <p className="th-label">{SECTION_LABELS.dataTime[lang]}</p>
-            <p className="mt-1 font-mono text-[15px] font-semibold text-neutral-40" suppressHydrationWarning>
-              {formatInRegion(radar.generated_at, profile, lang)} {profile.marketAnchor}
-            </p>
-          </div>
-        </div>
+    <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:px-5">
+        <p className="th-label">
+          {profile.label} · {profile.marketAnchor}
+        </p>
+        <p className="font-mono text-[11px] text-neutral-90" suppressHydrationWarning>
+          {SECTION_LABELS.dataTime[lang]} {formatInRegion(radar.generated_at, profile, lang)}
+        </p>
       </div>
 
-      <MorningSummary radar={radar} lang={lang} />
       <MarketClock items={radar.market_clock} lang={lang} />
       <OvernightRiskRail items={radar.overnight_risk} lang={lang} />
-      <NewsRail items={radar.popular_news} profile={profile} lang={lang} framed />
+      <NewsRail items={radar.popular_news} profile={profile} lang={lang} framed overviews={newsOverviews} />
       <Glossary items={glossary} lang={lang} />
 
       {disclaimer && (
