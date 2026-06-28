@@ -17,10 +17,10 @@ source span before it ships.
 
 ## Live demo
 
-A no-login public demo (built-in demo data, no backend) can be deployed in a couple of
-minutes — see [docs/DEPLOY_DEMO.md](docs/DEPLOY_DEMO.md). Once deployed, link it here:
-
-<!-- [cited-market-brief-agent.vercel.app](https://cited-market-brief-agent.vercel.app) — demo data, no login -->
+**[cited-market-brief-agent.vercel.app](https://cited-market-brief-agent.vercel.app)** — a
+no-login public demo with built-in demo data (no backend). Pick any region and click through
+the radar, news, ETF attribution, and the evidence brief. Deploy details:
+[docs/DEPLOY_DEMO.md](docs/DEPLOY_DEMO.md).
 
 The full app (live data) runs privately and is available on request.
 
