@@ -2,6 +2,7 @@
 
 import json
 import logging
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -51,6 +52,8 @@ class _NewsCache:
 
 
 _NEWS_CACHE: _NewsCache | None = None
+_NEWS_LOCK = threading.Lock()
+_NEWS_REFRESHING = False
 
 
 @router.get("", response_model=MorningRadarOut)
@@ -87,33 +90,66 @@ def prewarm_news() -> None:
 def _cached_news(
     *, now: datetime
 ) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
-    """Serve assembled + translated news and the day/week/month overviews from a
-    short-lived cache. The endpoint blocks on live fetches + LLM translation/overview
-    calls that can exceed the frontend server-render timeout; a brief TTL keeps the
-    page fast and a transient empty result falls back to the last good set."""
-    global _NEWS_CACHE
+    """Serve assembled + translated news and the day/week/month overviews.
+
+    A full rebuild does live fetches + LLM translation/overview calls that can take
+    tens of seconds — far longer than the frontend server-render timeout. So once the
+    cache is warm we serve it instantly and, when it goes stale, refresh in the
+    background (stale-while-revalidate) instead of blocking the request. Only a true
+    cold start (before prewarm finishes) rebuilds synchronously."""
+    global _NEWS_REFRESHING
     ttl = timedelta(seconds=max(settings.news_cache_ttl_seconds, 0))
-    if _NEWS_CACHE is not None and now - _NEWS_CACHE.fetched_at <= ttl:
-        return _NEWS_CACHE.items, _NEWS_CACHE.overviews
+    cache = _NEWS_CACHE
+    if cache is not None:
+        if now - cache.fetched_at <= ttl:
+            return cache.items, cache.overviews
+        # Stale: serve the last good set immediately, refresh off the request path.
+        with _NEWS_LOCK:
+            should_refresh = not _NEWS_REFRESHING
+            if should_refresh:
+                _NEWS_REFRESHING = True
+        if should_refresh:
+            threading.Thread(target=_background_news_refresh, daemon=True).start()
+        return cache.items, cache.overviews
+    return _rebuild_news_cache(now=now)
+
+
+def _rebuild_news_cache(
+    *, now: datetime
+) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
+    """Fetch + translate news and (re)generate the day/week/month overviews, updating
+    the module cache. Returns the last good set if the live fetch comes back empty."""
+    global _NEWS_CACHE
     fetched = _fetch_popular_news()
-    if fetched:
-        fetched = translate_news_items_zh(fetched)
-        # Windows are cumulative time ranges: this week's report covers today + the
-        # week's most-read finance, this month's covers all of it. A single
-        # publisher's week-only most-read finance is often empty, so summarizing the
-        # rolling window keeps the weekly/monthly digests substantive.
-        day_items = [i for i in fetched if i.window == "1d"]
-        week_items = [i for i in fetched if i.window in ("1d", "1w")]
-        overviews = (
-            generate_news_overview(day_items, "今日"),
-            generate_news_overview(week_items, "本週"),
-            generate_news_overview(fetched, "本月"),
-        )
-        _NEWS_CACHE = _NewsCache(items=fetched, overviews=overviews, fetched_at=now)
-        return fetched, overviews
-    if _NEWS_CACHE is not None:
-        return _NEWS_CACHE.items, _NEWS_CACHE.overviews
-    return [], (None, None, None)
+    if not fetched:
+        if _NEWS_CACHE is not None:
+            return _NEWS_CACHE.items, _NEWS_CACHE.overviews
+        return [], (None, None, None)
+    fetched = translate_news_items_zh(fetched)
+    # Windows are cumulative time ranges: this week's report covers today + the week's
+    # most-read finance, this month's covers all of it. A single publisher's week-only
+    # most-read finance is often empty, so summarizing the rolling window keeps the
+    # weekly/monthly digests substantive.
+    day_items = [i for i in fetched if i.window == "1d"]
+    week_items = [i for i in fetched if i.window in ("1d", "1w")]
+    overviews = (
+        generate_news_overview(day_items, "今日"),
+        generate_news_overview(week_items, "本週"),
+        generate_news_overview(fetched, "本月"),
+    )
+    _NEWS_CACHE = _NewsCache(items=fetched, overviews=overviews, fetched_at=now)
+    return fetched, overviews
+
+
+def _background_news_refresh() -> None:
+    global _NEWS_REFRESHING
+    try:
+        _rebuild_news_cache(now=datetime.now(UTC))
+    except Exception as exc:  # noqa: BLE001 - background refresh must never crash.
+        logger.info("Background news refresh failed: %s", exc)
+    finally:
+        with _NEWS_LOCK:
+            _NEWS_REFRESHING = False
 
 
 def _fetch_popular_news() -> list[PopularNewsItem]:

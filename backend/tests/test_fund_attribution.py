@@ -78,6 +78,32 @@ def test_fund_attribution_tracks_missing_returns() -> None:
     assert "落後基準" in result.summary_zh_hant
 
 
+def test_fund_attribution_summary_explains_all_holdings_down() -> None:
+    # Every holding fell today, yet the fund still beat the index (smaller drop) — so
+    # there are no positive contributors. The summary must explain that instead of
+    # claiming a phantom leader.
+    result = analyze_fund_attribution(
+        FundAttributionRequest(
+            fund_name="主動摩根台灣鑫收益ETF",
+            benchmark_name="台灣加權指數",
+            as_of="2026-06-28",
+            fund_return_pct=-1.15,
+            benchmark_return_pct=-3.64,
+            holdings=[
+                {"symbol": "2330", "name": "台積電", "weight_pct": 20.5, "return_pct": -2.09},
+                {"symbol": "2454", "name": "聯發科", "weight_pct": 5.25, "return_pct": -9.98},
+                {"symbol": "2882", "name": "國泰金", "weight_pct": 4.0, "return_pct": -4.93},
+            ],
+        )
+    )
+
+    assert result.contributors == []
+    assert result.drags[0].symbol == "2454"
+    assert "贏過基準" in result.summary_zh_hant
+    assert "主要正貢獻來自" not in result.summary_zh_hant
+    assert "跌幅較小或產業配置" in result.summary_zh_hant
+
+
 def test_fund_attribution_plan_endpoint_documents_automation_policy() -> None:
     response = client.get("/fund-attribution/plan")
 
