@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   API_URL,
-  getSectorAttribution,
   type SectorAttributionPayload,
   type SectorAttributionRow,
   type SectorConfigPayload,
@@ -126,7 +125,11 @@ export default function SectorAttributionPanel() {
     setError(null);
     try {
       const [attribution, config] = await Promise.all([
-        getSectorAttribution(),
+        // Same-origin /api proxy: this runs in the browser, so it must not use the
+        // server-only API origin (which points at localhost from the viewer's machine).
+        fetch(`${API_URL}/fund-attribution/sector-attribution`, { cache: "no-store" })
+          .then((r) => (r.ok ? (r.json() as Promise<SectorAttributionPayload>) : null))
+          .catch(() => null),
         fetch(`${API_URL}/fund-attribution/sector-config`, { cache: "no-store" })
           .then((r) => (r.ok ? (r.json() as Promise<SectorConfigPayload>) : null))
           .catch(() => null),
