@@ -210,11 +210,24 @@ function NewsRail({
       : lang === "ko"
         ? { "1d": "오늘", "1w": "이번 주", "1m": "이번 달" }
         : { "1d": "Today", "1w": "This week", "1m": "This month" };
-  // Windows are cumulative ranges; a single publisher's week-only most-read finance
-  // is often empty, so a window earns a tab when it has its own most-read articles
-  // OR a rolling period report to show.
+  // Windows are cumulative time ranges: 本週 includes today + this week's most-read,
+  // 本月 includes everything. A single publisher's week/month-only most-read finance
+  // is often empty, so showing the rolling (deduped) set keeps every tab populated
+  // with real articles instead of a summary-only card.
+  const winRank = (w: string) => ["1d", "1w", "1m"].indexOf(w);
   const groups = (["1d", "1w", "1m"] as const)
-    .map((key) => ({ key, label: periodLabels[key], items: realItems.filter((i) => i.window === key) }))
+    .map((key) => {
+      const seen = new Set<string>();
+      const items = realItems
+        .filter((i) => winRank(i.window) <= winRank(key))
+        .filter((i) => {
+          const dedupeKey = i.url ?? i.title;
+          if (seen.has(dedupeKey)) return false;
+          seen.add(dedupeKey);
+          return true;
+        });
+      return { key, label: periodLabels[key], items };
+    })
     .filter((group) => group.items.length > 0 || Boolean(overviews?.[group.key]));
 
   const [activeTab, setActiveTab] = useState("1d");
