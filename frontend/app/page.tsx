@@ -309,7 +309,7 @@ export default async function Page() {
             <span className="truncate font-serif text-[16px] font-semibold tracking-tight text-neutral-30 sm:text-[17px]">
               Morning Market Radar
             </span>
-            <span className="th-label mt-px hidden sm:inline">Taiwan morning · Evidence-backed</span>
+            <span className="th-label mt-px hidden sm:inline">Daily market radar · Evidence-backed</span>
           </div>
           <div className="flex min-w-0 basis-full items-center justify-between gap-2 sm:basis-auto sm:justify-start sm:gap-3">
             <RegionSwitcher />
@@ -362,7 +362,7 @@ export default async function Page() {
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-4 sm:space-y-5">
-            <article className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card px-4 py-4 sm:px-6 sm:py-5">
+            <article className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card px-4 py-4 shadow-[var(--shadow-soft)] sm:px-6 sm:py-5">
               <div className="border-b border-hairline pb-4">
                 <p className="th-label mb-2 break-words">Morning brief · Watchlist: {data.watchlist}</p>
                 <h1 className="font-serif text-xl font-semibold leading-tight text-neutral-30 sm:text-2xl">
