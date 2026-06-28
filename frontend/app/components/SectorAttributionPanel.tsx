@@ -10,6 +10,24 @@ import {
 
 const MAX_ABS_DIFF = 4.0; // a 4pp over/underweight fills half the track
 
+// Shown on the backend-less public demo (NEXT_PUBLIC_DEMO_MODE=1).
+const DEMO_SECTOR: SectorAttributionPayload = {
+  as_of: "2026-06-28",
+  fund_name: "示範 ETF（範例資料）",
+  benchmark_name: "台灣加權指數",
+  has_benchmark: true,
+  rows: [
+    { sector: "半導體", etf_weight_pct: 25.75, benchmark_weight_pct: 38.0, weight_diff_pct: -12.25, sector_return_pct: -3.43, etf_contribution_pct: -0.88, allocation_effect_pct: 0.42 },
+    { sector: "金融保險", etf_weight_pct: 4.0, benchmark_weight_pct: 16.0, weight_diff_pct: -12.0, sector_return_pct: -4.93, etf_contribution_pct: -0.2, allocation_effect_pct: 0.59 },
+    { sector: "電信", etf_weight_pct: 6.0, benchmark_weight_pct: 3.5, weight_diff_pct: 2.5, sector_return_pct: 0.82, etf_contribution_pct: 0.05, allocation_effect_pct: 0.02 },
+  ],
+  allocation_total_pct: 1.03,
+  unmapped_weight_pct: 0,
+  summary_zh_hant: "示範資料：基金相對加權指數明顯減碼半導體與金融，今日這兩大產業下跌，因此配置效果為正。",
+  source_notes: ["示範資料，僅供展示介面。"],
+  disclaimer: "本頁為教育性績效歸因，不構成投資建議。",
+};
+
 function pct(value: number | null, dash = "—") {
   return value === null ? dash : `${value.toFixed(2)}%`;
 }
@@ -123,6 +141,11 @@ export default function SectorAttributionPanel() {
   const load = useCallback(async () => {
     setBusy("load");
     setError(null);
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === "1") {
+      setData(DEMO_SECTOR);
+      setBusy(null);
+      return;
+    }
     try {
       const [attribution, config] = await Promise.all([
         // Same-origin /api proxy: this runs in the browser, so it must not use the

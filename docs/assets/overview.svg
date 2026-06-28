@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Cited Market Brief Agent — architecture overview">
+  <!-- self-contained card so it reads on both light and dark GitHub themes -->
+  <rect x="0" y="0" width="1200" height="560" rx="16" fill="#f4f6f8"/>
+  <rect x="0.5" y="0.5" width="1199" height="559" rx="16" fill="none" stroke="#dbe3ec"/>
+
+  <!-- header -->
+  <text x="48" y="66" font-size="34" font-weight="700" fill="#16202e">Cited Market Brief Agent</text>
+  <text x="48" y="96" font-size="16" fill="#5b6b7d">Region-aware Morning Market Radar · audit-ready evidence briefs · one web app</text>
+
+  <!-- two surfaces -->
+  <!-- Surface A: radar -->
+  <rect x="48" y="124" width="536" height="216" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
+  <rect x="48" y="124" width="6" height="216" rx="3" fill="#1f5c8f"/>
+  <text x="76" y="156" font-size="12" font-weight="700" letter-spacing="1.2" fill="#1f5c8f">PRIMARY · CONSUMER</text>
+  <text x="76" y="184" font-size="22" font-weight="700" fill="#16202e">Morning Market Radar</text>
+  <g font-size="15" fill="#3c4a5a">
+    <circle cx="82" cy="214" r="3" fill="#4e9bd6"/><text x="96" y="219">Asia → US market clock + overnight-risk rail (FRED)</text>
+    <circle cx="82" cy="244" r="3" fill="#4e9bd6"/><text x="96" y="249">Most-read finance news — day / week / month</text>
+    <circle cx="82" cy="274" r="3" fill="#4e9bd6"/><text x="96" y="279">Traditional-Chinese key points + AI summaries</text>
+    <circle cx="82" cy="304" r="3" fill="#4e9bd6"/><text x="96" y="309">Taiwan ETF-vs-TAIEX attribution</text>
+  </g>
+
+  <!-- Surface B: brief -->
+  <rect x="616" y="124" width="536" height="216" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
+  <rect x="616" y="124" width="6" height="216" rx="3" fill="#7e8d9e"/>
+  <text x="644" y="156" font-size="12" font-weight="700" letter-spacing="1.2" fill="#6b7888">SECONDARY · PROFESSIONAL</text>
+  <text x="644" y="184" font-size="22" font-weight="700" fill="#16202e">Evidence-backed Brief</text>
+  <g font-size="15" fill="#3c4a5a">
+    <circle cx="650" cy="214" r="3" fill="#7e8d9e"/><text x="664" y="219">SEC filing diffs + vintage-aware macro deltas</text>
+    <circle cx="650" cy="244" r="3" fill="#7e8d9e"/><text x="664" y="249">Every claim validated against a stored source span</text>
+    <circle cx="650" cy="274" r="3" fill="#7e8d9e"/><text x="664" y="279">Click-through evidence ledger</text>
+    <circle cx="650" cy="304" r="3" fill="#7e8d9e"/><text x="664" y="309">Markdown / PDF / PPTX / XLSX exports</text>
+  </g>
+
+  <!-- regions -->
+  <text x="48" y="386" font-size="13" font-weight="700" letter-spacing="1.2" fill="#6b7888">FOUR EDITIONS · ONE UNIFIED UI</text>
+  <g font-size="15" fill="#16202e">
+    <rect x="48" y="400" width="150" height="40" rx="20" fill="#eef3f8" stroke="#cdd9e6"/><text x="123" y="425" text-anchor="middle">🇹🇼 Taiwan · 繁中</text>
+    <rect x="214" y="400" width="150" height="40" rx="20" fill="#eef3f8" stroke="#cdd9e6"/><text x="289" y="425" text-anchor="middle">🇰🇷 Korea · 한국어</text>
+    <rect x="380" y="400" width="150" height="40" rx="20" fill="#eef3f8" stroke="#cdd9e6"/><text x="455" y="425" text-anchor="middle">🇬🇧 UK · English</text>
+    <rect x="546" y="400" width="150" height="40" rx="20" fill="#eef3f8" stroke="#cdd9e6"/><text x="621" y="425" text-anchor="middle">🇪🇺 EU · English</text>
+  </g>
+
+  <!-- stack / data sources -->
+  <text x="48" y="486" font-size="13" font-weight="700" letter-spacing="1.2" fill="#6b7888">STACK &amp; DATA</text>
+  <g font-size="14" fill="#3c4a5a">
+    <text x="48" y="514">Next.js 16 · React 19 · Tailwind v4 &#160;|&#160; FastAPI · Postgres + pgvector · LiteLLM &#160;|&#160; Docker · Caddy</text>
+    <text x="48" y="538" fill="#5b6b7d">Sources: TWSE · FRED · NYT Most Popular · GDELT / finance RSS · SEC EDGAR &#160;— free / EOD tiers</text>
+  </g>
+</svg>
