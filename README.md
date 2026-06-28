@@ -6,12 +6,23 @@ news are surfaced in plain language (with Traditional-Chinese key points for the
 edition), and every claim in a generated research brief is validated against a stored
 source span before it ships.
 
+![Cited Market Brief Agent — overview](docs/assets/overview.svg)
+
 > [!NOTE]
 > **Honest framing.** This started as a daily market tool for a family member who invests
 > in Taiwan, and grew into a portfolio-grade full-stack project. It runs on free/EOD data
 > tiers (TWSE, FRED, NYT Most Popular, RSS) — great for a personal morning digest, not a
 > Bloomberg replacement. It is **not** a commercial product, and nothing it produces is
 > investment advice. See the disclaimer at the bottom.
+
+## Live demo
+
+A no-login public demo (built-in demo data, no backend) can be deployed in a couple of
+minutes — see [docs/DEPLOY_DEMO.md](docs/DEPLOY_DEMO.md). Once deployed, link it here:
+
+<!-- [cited-market-brief-agent.vercel.app](https://cited-market-brief-agent.vercel.app) — demo data, no login -->
+
+The full app (live data) runs privately and is available on request.
 
 ## Overview
 
@@ -27,6 +38,29 @@ The app has two surfaces on one page:
 All four regional editions (Taiwan, Korea, UK, EU) render the same core radar, localized.
 Each then carries one audience-specific module: Taiwan gets the ETF tool; the other
 editions get the evidence brief.
+
+## Screenshots
+
+<!--
+  Capture from the running app and drop PNG/GIF files into docs/screenshots/, then
+  uncomment the block below. Suggested shots (Windows: Snipping Tool for stills,
+  ScreenToGif for the GIF):
+    1. radar-tw.png        — Taiwan edition: hero + market clock + news
+    2. etf-attribution.png — ETF vs TAIEX: contributors/drags + sector bars
+    3. news-windows.gif    — switching the 今日 / 本週 / 本月 news tabs
+    4. evidence-ledger.png — UK/EU edition: a claim expanded to its source span
+
+<p align="center">
+  <img src="docs/screenshots/radar-tw.png" width="48%" alt="Taiwan morning radar" />
+  <img src="docs/screenshots/etf-attribution.png" width="48%" alt="ETF vs TAIEX attribution" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/news-windows.gif" width="48%" alt="News day/week/month tabs" />
+  <img src="docs/screenshots/evidence-ledger.png" width="48%" alt="Evidence ledger" />
+</p>
+-->
+
+_Screenshots coming soon — see the overview diagram above for the layout at a glance._
 
 ## Features
 
