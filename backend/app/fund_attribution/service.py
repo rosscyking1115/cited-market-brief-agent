@@ -1009,10 +1009,19 @@ def _summary_zh(
     drags: list[AttributionRow],
 ) -> str:
     relation = "贏過" if active_return >= 0 else "落後"
-    leader = contributors[0].name if contributors else "主要持股"
-    laggard = drags[0].name if drags else "部分持股或現金部位"
-    return (
+    headline = (
         f"{fund_name} 當日報酬 {fund_return:+.2f}%，{benchmark_name} {benchmark_return:+.2f}%，"
         f"相對表現 {active_return:+.2f} 個百分點，今天{relation}基準。"
-        f"主要正貢獻來自 {leader}；主要拖累來自 {laggard}。"
     )
+    if contributors:
+        laggard = drags[0].name if drags else "部分持股或現金部位"
+        detail = f"主要正貢獻來自 {contributors[0].name}；主要拖累來自 {laggard}。"
+    elif drags:
+        # No individual gainers today — explain why 最大正貢獻 is empty.
+        detail = (
+            f"今日持股多數下跌，最大拖累為 {drags[0].name}；"
+            f"{'仍' if active_return >= 0 else ''}{relation}指數主要來自跌幅較小或產業配置，而非個股上漲。"
+        )
+    else:
+        detail = "今日尚無明顯的個股正負貢獻（可能因缺漲跌幅或現金部位）。"
+    return headline + detail

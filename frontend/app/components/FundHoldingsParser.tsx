@@ -49,7 +49,7 @@ function rowTone(row: AttributionRow) {
   return "text-neutral-70";
 }
 
-function ResultRows({ title, rows }: { title: string; rows: AttributionRow[] }) {
+function ResultRows({ title, rows, emptyHint }: { title: string; rows: AttributionRow[]; emptyHint?: string }) {
   return (
     <div className="rounded-(--radius-ctl) border border-hairline bg-page/50">
       <div className="border-b border-hairline px-3 py-2">
@@ -73,7 +73,7 @@ function ResultRows({ title, rows }: { title: string; rows: AttributionRow[] }) 
           ))}
         </div>
       ) : (
-        <p className="reader-meta px-3 py-3 text-neutral-90">沒有資料。</p>
+        <p className="reader-meta px-3 py-3 text-neutral-90">{emptyHint ?? "沒有資料。"}</p>
       )}
     </div>
   );
@@ -619,7 +619,11 @@ export default function FundHoldingsParser({
           </div>
 
           <div className="mt-3 grid gap-3 lg:grid-cols-3">
-            <ResultRows title="最大正貢獻" rows={analysis.contributors} />
+            <ResultRows
+              title="最大正貢獻"
+              rows={analysis.contributors}
+              emptyHint="今日沒有上漲的個股，因此沒有正貢獻。基金相對指數的表現來自跌幅較小或產業配置（見下方產業配置比較）。"
+            />
             <ResultRows title="最大拖累" rows={analysis.drags} />
             <ResultRows title="缺少漲跌幅" rows={analysis.missing_returns.slice(0, 5)} />
           </div>
