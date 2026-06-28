@@ -332,19 +332,15 @@ export default async function Page() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
-        <ShowOnTaiwan>
-          <TodayHero
-            headline={radarData.headline}
-            overview={radarData.today_overview ?? null}
-            attribution={latestAttribution?.result ?? null}
-          />
-        </ShowOnTaiwan>
+        <TodayHero radar={radarData} attribution={latestAttribution?.result ?? null} />
 
         <MorningMarketDashboard radar={radarData} />
 
-        <div id="fund" className="scroll-mt-20">
-          <FundAttributionPanel plan={attributionPlan} latest={latestAttribution?.result ?? null} />
-        </div>
+        <ShowOnTaiwan>
+          <div id="fund" className="scroll-mt-20">
+            <FundAttributionPanel plan={attributionPlan} latest={latestAttribution?.result ?? null} />
+          </div>
+        </ShowOnTaiwan>
 
         <HideOnTaiwan>
         <div className="flex flex-col gap-1 border-t border-hairline pt-5 sm:flex-row sm:items-end sm:justify-between">
