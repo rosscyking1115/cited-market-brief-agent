@@ -1,5 +1,11 @@
 # Cited Market Brief Agent
 
+[![Live demo](https://img.shields.io/badge/demo-live-1f5c8f)](https://cited-market-brief-agent.vercel.app)
+![Tests](https://img.shields.io/badge/tests-116%20passing-2ea877)
+![Frontend](https://img.shields.io/badge/Next.js%2016-React%2019-000000?logo=nextdotjs&logoColor=white)
+![Backend](https://img.shields.io/badge/FastAPI-Python%203.13-009688?logo=fastapi&logoColor=white)
+![Database](https://img.shields.io/badge/Postgres%2018-pgvector-4169E1?logo=postgresql&logoColor=white)
+
 A region-aware **Morning Market Radar** for everyday investors, plus an audit-ready
 **evidence-backed brief engine** for research teams — in one web app. Market context and
 news are surfaced in plain language (with Traditional-Chinese key points for the Taiwan
@@ -7,6 +13,9 @@ edition), and every claim in a generated research brief is validated against a s
 source span before it ships.
 
 ![Cited Market Brief Agent — overview](docs/assets/overview.svg)
+
+**Citation integrity:** every material claim is validated against a stored source span
+before it ships — precision ≥ 0.95, recall ≥ 0.90, enforced by the CI eval gate.
 
 > [!NOTE]
 > **Honest framing.** This started as a daily market tool for a family member who invests
@@ -41,26 +50,13 @@ editions get the evidence brief.
 
 ## Screenshots
 
-<!--
-  Capture from the running app and drop PNG/GIF files into docs/screenshots/, then
-  uncomment the block below. Suggested shots (Windows: Snipping Tool for stills,
-  ScreenToGif for the GIF):
-    1. radar-tw.png        — Taiwan edition: hero + market clock + news
-    2. etf-attribution.png — ETF vs TAIEX: contributors/drags + sector bars
-    3. news-windows.gif    — switching the 今日 / 本週 / 本月 news tabs
-    4. evidence-ledger.png — UK/EU edition: a claim expanded to its source span
+| Taiwan morning radar | ETF vs. TAIEX attribution |
+| --- | --- |
+| ![Taiwan morning radar — hero, market clock, overnight-risk rail](docs/screenshots/radar-tw.png) | ![ETF vs TAIEX attribution — contributors, drags, holdings, sector bars](docs/screenshots/etf-attribution.png) |
+| **Most-read news — day / week / month** | **Evidence ledger (UK/EU edition)** |
+| ![Switching the 今日 / 本週 / 本月 news tabs](docs/screenshots/news-windows.gif) | ![A claim expanded to its validated SEC source span](docs/screenshots/evidence-ledger.png) |
 
-<p align="center">
-  <img src="docs/screenshots/radar-tw.png" width="48%" alt="Taiwan morning radar" />
-  <img src="docs/screenshots/etf-attribution.png" width="48%" alt="ETF vs TAIEX attribution" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/news-windows.gif" width="48%" alt="News day/week/month tabs" />
-  <img src="docs/screenshots/evidence-ledger.png" width="48%" alt="Evidence ledger" />
-</p>
--->
-
-_Screenshots coming soon — see the overview diagram above for the layout at a glance._
+> Screenshots are from the [live demo](https://cited-market-brief-agent.vercel.app) (demo data).
 
 ## Features
 

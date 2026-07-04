@@ -201,6 +201,12 @@ const DEMO_RADAR: MorningRadarPayload = {
   generated_at: "2026-06-14T07:30:00+08:00",
   timezone: "Asia/Taipei",
   headline: "今天先看全球市場，再看台股開盤",
+  today_overview:
+    "今日重點：聯準會維持利率、AI 晶片需求續強帶動科技股，油價因供給疑慮緩解而回落；亞股資金流入延續。（示範資料）",
+  week_overview:
+    "本週：全球資金轉進亞洲股市，降息預期升溫使美元走弱，半導體與科技類股相對強勢。（示範資料）",
+  month_overview:
+    "本月：半導體帶動台股月線收紅，市場聚焦 AI 需求與利率路徑。（示範資料）",
   summary_points: [
     "美股與歐股收盤先決定隔夜基調。",
     "08:00 先看日本、韓國；09:00 接台股。",
@@ -252,8 +258,68 @@ const DEMO_RADAR: MorningRadarPayload = {
     },
   ],
   snapshots: [],
-  popular_news: [],
-  overnight_risk: [],
+  popular_news: [
+    {
+      rank: 1, window: "1d", rank_kind: "most_viewed", source_status: "official_api",
+      source: "Reuters", url: "https://www.reuters.com/", published_at: "2026-06-14T04:10:00+00:00",
+      category: "市場", title: "Fed holds rates steady as inflation cools toward target",
+      title_zh_hant: "聯準會按兵不動，通膨降溫接近目標",
+      summary: "The central bank kept its benchmark rate unchanged and signalled patience on cuts.",
+      summary_zh: "聯準會維持基準利率不變，對降息維持觀望；市場解讀為偏鴿，科技股受惠。",
+      why: "利率路徑影響成長股與台股電子族群評價。", rights_note: "示範資料。",
+    },
+    {
+      rank: 2, window: "1d", rank_kind: "most_viewed", source_status: "official_api",
+      source: "CNBC", url: "https://www.cnbc.com/", published_at: "2026-06-14T03:05:00+00:00",
+      category: "半導體", title: "Nvidia leads chip rally on strong AI demand outlook",
+      title_zh_hant: "AI 需求強勁，輝達領軍晶片股走高",
+      summary: "AI accelerator demand lifted semiconductor names across the US and Asia.",
+      summary_zh: "AI 加速器需求續強，帶動美股與亞股半導體走高，留意台積電、聯發科連動。",
+      why: "晶片族群是台股權值核心，牽動加權指數。", rights_note: "示範資料。",
+    },
+    {
+      rank: 3, window: "1d", rank_kind: "most_covered", source_status: "rss",
+      source: "MarketWatch", url: "https://www.marketwatch.com/", published_at: "2026-06-14T02:20:00+00:00",
+      category: "能源", title: "Oil slips as supply concerns ease",
+      title_zh_hant: "供給疑慮緩解，油價回落",
+      summary: "Crude fell as traders dialled back supply-disruption fears.",
+      summary_zh: "供給中斷疑慮降低，原油走跌；有助紓解通膨壓力，但衝擊能源類股。",
+      why: "油價影響通膨與能源股，間接牽動風險情緒。", rights_note: "示範資料。",
+    },
+    {
+      rank: 4, window: "1w", rank_kind: "most_viewed", source_status: "official_api",
+      source: "Financial Times", url: "https://www.ft.com/", published_at: "2026-06-11T09:00:00+00:00",
+      category: "市場", title: "Global funds rotate into Asian equities",
+      title_zh_hant: "全球資金轉進亞洲股市",
+      summary: "Investors added to Asian exposure on valuation and earnings momentum.",
+      summary_zh: "資金因評價與獲利動能轉進亞股，台、韓科技股為主要流入標的。",
+      why: "外資動向是台股短線資金面的重要觀察。", rights_note: "示範資料。",
+    },
+    {
+      rank: 5, window: "1w", rank_kind: "most_viewed", source_status: "rss",
+      source: "Bloomberg", url: "https://www.bloomberg.com/", published_at: "2026-06-10T13:30:00+00:00",
+      category: "匯率", title: "Dollar softens as rate-cut bets build",
+      title_zh_hant: "降息預期升溫，美元走弱",
+      summary: "The dollar eased as markets priced in earlier rate cuts.",
+      summary_zh: "市場提前反映降息，美元走弱；有利新興市場與非美資產。",
+      why: "美元強弱影響台幣與外資進出。", rights_note: "示範資料。",
+    },
+    {
+      rank: 6, window: "1m", rank_kind: "most_viewed", source_status: "official_api",
+      source: "Reuters", url: "https://www.reuters.com/", published_at: "2026-05-30T08:00:00+00:00",
+      category: "半導體", title: "Semiconductors drive Taiwan index to monthly gain",
+      title_zh_hant: "半導體帶動台股月線收紅",
+      summary: "Chip strength carried the benchmark to a positive month.",
+      summary_zh: "半導體撐盤，加權指數月線收紅；市場聚焦 AI 需求延續性。",
+      why: "月度回顧有助掌握中期趨勢與族群輪動。", rights_note: "示範資料。",
+    },
+  ],
+  overnight_risk: [
+    { rank: 1, symbol: "VIX", name: "CBOE Volatility Index", local_name: "VIX 波動率指數", group: "volatility", value: "14.2", change: "-0.6", tone: "down", source: "FRED", source_status: "eod", why: "避險與市場波動壓力參考。", rights_note: "示範資料。" },
+    { rank: 2, symbol: "USD/TWD", name: "US dollar / Taiwan dollar", local_name: "美元兌台幣", group: "fx", value: "31.85", change: "+0.12", tone: "up", source: "Alpha Vantage", source_status: "delayed", why: "影響台股電子與出口股情緒。", rights_note: "示範資料。" },
+    { rank: 3, symbol: "WTI", name: "WTI crude oil", local_name: "西德州原油", group: "commodities", value: "68.4", change: "-1.1", tone: "down", source: "FRED", source_status: "eod", why: "油價牽動通膨與能源股。", rights_note: "示範資料。" },
+    { rank: 4, symbol: "US10Y", name: "US 10-year Treasury yield", local_name: "美債 10 年期殖利率", group: "rates", value: "4.18", change: "-0.03", tone: "down", source: "FRED", source_status: "eod", why: "利率變化影響科技股評價與美元。", rights_note: "示範資料。" },
+  ],
   stories: [
     {
       title: "先看隔夜美股、歐股，再看亞洲開盤順序。",
