@@ -50,13 +50,17 @@ editions get the evidence brief.
 
 ## Screenshots
 
-| Taiwan morning radar | ETF vs. TAIEX attribution |
-| --- | --- |
-| ![Taiwan morning radar — hero, market clock, overnight-risk rail](docs/screenshots/radar-tw.png) | ![ETF vs TAIEX attribution — contributors, drags, holdings, sector bars](docs/screenshots/etf-attribution.png) |
-| **Most-read news — day / week / month** | **Evidence ledger (UK/EU edition)** |
-| ![Switching the 今日 / 本週 / 本月 news tabs](docs/screenshots/news-windows.gif) | ![A claim expanded to its validated SEC source span](docs/screenshots/evidence-ledger.png) |
+Four localized editions (English · 繁體中文 · 한국어) render the **same UI**. The English
+edition is shown first; the Taiwan edition adds a TWSE ETF-vs-benchmark tool.
 
-> Screenshots are from the [live demo](https://cited-market-brief-agent.vercel.app) (demo data).
+| Morning radar — UK edition | Evidence ledger — UK/EU edition |
+| --- | --- |
+| ![UK morning radar — English hero, market clock, overnight-risk rail](docs/screenshots/radar-uk.png) | ![A claim expanded to its validated SEC source span](docs/screenshots/evidence-ledger.png) |
+| **Taiwan edition — ETF vs. TAIEX attribution** | **Taiwan edition — most-read news (day / week / month)** |
+| ![ETF vs TAIEX attribution — contributors, drags, full holdings, sector bars](docs/screenshots/etf-attribution.png) | ![Switching the 今日 / 本週 / 本月 news tabs with Traditional-Chinese key points](docs/screenshots/news-windows.gif) |
+
+> From the [live demo](https://cited-market-brief-agent.vercel.app) (demo data). The same radar
+> renders in English, 繁體中文, and 한국어 — even the up/down colours localize (Taiwan uses red = up).
 
 ## Features
 
