@@ -2,6 +2,12 @@
 
 Engineering reference for the controls in `docs/PRODUCTION_PLAN.md` §9. Status legend: ✅ implemented · 🔶 implemented, needs production wiring · ⏳ pending.
 
+## Reporting a vulnerability
+
+Report suspected vulnerabilities privately to **rosscyking@gmail.com** — please don't open a
+public issue for security reports. This is a personal-scale project with no formal SLA; reports
+are reviewed on a best-effort basis.
+
 ## Control status vs launch no-go gates
 
 | Gate | Status | Where |
@@ -43,7 +49,7 @@ Untrusted source text is delimited in prompts and never executed; citations are 
 
 ## Incident response (draft)
 
-1. **Detect/Report** — alerting on audit-log anomalies, rate-limit spikes, CI security failures; security@ inbox.
+1. **Detect/Report** — alerting on audit-log anomalies, rate-limit spikes, CI security failures; reports to the security contact above.
 2. **Triage** — severity: SEV1 cross-tenant data exposure / credential compromise · SEV2 injection bypassing guardrails into an exported brief · SEV3 dependency CVE in prod · SEV4 other. Incident commander assigned on SEV1–2.
 3. **Contain** — revoke tokens (IdP), disable affected tenant exports, rotate secrets (Secrets Manager), block source in allowlist if poisoning suspected.
 4. **Eradicate/Recover** — patch, re-run eval + red-team suite, restore from backup if integrity is in question (see runbook below).

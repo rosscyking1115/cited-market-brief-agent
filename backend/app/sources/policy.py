@@ -28,9 +28,7 @@ SOURCE_POLICIES: dict[SourceKey, SourcePolicy] = {
         source_status="rss",
         allowed_label="Latest from BBC",
         forbidden_label="BBC Most Read",
-        rights_note=(
-            "BBC RSS/latest only after terms review; do not scrape or label as Most Read."
-        ),
+        rights_note=("BBC RSS/latest only after terms review; do not scrape or label as Most Read."),
     ),
     "finance_rss": SourcePolicy(
         key="finance_rss",

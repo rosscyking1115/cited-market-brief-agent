@@ -31,9 +31,7 @@ class TranslatedSection(BaseModel):
 class BriefTranslation(BaseModel):
     locale: Locale
     label: str
-    disclaimer: str = Field(
-        description="Short note explaining that English remains the source of record."
-    )
+    disclaimer: str = Field(description="Short note explaining that English remains the source of record.")
     sections: list[TranslatedSection] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
 

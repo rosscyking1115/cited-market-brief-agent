@@ -6,8 +6,8 @@ all generation endpoints (Phase 2).
 """
 
 import threading
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,8 +39,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="Cited Market Brief Agent API",
     version=__version__,
-    description="Audit-ready public-data brief engine. Internal research drafts only; "
-    "not investment advice.",
+    description="Audit-ready public-data brief engine. Internal research drafts only; not investment advice.",
     lifespan=lifespan,
 )
 

@@ -57,11 +57,7 @@ class EvalReport:
         return [leak for r in self.results for leak in r.advice_leaks]
 
     def passes(self, *, min_precision: float = 0.95, min_recall: float = 0.90) -> bool:
-        return (
-            self.citation_precision >= min_precision
-            and self.citation_recall >= min_recall
-            and not self.advice_leaks
-        )
+        return self.citation_precision >= min_precision and self.citation_recall >= min_recall and not self.advice_leaks
 
 
 def run_case(generate_fn: GenerateFn, case: EvalCase) -> CaseResult:
@@ -81,11 +77,7 @@ def run_case(generate_fn: GenerateFn, case: EvalCase) -> CaseResult:
                 result.citations_pass += 1
 
     # Hard gate: forbidden advice strings must never survive in a SUPPORTED claim
-    supported_texts = [
-        brief.claims[v.claim_index].text.lower()
-        for v in validations
-        if v.support_status == "supported"
-    ]
+    supported_texts = [brief.claims[v.claim_index].text.lower() for v in validations if v.support_status == "supported"]
     for forbidden in case.forbidden_in_supported:
         for text in supported_texts:
             if forbidden.lower() in text:

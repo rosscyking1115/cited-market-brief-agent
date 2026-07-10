@@ -134,9 +134,7 @@ def generate_deterministic(watchlist_name: str, pack: list[EvidenceItem]) -> Gen
                 evidence_quote=first_sentences,
             )
         )
-        lines_by_label.setdefault(item.doc_label.split("·")[0].strip(), []).append(
-            f"- {first_sentences} [#{idx}]"
-        )
+        lines_by_label.setdefault(item.doc_label.split("·")[0].strip(), []).append(f"- {first_sentences} [#{idx}]")
 
     sections = [
         BriefSection(
@@ -150,8 +148,7 @@ def generate_deterministic(watchlist_name: str, pack: list[EvidenceItem]) -> Gen
         claims=claims,
         unsupported_claims=[],
         open_questions=[
-            "Offline extractive mode: configure ANTHROPIC_API_KEY or OPENAI_API_KEY "
-            "for analytical synthesis."
+            "Offline extractive mode: configure ANTHROPIC_API_KEY or OPENAI_API_KEY for analytical synthesis."
         ],
     )
 

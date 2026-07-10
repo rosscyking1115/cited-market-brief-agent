@@ -12,7 +12,7 @@ Status flow: draft -> in_review (first action) -> approved (explicit approve, al
 sections resolved). Approved briefs are immutable to section actions.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 ALLOWED_ACTIONS = {"accept", "reject", "edit", "needs_source"}
 
@@ -43,7 +43,7 @@ def apply_section_action(
     sections[str(section_index)] = {
         "action": action,
         "content": content if action == "edit" else None,
-        "at": datetime.now(timezone.utc).isoformat(),
+        "at": datetime.now(UTC).isoformat(),
         "by": actor,
     }
     edits["sections"] = sections
@@ -72,7 +72,7 @@ def approval_readiness(user_edits: dict, section_count: int, claims: list) -> di
     citationless = []
 
     for i, claim in enumerate(claims):
-        status = claim.get("support_status") if isinstance(claim, dict) else getattr(claim, "support_status")
+        status = claim.get("support_status") if isinstance(claim, dict) else claim.support_status
         if hasattr(status, "value"):
             status = status.value
         citations = claim.get("citations", []) if isinstance(claim, dict) else getattr(claim, "citations", [])

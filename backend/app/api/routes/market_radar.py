@@ -87,9 +87,7 @@ def prewarm_news() -> None:
         logger.info("News prewarm failed: %s", exc)
 
 
-def _cached_news(
-    *, now: datetime
-) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
+def _cached_news(*, now: datetime) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
     """Serve assembled + translated news and the day/week/month overviews.
 
     A full rebuild does live fetches + LLM translation/overview calls that can take
@@ -114,9 +112,7 @@ def _cached_news(
     return _rebuild_news_cache(now=now)
 
 
-def _rebuild_news_cache(
-    *, now: datetime
-) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
+def _rebuild_news_cache(*, now: datetime) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
     """Fetch + translate news and (re)generate the day/week/month overviews, updating
     the module cache. Returns the last good set if the live fetch comes back empty."""
     global _NEWS_CACHE
@@ -237,25 +233,31 @@ def _alpha_fetch_plan() -> list[_AlphaFetchSpec]:
         _AlphaFetchSpec(
             symbol="USD/TWD",
             label="USD/TWD",
-            fetch_factory=lambda client: lambda: client.exchange_rate(
-                from_currency="USD",
-                to_currency="TWD",
+            fetch_factory=lambda client: (
+                lambda: client.exchange_rate(
+                    from_currency="USD",
+                    to_currency="TWD",
+                )
             ),
         ),
         _AlphaFetchSpec(
             symbol="USD/JPY",
             label="USD/JPY",
-            fetch_factory=lambda client: lambda: client.exchange_rate(
-                from_currency="USD",
-                to_currency="JPY",
+            fetch_factory=lambda client: (
+                lambda: client.exchange_rate(
+                    from_currency="USD",
+                    to_currency="JPY",
+                )
             ),
         ),
         _AlphaFetchSpec(
             symbol="USD/CNY",
             label="USD/CNY",
-            fetch_factory=lambda client: lambda: client.exchange_rate(
-                from_currency="USD",
-                to_currency="CNY",
+            fetch_factory=lambda client: (
+                lambda: client.exchange_rate(
+                    from_currency="USD",
+                    to_currency="CNY",
+                )
             ),
         ),
     ]

@@ -20,8 +20,18 @@ def test_every_org_id_table_has_a_policy() -> None:
 def test_known_tenant_tables_are_scoped() -> None:
     scoped = org_scoped_tables()
     for table in (
-        "organizations", "users", "watchlists", "sources", "documents", "chunks",
-        "time_series", "briefs", "claims", "citations", "exports", "feedback",
+        "organizations",
+        "users",
+        "watchlists",
+        "sources",
+        "documents",
+        "chunks",
+        "time_series",
+        "briefs",
+        "claims",
+        "citations",
+        "exports",
+        "feedback",
         "audit_events",
     ):
         assert table in scoped, f"{table} must be tenant-scoped"

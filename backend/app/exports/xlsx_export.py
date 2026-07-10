@@ -67,9 +67,7 @@ def build_xlsx(bundle: ExportBundle, time_series: list[dict] | None = None) -> b
 
     # --- Evidence ledger tab ---
     ws = wb.create_sheet("Evidence Ledger")
-    ws.append(
-        ["ID", "Claim", "Type", "Confidence", "Status", "Sources", "Reason", "Span IDs"]
-    )
+    ws.append(["ID", "Claim", "Type", "Confidence", "Status", "Sources", "Reason", "Span IDs"])
     style_header(ws, 8)
     for claim in bundle.supported_claims + bundle.review_claims:
         ws.append(
@@ -88,9 +86,7 @@ def build_xlsx(bundle: ExportBundle, time_series: list[dict] | None = None) -> b
 
     # --- Sources tab ---
     ws = wb.create_sheet("Sources")
-    ws.append(
-        ["Claim", "Doc type", "Accession", "Section", "Span", "Source URL", "Retrieved", "SHA-256"]
-    )
+    ws.append(["Claim", "Doc type", "Accession", "Section", "Span", "Source URL", "Retrieved", "SHA-256"])
     style_header(ws, 8)
     for claim in bundle.supported_claims:
         for m in claim.meta:
@@ -137,14 +133,10 @@ def build_xlsx(bundle: ExportBundle, time_series: list[dict] | None = None) -> b
     ws.append(["Disclosure"])
     style_header(ws, 1)
     ws.append([_safe_cell(bundle.disclaimer)])
-    ws.append(
-        [f"ai_generated=true; brief_id={bundle.brief_id}; format=cited-market-brief-agent.xlsx/v1"]
-    )
+    ws.append([f"ai_generated=true; brief_id={bundle.brief_id}; format=cited-market-brief-agent.xlsx/v1"])
     autosize(ws, [140])
 
-    wb.properties.description = (
-        f"ai_generated=true; brief_id={bundle.brief_id}; model={bundle.model}"
-    )
+    wb.properties.description = f"ai_generated=true; brief_id={bundle.brief_id}; model={bundle.model}"
 
     buf = io.BytesIO()
     wb.save(buf)

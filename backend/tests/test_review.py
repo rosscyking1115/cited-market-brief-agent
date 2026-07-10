@@ -3,8 +3,8 @@ import pytest
 from app.briefs.review import (
     ReviewError,
     all_sections_resolved,
-    approval_readiness,
     apply_section_action,
+    approval_readiness,
 )
 
 

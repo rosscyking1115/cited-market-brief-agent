@@ -37,16 +37,12 @@ class ClaimValidation:
     reason: str = ""  # populated by guardrails or validator failure summaries
 
 
-def validate_claims(
-    claims: list[GeneratedClaim], span_texts: dict[str, str]
-) -> list[ClaimValidation]:
+def validate_claims(claims: list[GeneratedClaim], span_texts: dict[str, str]) -> list[ClaimValidation]:
     results: list[ClaimValidation] = []
 
     for i, claim in enumerate(claims):
         if not claim.citations:
-            results.append(
-                ClaimValidation(claim_index=i, support_status="unsupported", needs_review=True)
-            )
+            results.append(ClaimValidation(claim_index=i, support_status="unsupported", needs_review=True))
             continue
 
         citation_results: list[CitationResult] = []
@@ -54,9 +50,7 @@ def validate_claims(
         for span_id in claim.citations:
             text = span_texts.get(span_id)
             if text is None:
-                citation_results.append(
-                    CitationResult(span_id=span_id, status="fail", reason="unknown span_id")
-                )
+                citation_results.append(CitationResult(span_id=span_id, status="fail", reason="unknown span_id"))
                 continue
             if claim.evidence_quote:
                 if _normalize_ws(claim.evidence_quote) not in _normalize_ws(text):

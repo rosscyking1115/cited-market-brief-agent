@@ -323,11 +323,6 @@ export async function getMorningRadar(): Promise<MorningRadarPayload | null> {
   return fetchJson<MorningRadarPayload>("/market-radar", 6000);
 }
 
-/** Fund attribution workflow plan, or null when the API isn't reachable. */
-export async function getFundAttributionPlan(): Promise<FundAttributionPlanPayload | null> {
-  return fetchJson<FundAttributionPlanPayload>("/fund-attribution/plan");
-}
-
 /** Latest pre-computed daily attribution (the scheduled result), or null. */
 export async function getLatestFundAttribution(): Promise<LatestAttributionPayload | null> {
   return fetchJson<LatestAttributionPayload>("/fund-attribution/latest");

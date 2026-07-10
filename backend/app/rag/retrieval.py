@@ -52,9 +52,7 @@ def _fts_ranking(db: Session, org_id: uuid.UUID, query: str, limit: int) -> list
     return list(db.scalars(stmt))
 
 
-def _vector_ranking(
-    db: Session, org_id: uuid.UUID, query_vec: list[float], limit: int
-) -> list[uuid.UUID]:
+def _vector_ranking(db: Session, org_id: uuid.UUID, query_vec: list[float], limit: int) -> list[uuid.UUID]:
     stmt = (
         select(Chunk.id)
         .where(Chunk.org_id == org_id, Chunk.embedding.is_not(None))
@@ -64,9 +62,7 @@ def _vector_ranking(
     return list(db.scalars(stmt))
 
 
-def hybrid_search(
-    db: Session, org_id: uuid.UUID, query: str, k: int = 8
-) -> list[RetrievedChunk]:
+def hybrid_search(db: Session, org_id: uuid.UUID, query: str, k: int = 8) -> list[RetrievedChunk]:
     rankings = [_fts_ranking(db, org_id, query, CANDIDATES)]
 
     query_vec = embed_query(query)  # None in FTS-only mode

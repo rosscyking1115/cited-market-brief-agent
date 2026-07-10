@@ -24,9 +24,7 @@ class GeneratedClaim(BaseModel):
     )
     citations: list[str] = Field(default_factory=list, description="span_ids from the pack")
     confidence: str = "medium"  # high | medium | low
-    evidence_quote: str = Field(
-        default="", description="verbatim quote from the cited span supporting the claim"
-    )
+    evidence_quote: str = Field(default="", description="verbatim quote from the cited span supporting the claim")
     needs_review: bool = False
 
 

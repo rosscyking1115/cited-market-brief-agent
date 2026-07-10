@@ -62,9 +62,7 @@ def get_watchlist(watchlist_id: uuid.UUID, db: Session = Depends(get_db)) -> Wat
 
 
 @router.patch("/{watchlist_id}", response_model=WatchlistOut)
-def update_watchlist(
-    watchlist_id: uuid.UUID, payload: WatchlistUpdate, db: Session = Depends(get_db)
-) -> Watchlist:
+def update_watchlist(watchlist_id: uuid.UUID, payload: WatchlistUpdate, db: Session = Depends(get_db)) -> Watchlist:
     wl = db.get(Watchlist, watchlist_id)
     if wl is None:
         raise HTTPException(status_code=404, detail="Watchlist not found")

@@ -54,8 +54,7 @@ def build_report_html(bundle: ExportBundle) -> str:
         f"{bundle.generated_at.strftime('%Y-%m-%d %H:%M UTC')} · model {e(bundle.model)} · "
         f"prompt {e(bundle.prompt_version)} · {len(bundle.supported_claims)} validated claims</div>",
         "</header>",
-        f"<div class='watermark sans{' approved' if bundle.status == 'approved' else ''}'>"
-        f"{e(bundle.watermark)}</div>",
+        f"<div class='watermark sans{' approved' if bundle.status == 'approved' else ''}'>{e(bundle.watermark)}</div>",
     ]
     if bundle.approval_line:
         parts.append(f"<div class='meta sans'>{e(bundle.approval_line)}</div>")
@@ -69,8 +68,7 @@ def build_report_html(bundle: ExportBundle) -> str:
 
     parts.append("<h2>Evidence ledger</h2>")
     parts.append(
-        "<table><thead><tr><th>ID</th><th>Claim</th><th>Type</th><th>Sources</th>"
-        "<th>Validator</th></tr></thead><tbody>"
+        "<table><thead><tr><th>ID</th><th>Claim</th><th>Type</th><th>Sources</th><th>Validator</th></tr></thead><tbody>"
     )
     for claim in bundle.supported_claims:
         sources = "; ".join(e(s) for s in claim.sources)

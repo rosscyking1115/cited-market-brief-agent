@@ -97,9 +97,7 @@ def build_evidence_pack(
 
     publishers = {
         s.id: s.publisher
-        for s in db.scalars(
-            select(Source).where(Source.id.in_({c.source_id for c in by_id.values()}))
-        )
+        for s in db.scalars(select(Source).where(Source.id.in_({c.source_id for c in by_id.values()})))
     }
 
     pack: list[EvidenceItem] = []
@@ -109,9 +107,7 @@ def build_evidence_pack(
         if span_id in changed:
             label += " (CHANGED vs prior filing)"
         labels[span_id] = label
-        pack.append(
-            EvidenceItem(span_id=span_id, doc_label=label, section=chunk.section, text=chunk.text)
-        )
+        pack.append(EvidenceItem(span_id=span_id, doc_label=label, section=chunk.section, text=chunk.text))
     return pack, by_id, labels
 
 
@@ -125,9 +121,7 @@ def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
     model_used = settings.generation_model if llm_available() else "deterministic/extractive-v1"
 
     generated = generate_brief_json(watchlist.name, pack)
-    validations = validate_claims(
-        generated.claims, {sid: c.text for sid, c in chunks_by_id.items()}
-    )
+    validations = validate_claims(generated.claims, {sid: c.text for sid, c in chunks_by_id.items()})
     validations = apply_guardrails(generated.claims, validations)
 
     brief = Brief(
@@ -143,9 +137,7 @@ def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
     for i, gen_claim in enumerate(generated.claims):
         validation = next(v for v in validations if v.claim_index == i)
         claim_type = (
-            gen_claim.claim_type
-            if gen_claim.claim_type in _VALID_CLAIM_TYPES
-            else ClaimType.FACTUAL_SUMMARY.value
+            gen_claim.claim_type if gen_claim.claim_type in _VALID_CLAIM_TYPES else ClaimType.FACTUAL_SUMMARY.value
         )
         claim = Claim(
             org_id=watchlist.org_id,
@@ -274,9 +266,7 @@ def export_brief_markdown(db: Session, brief: Brief, watchlist: Watchlist) -> tu
 
     generated = GeneratedBrief.model_validate(brief.generated_draft)
     span_texts, span_labels, span_meta = _stored_spans(db, generated.claims, watchlist.org_id)
-    validations = apply_guardrails(
-        generated.claims, validate_claims(generated.claims, span_texts)
-    )
+    validations = apply_guardrails(generated.claims, validate_claims(generated.claims, span_texts))
     model_used = settings.generation_model if llm_available() else "deterministic/extractive-v1"
 
     md = render_markdown(

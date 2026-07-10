@@ -21,10 +21,7 @@ def _latest_briefs(db) -> list[Brief]:
     watchlists = db.scalars(select(Watchlist)).all()
     for watchlist in watchlists:
         brief = db.scalar(
-            select(Brief)
-            .where(Brief.watchlist_id == watchlist.id)
-            .order_by(Brief.created_at.desc())
-            .limit(1)
+            select(Brief).where(Brief.watchlist_id == watchlist.id).order_by(Brief.created_at.desc()).limit(1)
         )
         if brief is not None:
             briefs.append(brief)

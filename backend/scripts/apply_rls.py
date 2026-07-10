@@ -1,7 +1,7 @@
 """Generate (and optionally apply) the tenant-isolation RLS policies.
 
-    python scripts/apply_rls.py            # print DDL
-    python scripts/apply_rls.py --apply    # apply to DATABASE_URL
+python scripts/apply_rls.py            # print DDL
+python scripts/apply_rls.py --apply    # apply to DATABASE_URL
 """
 
 import sys

@@ -6,9 +6,7 @@ workflow when schedules land. Every step emits audit events.
 """
 
 import uuid
-from datetime import datetime, timezone
-
-UTC = timezone.utc
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -151,11 +149,7 @@ async def ingest_sec_for_watchlist(db: Session, watchlist: Watchlist) -> int:
                 raw = await sec.get_raw(url)
                 parsed = parse_filing_html(raw.decode("utf-8", errors="replace"))
                 filing_date = recent.get("filingDate", [None] * len(forms))[idx]
-                pub_date = (
-                    datetime.fromisoformat(filing_date).replace(tzinfo=UTC)
-                    if filing_date
-                    else None
-                )
+                pub_date = datetime.fromisoformat(filing_date).replace(tzinfo=UTC) if filing_date else None
                 _store_document(
                     db,
                     org_id=watchlist.org_id,
@@ -169,10 +163,7 @@ async def ingest_sec_for_watchlist(db: Session, watchlist: Watchlist) -> int:
                     doc_type=form,
                     accession=accession,
                     publication_date=pub_date,
-                    chunks=[
-                        (c.text, c.section, c.span_start, c.span_end, c.is_table)
-                        for c in parsed.chunks
-                    ],
+                    chunks=[(c.text, c.section, c.span_start, c.span_end, c.is_table) for c in parsed.chunks],
                 )
                 ingested += 1
                 picked += 1

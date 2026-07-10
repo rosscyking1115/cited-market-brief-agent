@@ -100,8 +100,8 @@ class SourceType(str, enum.Enum):
 class TrustTier(str, enum.Enum):
     """RAG-poisoning control: non-government sources land in QUARANTINE before promotion."""
 
-    OFFICIAL = "official"        # SEC, FRED, BLS, BEA, Census
-    QUARANTINE = "quarantine"    # IR pages, RSS — pending integrity checks
+    OFFICIAL = "official"  # SEC, FRED, BLS, BEA, Census
+    QUARANTINE = "quarantine"  # IR pages, RSS — pending integrity checks
     PROMOTED = "promoted"
 
 
@@ -214,9 +214,7 @@ class Claim(Base):
     text: Mapped[str] = mapped_column(Text, nullable=False)
     claim_type: Mapped[ClaimType] = mapped_column(Enum(ClaimType), nullable=False)
     confidence: Mapped[str] = mapped_column(String(10), default="medium")  # high|medium|low
-    support_status: Mapped[SupportStatus] = mapped_column(
-        Enum(SupportStatus), default=SupportStatus.UNSUPPORTED
-    )
+    support_status: Mapped[SupportStatus] = mapped_column(Enum(SupportStatus), default=SupportStatus.UNSUPPORTED)
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
 
     brief: Mapped["Brief"] = relationship(back_populates="claims")

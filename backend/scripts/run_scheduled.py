@@ -38,16 +38,11 @@ async def main(force: bool = False) -> None:
     db = get_sessionmaker()()
     now = datetime.now(UTC)
     try:
-        watchlists = list(
-            db.scalars(select(Watchlist).where(Watchlist.schedule_cron.is_not(None)))
-        )
+        watchlists = list(db.scalars(select(Watchlist).where(Watchlist.schedule_cron.is_not(None))))
         failures = 0
         for wl in watchlists:
             last_brief = db.scalar(
-                select(Brief)
-                .where(Brief.watchlist_id == wl.id)
-                .order_by(Brief.created_at.desc())
-                .limit(1)
+                select(Brief).where(Brief.watchlist_id == wl.id).order_by(Brief.created_at.desc()).limit(1)
             )
             last_run = last_brief.created_at if last_brief else None
             if not force and not _is_due(wl.schedule_cron, last_run, now):

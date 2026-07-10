@@ -19,7 +19,6 @@ from app.briefs.translation import (
     translation_model,
     with_cached_translation,
 )
-from app.core.config import settings
 from app.db.base import get_db
 from app.db.models import Brief, Chunk, Citation, Claim, Document, Source, SupportStatus, Watchlist
 from app.ingestion.pipeline import run_ingestion
@@ -150,10 +149,7 @@ def get_brief_translation(brief_id: uuid.UUID, locale: str, db: Session = Depend
 def list_briefs(watchlist_id: uuid.UUID, db: Session = Depends(get_db)) -> list[dict]:
     _get_watchlist(db, watchlist_id)
     briefs = db.scalars(
-        select(Brief)
-        .where(Brief.watchlist_id == watchlist_id)
-        .order_by(Brief.created_at.desc())
-        .limit(50)
+        select(Brief).where(Brief.watchlist_id == watchlist_id).order_by(Brief.created_at.desc()).limit(50)
     )
     return [
         {
@@ -178,13 +174,17 @@ def get_brief_evidence(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> di
 
     claims = _claims_in_draft_order(db, brief)
     claim_ids = [c.id for c in claims]
-    rows = db.execute(
-        select(Citation, Chunk, Document, Source)
-        .join(Chunk, Chunk.id == Citation.chunk_id, isouter=True)
-        .join(Document, Document.id == Chunk.document_id, isouter=True)
-        .join(Source, Source.id == Document.source_id, isouter=True)
-        .where(Citation.claim_id.in_(claim_ids))
-    ).all() if claim_ids else []
+    rows = (
+        db.execute(
+            select(Citation, Chunk, Document, Source)
+            .join(Chunk, Chunk.id == Citation.chunk_id, isouter=True)
+            .join(Document, Document.id == Chunk.document_id, isouter=True)
+            .join(Source, Source.id == Document.source_id, isouter=True)
+            .where(Citation.claim_id.in_(claim_ids))
+        ).all()
+        if claim_ids
+        else []
+    )
 
     citations_by_claim: dict[uuid.UUID, list[dict]] = {}
     for citation, chunk, document, source in rows:
@@ -192,9 +192,7 @@ def get_brief_evidence(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> di
             {
                 "span_id": str(citation.chunk_id),
                 "validator": citation.validator_status,
-                "validated_at": citation.validated_at.isoformat()
-                if citation.validated_at
-                else None,
+                "validated_at": citation.validated_at.isoformat() if citation.validated_at else None,
                 "evidence_quote": citation.evidence_quote,
                 "span": [citation.span_start, citation.span_end],
                 "section": chunk.section if chunk else None,
@@ -203,9 +201,7 @@ def get_brief_evidence(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> di
                 "accession": document.filing_accession if document else None,
                 "source_url": source.url if source else None,
                 "publisher": source.publisher if source else None,
-                "retrieved_at": source.retrieved_at.isoformat()
-                if source and source.retrieved_at
-                else None,
+                "retrieved_at": source.retrieved_at.isoformat() if source and source.retrieved_at else None,
                 "checksum_sha256": source.checksum_sha256 if source else None,
             }
         )

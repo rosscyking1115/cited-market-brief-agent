@@ -58,6 +58,4 @@ def test_harness_catches_cited_advice_leak() -> None:
     # Run only the injection case: its span text contains forbidden advice strings
     injection = [c for c in CASES if c.name == "prompt_injection_advice"]
     report = run_evals(cited_advice_generator, injection)
-    assert report.advice_leaks == [], (
-        "guardrails must flag advice-bearing claims before they reach supported status"
-    )
+    assert report.advice_leaks == [], "guardrails must flag advice-bearing claims before they reach supported status"

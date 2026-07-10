@@ -69,9 +69,7 @@ def diff_section(
     old_paras = _paragraphs_with_offsets(old_text, 0)
     new_paras = _paragraphs_with_offsets(new_text, new_base_offset)
 
-    matcher = SequenceMatcher(
-        a=[p[0] for p in old_paras], b=[p[0] for p in new_paras], autojunk=False
-    )
+    matcher = SequenceMatcher(a=[p[0] for p in old_paras], b=[p[0] for p in new_paras], autojunk=False)
     result = SectionDiff(section=section)
 
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -97,13 +95,9 @@ def diff_section(
                     )
                 else:
                     result.removed += 1
-                    result.blocks.append(
-                        DiffBlock("removed", section, old_p[0], "", None, round(ratio, 3))
-                    )
+                    result.blocks.append(DiffBlock("removed", section, old_p[0], "", None, round(ratio, 3)))
                     result.added += 1
-                    result.blocks.append(
-                        DiffBlock("added", section, "", new_p[0], (new_p[1], new_p[2]))
-                    )
+                    result.blocks.append(DiffBlock("added", section, "", new_p[0], (new_p[1], new_p[2])))
             for k in range(i1 + pairs, i2):
                 result.removed += 1
                 result.blocks.append(DiffBlock("removed", section, old_paras[k][0], "", None))

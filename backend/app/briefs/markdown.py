@@ -8,7 +8,7 @@ AI-generated marking (EU AI Act Art. 50 posture).
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.briefs.schemas import GeneratedBrief
@@ -40,7 +40,7 @@ def render_markdown(
     prompt_version: str,
     generated_at: datetime | None = None,
 ) -> str:
-    ts = (generated_at or datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M UTC")
+    ts = (generated_at or datetime.now(UTC)).strftime("%Y-%m-%d %H:%M UTC")
     supported = {v.claim_index for v in validations if v.support_status == "supported"}
 
     lines: list[str] = [
@@ -69,9 +69,7 @@ def render_markdown(
         v = _status_of(validations, i)
         if v is None or v.support_status != "supported":
             continue
-        sources = "; ".join(
-            span_labels.get(c.span_id, c.span_id) for c in v.citations if c.status == "pass"
-        )
+        sources = "; ".join(span_labels.get(c.span_id, c.span_id) for c in v.citations if c.status == "pass")
         text = claim.text.replace("|", "\\|")
         lines.append(f"| C-{i:03d} | {text} | {claim.claim_type} | {sources} | ✓ PASS |")
     lines.append("")
@@ -80,8 +78,7 @@ def render_markdown(
     flagged = [
         (i, c)
         for i, c in enumerate(brief.claims)
-        if (_status_of(validations, i) or ClaimValidation(i, "flagged", True)).support_status
-        != "supported"
+        if (_status_of(validations, i) or ClaimValidation(i, "flagged", True)).support_status != "supported"
     ]
     if flagged or brief.unsupported_claims:
         lines += ['<a id="needs-review"></a>', "## Needs review — not validated, do not cite", ""]
@@ -91,9 +88,7 @@ def render_markdown(
                 continue
             reason = (
                 (v.reason if v else "")
-                or "; ".join(
-                    f"{c.span_id[:8]}…: {c.reason}" for c in (v.citations if v else []) if c.reason
-                )
+                or "; ".join(f"{c.span_id[:8]}…: {c.reason}" for c in (v.citations if v else []) if c.reason)
                 or "no validated citation"
             )
             lines.append(f"- ⚑ **C-{i:03d}** {claim.text} — *{reason}*")
@@ -126,7 +121,7 @@ def build_citation_manifest(
         "ai_generated": True,  # EU AI Act Art. 50 machine-readable marking
         "brief_id": brief_id,
         "watchlist": watchlist_name,
-        "generated_at": (generated_at or datetime.now(timezone.utc)).isoformat(),
+        "generated_at": (generated_at or datetime.now(UTC)).isoformat(),
         "model": model,
         "prompt_version": prompt_version,
         "claims": [
