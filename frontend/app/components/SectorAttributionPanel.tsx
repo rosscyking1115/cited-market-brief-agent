@@ -7,6 +7,7 @@ import {
   type SectorAttributionRow,
   type SectorConfigPayload,
 } from "@/lib/api";
+import { parseMap, parseWeights } from "@/lib/sector-config";
 
 const MAX_ABS_DIFF = 4.0; // a 4pp over/underweight fills half the track
 
@@ -54,32 +55,6 @@ function Arrow({ up }: { up: boolean }) {
       />
     </svg>
   );
-}
-
-function parseWeights(text: string) {
-  const rows: { sector: string; weight_pct: number }[] = [];
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const parts = trimmed.split(/[,\t]|\s{2,}|\s(?=[\d.]+%?$)/).map((p) => p.trim()).filter(Boolean);
-    if (parts.length < 2) continue;
-    const weight = Number(parts[parts.length - 1].replace("%", ""));
-    const sector = parts.slice(0, -1).join(" ").trim();
-    if (sector && Number.isFinite(weight)) rows.push({ sector, weight_pct: weight });
-  }
-  return rows;
-}
-
-function parseMap(text: string) {
-  const map: Record<string, string> = {};
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const parts = trimmed.split(/[,\t]|\s{2,}/).map((p) => p.trim()).filter(Boolean);
-    if (parts.length < 2) continue;
-    map[parts[0]] = parts.slice(1).join(" ").trim();
-  }
-  return map;
 }
 
 function DivergingRow({ row }: { row: SectorAttributionRow }) {

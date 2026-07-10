@@ -1,7 +1,8 @@
 # Cited Market Brief Agent
 
+[![CI](https://github.com/rosscyking1115/cited-market-brief-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/rosscyking1115/cited-market-brief-agent/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-live-1f5c8f)](https://cited-market-brief-agent.vercel.app)
-![Tests](https://img.shields.io/badge/tests-116%20passing-2ea877)
 ![Frontend](https://img.shields.io/badge/Next.js%2016-React%2019-000000?logo=nextdotjs&logoColor=white)
 ![Backend](https://img.shields.io/badge/FastAPI-Python%203.13-009688?logo=fastapi&logoColor=white)
 ![Database](https://img.shields.io/badge/Postgres%2018-pgvector-4169E1?logo=postgresql&logoColor=white)
@@ -18,11 +19,11 @@ source span before it ships.
 before it ships — precision ≥ 0.95, recall ≥ 0.90, enforced by the CI eval gate.
 
 > [!NOTE]
-> **Honest framing.** This started as a daily market tool for a family member who invests
-> in Taiwan, and grew into a portfolio-grade full-stack project. It runs on free/EOD data
-> tiers (TWSE, FRED, NYT Most Popular, RSS) — great for a personal morning digest, not a
-> Bloomberg replacement. It is **not** a commercial product, and nothing it produces is
-> investment advice. See the disclaimer at the bottom.
+> **Scope.** A personal-scale morning market tool built for a family member who invests in
+> Taiwan. It runs on free / end-of-day data tiers (TWSE, FRED, NYT Most Popular, RSS) —
+> suited to a personal daily digest, not a real-time trading terminal. It is **not** a
+> commercial product, and nothing it produces is investment advice (see the disclaimer at
+> the bottom).
 
 ## Live demo
 

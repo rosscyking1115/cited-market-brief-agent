@@ -17,7 +17,6 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 import {
   API_URL,
   getChanges,
-  getFundAttributionPlan,
   getLatestEvidence,
   getLatestFundAttribution,
   getMorningRadar,
@@ -398,7 +397,6 @@ export default async function Page() {
     isLive && data.watchlist_id ? await getChanges(data.watchlist_id) : null;
   const changesData = liveChanges ?? DEMO_CHANGES;
   const radarData = (DEMO_MODE ? null : await getMorningRadar()) ?? DEMO_RADAR;
-  const attributionPlan = DEMO_MODE ? null : await getFundAttributionPlan();
   const latestAttribution = DEMO_MODE ? null : await getLatestFundAttribution();
   const attribution = latestAttribution?.result ?? (DEMO_MODE ? DEMO_ATTRIBUTION : null);
   const ts = data.created_at.slice(0, 16).replace("T", " ");
@@ -444,7 +442,7 @@ export default async function Page() {
 
         <ShowOnTaiwan>
           <div id="fund" className="scroll-mt-20">
-            <FundAttributionPanel plan={attributionPlan} latest={attribution} />
+            <FundAttributionPanel latest={attribution} />
           </div>
         </ShowOnTaiwan>
 
