@@ -57,8 +57,9 @@ jobs:
       # Dependency vulnerability scans (launch gate: no high/critical findings)
       - run: python -m pip install --upgrade pip
       - run: pip install -e "./backend[dev]" pip-audit cyclonedx-bom
-      # --skip-editable: the local package isn't published to PyPI, so it can't be audited.
-      - run: pip-audit --strict --skip-editable || (echo "::warning::pip-audit findings — triage before release" && exit 1)
+      # --skip-editable: the local package isn't on PyPI so it can't be audited (and --strict
+      # would treat that skip as a failure). pip-audit still exits non-zero on real findings.
+      - run: pip-audit --skip-editable || (echo "::warning::pip-audit findings — triage before release" && exit 1)
       - run: cd frontend && npm ci && npm audit --audit-level=high
       # SBOM per release (CycloneDX) — supply-chain control from the evaluation report
       - run: cyclonedx-py environment -o sbom-backend.cdx.json
