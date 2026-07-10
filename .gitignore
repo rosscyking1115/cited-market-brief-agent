@@ -32,3 +32,9 @@ Thumbs.db
 *.sqlite3
 minio-data/
 pg-data/
+
+# internal working docs — kept local, not for the public repo
+/docs/FUND_ATTRIBUTION_PLAN.md
+/docs/PRODUCTION_DEVELOPMENT_PLAN_LEGACY.md
+/docs/PRODUCTION_PLAN.md
+/docs/TAIWAN_MORNING_MARKET_RADAR_PLAN.md
