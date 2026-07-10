@@ -14,8 +14,8 @@ tests/test_rls_coverage.py fails CI if a new org-scoped table lacks a policy.
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.db.base import Base
 from app.db import models  # noqa: F401 — register all tables
+from app.db.base import Base
 
 POLICY_NAME = "tenant_isolation"
 

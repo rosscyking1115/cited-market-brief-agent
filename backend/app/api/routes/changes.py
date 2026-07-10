@@ -1,6 +1,7 @@
 """Change detection + review workflow endpoints (Phase 3)."""
 
 import uuid
+from datetime import UTC
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -11,8 +12,8 @@ from app.api.deps import dev_user
 from app.briefs.review import (
     ReviewError,
     all_sections_resolved,
-    approval_readiness,
     apply_section_action,
+    approval_readiness,
 )
 from app.changes.service import changes_since_last_brief
 from app.db.base import get_db
@@ -99,12 +100,12 @@ def approve_brief(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
             detail=readiness,
         )
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     user = dev_user(db)
     brief.status = "approved"
     brief.approved_by = user.id
-    brief.approved_at = datetime.now(timezone.utc)
+    brief.approved_at = datetime.now(UTC)
     db.commit()
     record_event(
         db,

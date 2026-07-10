@@ -30,9 +30,7 @@ MEDIA_TYPES = {
 def assemble_bundle(db: Session, brief: Brief, watchlist: Watchlist) -> ExportBundle:
     generated = GeneratedBrief.model_validate(brief.generated_draft)
     span_texts, span_labels, span_meta = _stored_spans(db, generated.claims, watchlist.org_id)
-    validations = apply_guardrails(
-        generated.claims, validate_claims(generated.claims, span_texts)
-    )
+    validations = apply_guardrails(generated.claims, validate_claims(generated.claims, span_texts))
     approved_by_email = None
     if brief.approved_by:
         user = db.get(User, brief.approved_by)
@@ -78,9 +76,7 @@ def _macro_rows(db: Session, watchlist: Watchlist) -> list[dict]:
     return rows
 
 
-def export_brief(
-    db: Session, brief: Brief, watchlist: Watchlist, fmt: str
-) -> tuple[str, bytes, str]:
+def export_brief(db: Session, brief: Brief, watchlist: Watchlist, fmt: str) -> tuple[str, bytes, str]:
     """Returns (filename, content bytes, media type) and records the export."""
     if fmt not in MEDIA_TYPES:
         raise ValueError(f"fmt must be one of {sorted(MEDIA_TYPES)}")

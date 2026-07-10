@@ -2,6 +2,7 @@ import base64
 import binascii
 import csv
 import io
+import logging
 import re
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -32,6 +33,7 @@ from app.fund_attribution.schemas import (
 )
 from app.fund_attribution.store import load_config, load_sector_config, save_result
 
+logger = logging.getLogger(__name__)
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
 
 DISCLAIMER = "本頁提供績效歸因與教育資訊，不構成個人化投資建議或買賣建議。"
@@ -113,9 +115,7 @@ def automation_policy() -> list[AutomationPolicyItem]:
         AutomationPolicyItem(
             label="JPM ETF holdings file",
             status="manual_first",
-            note=(
-                "先支援使用者上傳官網下載的持股檔；自動下載前需確認 JPM 頁面條款與機器存取方式。"
-            ),
+            note=("先支援使用者上傳官網下載的持股檔；自動下載前需確認 JPM 頁面條款與機器存取方式。"),
         ),
         AutomationPolicyItem(
             label="TWSE after-close prices",
@@ -513,9 +513,7 @@ def refresh_latest_attribution(as_of: date | None = None) -> FundAttributionOut 
     iso = day.isoformat()
     notes: list[str] = list(config.source_notes)
 
-    fill = fill_holding_returns_from_twse(
-        HoldingReturnFillRequest(as_of=iso, holdings=config.holdings)
-    )
+    fill = fill_holding_returns_from_twse(HoldingReturnFillRequest(as_of=iso, holdings=config.holdings))
     holdings = fill.holdings
     notes.extend(fill.source_notes)
 
@@ -530,9 +528,7 @@ def refresh_latest_attribution(as_of: date | None = None) -> FundAttributionOut 
         notes.extend(fund.source_notes)
 
     explained = sum(
-        holding.weight_pct * holding.return_pct / 100
-        for holding in holdings
-        if holding.return_pct is not None
+        holding.weight_pct * holding.return_pct / 100 for holding in holdings if holding.return_pct is not None
     )
     if fund_return is None:
         fund_return = round(explained, 4)
@@ -597,6 +593,7 @@ def _cached_sector_returns(day: date) -> dict[str, float]:
         return fetched
     return _SECTOR_RETURNS_CACHE
 
+
 _SECTOR_SUFFIXES = ("類股價指數", "類報酬指數", "類指數", "類股指數", "類股", "類", "業")
 
 
@@ -619,9 +616,7 @@ def _holding_sector(holding: HoldingInput, sector_map: dict[str, str]) -> str | 
     return canonical_sector(mapped) if mapped and mapped.strip() else None
 
 
-def aggregate_etf_sectors(
-    holdings: list[HoldingInput], sector_map: dict[str, str]
-) -> tuple[dict[str, float], float]:
+def aggregate_etf_sectors(holdings: list[HoldingInput], sector_map: dict[str, str]) -> tuple[dict[str, float], float]:
     weights: dict[str, float] = {}
     unmapped = 0.0
     for holding in holdings:
@@ -866,11 +861,7 @@ def _workbook_metadata(sheet_title: str, raw_rows: list[list[str]]) -> dict[str,
             match = re.search(r"\((\d{4}-\d{2}-\d{2})\)", first)
             if match:
                 metadata["as_of"] = match.group(1)
-        if (
-            not metadata.get("fund_name")
-            and "基金" in first
-            and not first.startswith(("(", "基金資產"))
-        ):
+        if not metadata.get("fund_name") and "基金" in first and not first.startswith(("(", "基金資產")):
             metadata["fund_name"] = first
 
     if not metadata.get("as_of"):

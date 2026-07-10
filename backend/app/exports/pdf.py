@@ -10,8 +10,7 @@ def html_to_pdf(html: str) -> bytes:
         from playwright.sync_api import sync_playwright  # noqa: PLC0415
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
-            "PDF export requires Playwright: pip install -e '.[exports]' "
-            "&& playwright install chromium"
+            "PDF export requires Playwright: pip install -e '.[exports]' && playwright install chromium"
         ) from exc
 
     with sync_playwright() as p:

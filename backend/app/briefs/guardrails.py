@@ -51,9 +51,7 @@ def scan_text(text: str) -> list[str]:
     return [name for name, pattern in ADVICE_PATTERNS.items() if pattern.search(text)]
 
 
-def apply_guardrails(
-    claims: list[GeneratedClaim], validations: list[ClaimValidation]
-) -> list[ClaimValidation]:
+def apply_guardrails(claims: list[GeneratedClaim], validations: list[ClaimValidation]) -> list[ClaimValidation]:
     """Downgrade any claim whose text trips the advice boundary. Citation status is
     irrelevant: a perfectly-cited recommendation is still a policy violation."""
     out: list[ClaimValidation] = []

@@ -5,16 +5,11 @@ PARA_EQUAL = (
     "Our business depends on continued demand for accelerated computing platforms "
     "across datacenter and client markets worldwide."
 )
-PARA_OLD_MOD = (
-    "Demand may fluctuate based on datacenter capital expenditure cycles in major markets."
-)
+PARA_OLD_MOD = "Demand may fluctuate based on datacenter capital expenditure cycles in major markets."
 PARA_NEW_MOD = (
-    "Demand may fluctuate based on datacenter capital expenditure cycles and hyperscaler "
-    "build plans in major markets."
+    "Demand may fluctuate based on datacenter capital expenditure cycles and hyperscaler build plans in major markets."
 )
-PARA_REMOVED = (
-    "We rely on a limited number of foundry partners for wafer supply and capacity allocation."
-)
+PARA_REMOVED = "We rely on a limited number of foundry partners for wafer supply and capacity allocation."
 PARA_ADDED = (
     "We are subject to new export control licensing requirements for advanced accelerator "
     "products, which could materially reduce revenue from affected regions."
@@ -72,9 +67,7 @@ def test_diff_filings_end_to_end_with_chunk_mapping() -> None:
     assert item_1a is not None and item_1a.changed
 
     # Changed blocks must map to the new document's stored chunk spans
-    chunk_spans = [
-        (f"chunk-{i}", c.span_start, c.span_end) for i, c in enumerate(new_parsed.chunks)
-    ]
+    chunk_spans = [(f"chunk-{i}", c.span_start, c.span_end) for i, c in enumerate(new_parsed.chunks)]
     ids = blocks_to_chunk_ids(item_1a.blocks, chunk_spans)
     assert ids, "expected changed blocks to overlap at least one chunk"
 

@@ -1,6 +1,6 @@
 import io
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -18,10 +18,22 @@ SPANS = {
 }
 LABELS = {"span-1": "ACME 10-Q · Item 2", "span-2": "ACME 10-Q · Item 1A"}
 META = {
-    "span-1": {"doc_type": "10-Q", "accession": "0000000000-26-000001", "section": "Item 2",
-               "span": [100, 200], "source_url": "https://example.sec.gov/a", "checksum_sha256": "abc"},
-    "span-2": {"doc_type": "10-Q", "accession": "0000000000-26-000001", "section": "Item 1A",
-               "span": [300, 400], "source_url": "https://example.sec.gov/a", "checksum_sha256": "abc"},
+    "span-1": {
+        "doc_type": "10-Q",
+        "accession": "0000000000-26-000001",
+        "section": "Item 2",
+        "span": [100, 200],
+        "source_url": "https://example.sec.gov/a",
+        "checksum_sha256": "abc",
+    },
+    "span-2": {
+        "doc_type": "10-Q",
+        "accession": "0000000000-26-000001",
+        "section": "Item 1A",
+        "span": [300, 400],
+        "source_url": "https://example.sec.gov/a",
+        "checksum_sha256": "abc",
+    },
 }
 
 
@@ -52,23 +64,25 @@ def _generated() -> GeneratedBrief:
 def _bundle(status: str = "draft", user_edits: dict | None = None):
     generated = _generated()
     validations = apply_guardrails(generated.claims, validate_claims(generated.claims, SPANS))
-    return build_bundle(
-        brief_id="b-1",
-        watchlist="demo",
-        generated_at=datetime(2026, 6, 10, 6, 21, tzinfo=timezone.utc),
-        model="deterministic/extractive-v1",
-        prompt_version="p1.0",
-        status=status,
-        approved_by="dev@cited-market-brief-agent.local" if status == "approved" else None,
-        approved_at=datetime(2026, 6, 10, 7, 0, tzinfo=timezone.utc)
-        if status == "approved"
-        else None,
-        generated=generated,
-        validations=validations,
-        span_labels=LABELS,
-        span_meta=META,
-        user_edits=user_edits or {},
-    ), generated, validations
+    return (
+        build_bundle(
+            brief_id="b-1",
+            watchlist="demo",
+            generated_at=datetime(2026, 6, 10, 6, 21, tzinfo=UTC),
+            model="deterministic/extractive-v1",
+            prompt_version="p1.0",
+            status=status,
+            approved_by="dev@cited-market-brief-agent.local" if status == "approved" else None,
+            approved_at=datetime(2026, 6, 10, 7, 0, tzinfo=UTC) if status == "approved" else None,
+            generated=generated,
+            validations=validations,
+            span_labels=LABELS,
+            span_meta=META,
+            user_edits=user_edits or {},
+        ),
+        generated,
+        validations,
+    )
 
 
 def test_bundle_applies_review_state() -> None:
@@ -124,24 +138,31 @@ def test_xlsx_roundtrip_and_manifest_consistency() -> None:
 
     xlsx_bytes = build_xlsx(
         bundle,
-        time_series=[{"series_id": "CPIAUCSL", "observations": {"2026-05": "327.1"},
-                      "units": "Index", "frequency": "Monthly", "vintage": "2026-06-10"}],
+        time_series=[
+            {
+                "series_id": "CPIAUCSL",
+                "observations": {"2026-05": "327.1"},
+                "units": "Index",
+                "frequency": "Monthly",
+                "vintage": "2026-06-10",
+            }
+        ],
     )
     wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
     assert {"Brief", "Evidence Ledger", "Sources", "Macro Data", "Disclosures"} <= set(wb.sheetnames)
 
     ledger = wb["Evidence Ledger"]
-    xlsx_rows = {
-        (row[0].value, row[4].value)
-        for row in ledger.iter_rows(min_row=2)
-        if row[0].value
-    }
+    xlsx_rows = {(row[0].value, row[4].value) for row in ledger.iter_rows(min_row=2) if row[0].value}
 
     manifest = json.loads(
         build_citation_manifest(
-            brief_id="b-1", watchlist_name="demo", brief=generated,
-            validations=validations, span_meta=META,
-            model="deterministic/extractive-v1", prompt_version="p1.0",
+            brief_id="b-1",
+            watchlist_name="demo",
+            brief=generated,
+            validations=validations,
+            span_meta=META,
+            model="deterministic/extractive-v1",
+            prompt_version="p1.0",
         )
     )
     manifest_rows = {(c["id"], c["support_status"]) for c in manifest["claims"]}

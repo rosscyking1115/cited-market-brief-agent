@@ -36,9 +36,7 @@ async def main() -> None:
 
         wl = db.scalar(select(Watchlist).where(Watchlist.name == "demo-us-semis"))
         if wl is None:
-            wl = Watchlist(
-                org_id=org.id, name="demo-us-semis", tickers=TICKERS, macro_series=MACRO
-            )
+            wl = Watchlist(org_id=org.id, name="demo-us-semis", tickers=TICKERS, macro_series=MACRO)
             db.add(wl)
             db.commit()
 

@@ -42,9 +42,7 @@ def test_quote_whitespace_and_case_normalized() -> None:
 
 
 def test_fabricated_quote_fails() -> None:
-    [result] = validate_claims(
-        [_claim(citations=["span-1"], evidence_quote="Revenue decreased 50%")], SPANS
-    )
+    [result] = validate_claims([_claim(citations=["span-1"], evidence_quote="Revenue decreased 50%")], SPANS)
     assert result.support_status == "flagged"
     assert result.citations[0].status == "fail"
 

@@ -6,7 +6,7 @@ edit every word. Art. 50 marking goes into core document properties.
 """
 
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.exports.bundle import ExportBundle, strip_claim_refs
 
@@ -29,8 +29,7 @@ def build_pptx(bundle: ExportBundle) -> bytes:
     prs.slide_height = Inches(7.5)
     blank = prs.slide_layouts[6]
 
-    def add_text(slide, left, top, width, height, text, *, size=14, bold=False,
-                 color=INK, mono=False):
+    def add_text(slide, left, top, width, height, text, *, size=14, bold=False, color=INK, mono=False):
         box = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
         frame = box.text_frame
         frame.word_wrap = True
@@ -62,14 +61,26 @@ def build_pptx(bundle: ExportBundle) -> bytes:
     )
     add_text(slide, 0.8, 1.7, 11.5, 1.0, "What changed since yesterday?", size=34, bold=True)
     add_text(
-        slide, 0.8, 2.8, 11.5, 0.5,
+        slide,
+        0.8,
+        2.8,
+        11.5,
+        0.5,
         f"Watchlist: {bundle.watchlist} · generated "
         f"{bundle.generated_at.strftime('%Y-%m-%d %H:%M UTC')} · model {bundle.model} · "
         f"{len(bundle.supported_claims)} validated claims",
-        size=12, color=MUTED,
+        size=12,
+        color=MUTED,
     )
     add_text(
-        slide, 0.8, 3.5, 11.5, 0.5, bundle.watermark, size=13, bold=True,
+        slide,
+        0.8,
+        3.5,
+        11.5,
+        0.5,
+        bundle.watermark,
+        size=13,
+        bold=True,
         color=GREEN if bundle.status == "approved" else AMBER,
     )
     if bundle.approval_line:
@@ -90,8 +101,12 @@ def build_pptx(bundle: ExportBundle) -> bytes:
         slide = prs.slides.add_slide(blank)
         add_text(slide, 0.6, 0.4, 12, 0.5, "Evidence ledger", size=20, bold=True, color=NAVY)
         table_shape = slide.shapes.add_table(
-            rows=len(chunk) + 1, cols=4,
-            left=Inches(0.6), top=Inches(1.1), width=Inches(12.1), height=Inches(5.4),
+            rows=len(chunk) + 1,
+            cols=4,
+            left=Inches(0.6),
+            top=Inches(1.1),
+            width=Inches(12.1),
+            height=Inches(5.4),
         )
         table = table_shape.table
         for col, head in enumerate(("ID", "Claim", "Sources", "Validator")):
@@ -104,9 +119,7 @@ def build_pptx(bundle: ExportBundle) -> bytes:
         table.columns[2].width = Inches(3.8)
         table.columns[3].width = Inches(1.2)
         for r, claim in enumerate(chunk, start=1):
-            for c, value in enumerate(
-                (claim.cid, claim.text, "; ".join(claim.sources), "PASS")
-            ):
+            for c, value in enumerate((claim.cid, claim.text, "; ".join(claim.sources), "PASS")):
                 cell = table.cell(r, c)
                 cell.text = value
                 for para in cell.text_frame.paragraphs:
@@ -117,8 +130,7 @@ def build_pptx(bundle: ExportBundle) -> bytes:
     # --- Needs review ---
     if bundle.review_claims:
         slide = prs.slides.add_slide(blank)
-        add_text(slide, 0.6, 0.4, 12, 0.5, "Needs review — not validated, do not cite",
-                 size=20, bold=True, color=AMBER)
+        add_text(slide, 0.6, 0.4, 12, 0.5, "Needs review — not validated, do not cite", size=20, bold=True, color=AMBER)
         lines = "\n".join(f"⚑ {c.cid}  {c.text}  — {c.reason}" for c in bundle.review_claims)
         add_text(slide, 0.6, 1.2, 12.1, 5.4, lines, size=12)
 
@@ -132,7 +144,7 @@ def build_pptx(bundle: ExportBundle) -> bytes:
         f"ai_generated=true; brief_id={bundle.brief_id}; model={bundle.model}; "
         f"prompt={bundle.prompt_version}; format=cited-market-brief-agent.pptx/v1"
     )
-    prs.core_properties.created = datetime.now(timezone.utc).replace(tzinfo=None)
+    prs.core_properties.created = datetime.now(UTC).replace(tzinfo=None)
 
     buf = io.BytesIO()
     prs.save(buf)

@@ -196,9 +196,7 @@ def twse_sector_returns_from_payload(payload: dict[str, object]) -> dict[str, fl
     return out
 
 
-def _collect_sector_returns(
-    out: dict[str, float], *, fields: object, rows: object
-) -> None:
+def _collect_sector_returns(out: dict[str, float], *, fields: object, rows: object) -> None:
     if not isinstance(fields, list) or not isinstance(rows, list):
         return
     field_map = {_normalize_header(str(field)): index for index, field in enumerate(fields)}

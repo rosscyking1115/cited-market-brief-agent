@@ -13,9 +13,7 @@ _ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=str(_ROOT_ENV), env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=str(_ROOT_ENV), env_file_encoding="utf-8", extra="ignore")
 
     environment: str = "development"
     log_level: str = "INFO"
@@ -31,7 +29,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 120
 
     # Database
-    database_url: str = "postgresql+psycopg://cited_market_brief_agent:cited_market_brief_agent@localhost:5432/cited_market_brief_agent"
+    database_url: str = (
+        "postgresql+psycopg://cited_market_brief_agent:cited_market_brief_agent@localhost:5432/cited_market_brief_agent"
+    )
 
     # Cache / queue
     valkey_url: str = "redis://localhost:6379/0"

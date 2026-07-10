@@ -35,12 +35,7 @@ def _accession_cik(accession: str | None) -> str | None:
 
 
 def _previous_brief(db: Session, watchlist: Watchlist) -> Brief | None:
-    return db.scalar(
-        select(Brief)
-        .where(Brief.watchlist_id == watchlist.id)
-        .order_by(Brief.created_at.desc())
-        .limit(1)
-    )
+    return db.scalar(select(Brief).where(Brief.watchlist_id == watchlist.id).order_by(Brief.created_at.desc()).limit(1))
 
 
 def _filing_diffs(db: Session, watchlist: Watchlist) -> tuple[list[dict], list[str]]:
@@ -74,12 +69,8 @@ def _filing_diffs(db: Session, watchlist: Watchlist) -> tuple[list[dict], list[s
         try:
             new_src = db.get(Source, new_doc.source_id)
             old_src = db.get(Source, old_doc.source_id)
-            new_parsed = parse_filing_html(
-                store.get(new_src.raw_object_key).decode("utf-8", errors="replace")
-            )
-            old_parsed = parse_filing_html(
-                store.get(old_src.raw_object_key).decode("utf-8", errors="replace")
-            )
+            new_parsed = parse_filing_html(store.get(new_src.raw_object_key).decode("utf-8", errors="replace"))
+            old_parsed = parse_filing_html(store.get(old_src.raw_object_key).decode("utf-8", errors="replace"))
         except Exception:
             logger.exception("diff re-parse failed for CIK %s %s", cik, form)
             continue
@@ -157,8 +148,10 @@ def changes_since_last_brief(db: Session, watchlist: Watchlist) -> dict:
     previous = _previous_brief(db, watchlist)
     since = previous.created_at if previous else None
 
-    new_docs_q = select(Document, Source).join(Source, Source.id == Document.source_id).where(
-        Document.org_id == watchlist.org_id
+    new_docs_q = (
+        select(Document, Source)
+        .join(Source, Source.id == Document.source_id)
+        .where(Document.org_id == watchlist.org_id)
     )
     if since is not None:
         new_docs_q = new_docs_q.where(Document.created_at > since)
@@ -169,9 +162,7 @@ def changes_since_last_brief(db: Session, watchlist: Watchlist) -> dict:
             "accession": doc.filing_accession,
             "publisher": src.publisher,
             "url": src.url,
-            "publication_date": doc.publication_date.isoformat()
-            if doc.publication_date
-            else None,
+            "publication_date": doc.publication_date.isoformat() if doc.publication_date else None,
         }
         for doc, src in db.execute(new_docs_q.order_by(Document.created_at.desc()).limit(25))
     ]

@@ -89,9 +89,8 @@ def build_bundle(
 ) -> ExportBundle:
     if status == "approved" and approved_by:
         watermark = "APPROVED — INTERNAL USE ONLY"
-        approval_line = (
-            f"Approved by {approved_by}"
-            + (f" on {approved_at.strftime('%Y-%m-%d %H:%M UTC')}" if approved_at else "")
+        approval_line = f"Approved by {approved_by}" + (
+            f" on {approved_at.strftime('%Y-%m-%d %H:%M UTC')}" if approved_at else ""
         )
     else:
         watermark = "INTERNAL RESEARCH DRAFT — NOT APPROVED FOR EXTERNAL USE"
@@ -104,11 +103,7 @@ def build_bundle(
         action = edit.get("action") if edit else None
         if action == "reject":
             continue
-        content = (
-            edit["content"]
-            if action == "edit" and edit.get("content")
-            else section.content_markdown
-        )
+        content = edit["content"] if action == "edit" and edit.get("content") else section.content_markdown
         sections.append(ExportSection(title=section.title, content=content, action=action))
 
     by_index = {v.claim_index: v for v in validations}
@@ -118,9 +113,11 @@ def build_bundle(
         v = by_index.get(i)
         status_i = v.support_status if v else "unsupported"
         passing = [c for c in (v.citations if v else []) if c.status == "pass"]
-        reason = (v.reason if v else "") or "; ".join(
-            c.reason for c in (v.citations if v else []) if c.reason
-        ) or ("" if status_i == "supported" else "no validated citation")
+        reason = (
+            (v.reason if v else "")
+            or "; ".join(c.reason for c in (v.citations if v else []) if c.reason)
+            or ("" if status_i == "supported" else "no validated citation")
+        )
         export_claim = ExportClaim(
             cid=f"C-{i:03d}",
             index=i,

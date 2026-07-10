@@ -10,9 +10,7 @@ LABELS = {"span-1": "ACME 10-Q 0000000000-26-000001 · Item 2"}
 
 def _brief() -> GeneratedBrief:
     return GeneratedBrief(
-        brief_sections=[
-            BriefSection(title="Filing changes", content_markdown="Revenue grew [#0]. Also [#1].")
-        ],
+        brief_sections=[BriefSection(title="Filing changes", content_markdown="Revenue grew [#0]. Also [#1].")],
         claims=[
             GeneratedClaim(
                 text="Revenue increased 12% YoY",

@@ -48,9 +48,7 @@ def main() -> None:
 
         for template in TEMPLATES:
             existing = db.scalar(
-                select(Watchlist).where(
-                    Watchlist.org_id == org.id, Watchlist.name == template["name"]
-                )
+                select(Watchlist).where(Watchlist.org_id == org.id, Watchlist.name == template["name"])
             )
             if existing:
                 print(f"exists  {template['name']}")

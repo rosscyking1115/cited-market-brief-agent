@@ -90,9 +90,7 @@ MARKET_PHRASES = {
 }
 
 
-def _status_for(
-    minutes: int, windows: list[tuple[int, int]], *, weekend: bool
-) -> MarketStatus:
+def _status_for(minutes: int, windows: list[tuple[int, int]], *, weekend: bool) -> MarketStatus:
     if weekend:
         return "weekend"
     if any(start <= minutes < end for start, end in windows):
@@ -166,13 +164,7 @@ def _market_clock(now: datetime) -> list[MarketClockItem]:
             market="美國",
             label="道瓊 / 標普500 / 那斯達克",
             window="夏令 21:30-04:00",
-            status=(
-                "weekend"
-                if weekend
-                else "open"
-                if minutes < 4 * 60 or minutes >= 21 * 60 + 30
-                else "closed"
-            ),
+            status=("weekend" if weekend else "open" if minutes < 4 * 60 or minutes >= 21 * 60 + 30 else "closed"),
             note="台灣早上主要看昨晚收盤與期貨。",
         ),
     ]
@@ -307,9 +299,7 @@ def _has_phrase(text: str, phrases: set[str]) -> bool:
 
 def _market_category(title: str) -> str:
     tokens = _tokens(title)
-    if tokens & {"oil", "gold", "brent", "wti", "copper", "crude"} or _has_phrase(
-        title, {"strait of hormuz"}
-    ):
+    if tokens & {"oil", "gold", "brent", "wti", "copper", "crude"} or _has_phrase(title, {"strait of hormuz"}):
         return "商品"
     if tokens & {"semiconductor", "semiconductors", "chip", "chips", "nvidia", "tsmc"}:
         return "半導體"
@@ -632,9 +622,7 @@ def hydrate_overnight_risk_with_alpha(
                     "tone": _tone_for_change(value.change),
                     "source": value.source,
                     "source_status": value.source_status,
-                    "rights_note": (
-                        f"{value.source} pilot feed; review plan/terms before public display."
-                    ),
+                    "rights_note": (f"{value.source} pilot feed; review plan/terms before public display."),
                 }
             )
         )
@@ -760,12 +748,10 @@ def translate_news_items_zh(items: list[PopularNewsItem]) -> list[PopularNewsIte
     single LLM call. Best-effort: items unchanged without a key or on any failure."""
     if not items or not settings.anthropic_api_key.strip():
         return items
-    payload = [
-        {"i": idx, "title": item.title, "summary": (item.summary or "")[:400]}
-        for idx, item in enumerate(items)
-    ]
+    payload = [{"i": idx, "title": item.title, "summary": (item.summary or "")[:400]} for idx, item in enumerate(items)]
     try:
         import json  # noqa: PLC0415
+
         import litellm  # noqa: PLC0415
 
         response = litellm.completion(
@@ -800,9 +786,7 @@ def translate_news_items_zh(items: list[PopularNewsItem]) -> list[PopularNewsIte
             continue
         title_zh = str(entry.get("t") or "").strip() or item.title
         summary_zh = str(entry.get("s") or "").strip() or None
-        translated.append(
-            item.model_copy(update={"title_zh_hant": title_zh, "summary_zh": summary_zh})
-        )
+        translated.append(item.model_copy(update={"title_zh_hant": title_zh, "summary_zh": summary_zh}))
     return translated
 
 
