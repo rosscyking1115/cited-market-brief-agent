@@ -11,7 +11,7 @@ All seven phases are built and tested locally. "Local" means: Postgres/Valkey/Mi
 Prereqs: Docker Desktop, Python 3.13, Node 22.
 
 ```powershell
-cd "C:\Files\App\Cited Market Brief Agent"
+cd "C:\dev\portfolio\cited-market-brief-agent"
 copy .env.example .env        # then edit:
 #   SEC_USER_AGENT  = "Cited Market Brief Agent pilot your-email@example.com"   (REQUIRED)
 #   FRED_API_KEY    = free key from fred.stlouisfed.org/docs/api/api_key.html (optional)
