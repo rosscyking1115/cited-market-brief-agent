@@ -13,6 +13,13 @@ news are surfaced in plain language (with Traditional-Chinese key points for the
 edition), and every claim in a generated research brief is validated against a stored
 source span before it ships.
 
+> Bridges my fintech cluster
+> ([responsible-neobank-growth](https://github.com/rosscyking1115/responsible-neobank-growth))
+> and AI-safety cluster
+> ([agent-release-gates](https://github.com/rosscyking1115/agent-release-gates)) —
+> evidence-grounded LLM output, gated in CI. Full project map →
+> [profile](https://github.com/rosscyking1115).
+
 ![Cited Market Brief Agent — overview](docs/assets/overview.svg)
 
 **Citation integrity:** every material claim is validated against a stored source span
