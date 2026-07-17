@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cited-market-brief-agent-api"
-version = "0.1.0"
+version = "1.0.0"
 description = "Cited Market Brief Agent API - audit-ready public-data brief engine"
 authors = [{ name = "Cheng-Yuan King", email = "rosscyking1115@gmail.com" }]
 license = "MIT"
