@@ -106,7 +106,7 @@ function emptyNewsText(lang: RadarLang) {
 function periodNoteText(lang: RadarLang, label: string) {
   if (lang === "tw") return `本期單篇熱門文章較少；以上為 AI 整理的${label}重點，個別新聞可參考今日列表。`;
   if (lang === "ko") return `이 기간의 개별 인기 기사는 적습니다. 위 ${label} 요약을 참고하고, 개별 기사는 오늘 탭을 확인하세요.`;
-  return `Few standout articles for this window — see the ${label} summary above; individual reads are on the Today tab.`;
+  return `Not many standalone articles for this window. The ${label} summary above covers it, and individual reads are on the Today tab.`;
 }
 
 function StarIcon({ className }: { className?: string }) {

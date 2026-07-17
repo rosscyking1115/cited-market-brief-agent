@@ -455,8 +455,8 @@ export default async function Page() {
             </h2>
           </div>
           <p className="reader-meta max-w-xl break-words text-neutral-90">
-            A separate research module: SEC filing changes and macro deltas, validated claim-by-claim against
-            stored source spans. Shown {isLive ? "live from your watchlist." : "with sample data — start the backend to go live."}
+            A separate research module: SEC filing changes and macro deltas, checked claim-by-claim against
+            stored source spans. Shown {isLive ? "live from your watchlist." : "with sample data. Start the backend to go live."}
           </p>
         </div>
 
@@ -558,9 +558,9 @@ export default async function Page() {
         </HideOnTaiwan>
 
         <footer className="reader-meta px-1 pb-6 text-[11px] leading-relaxed text-neutral-90">
-          Internal research draft. Factual, cited, non-personalized. Not investment advice, not a
-          recommendation, and not an offer to buy or sell any security. AI-assisted content —
-          human review required before external use. Sources: SEC EDGAR, FRED (this product uses
+          Internal research draft. Factual, cited, non-personalised. Not investment advice, not a
+          recommendation, and not an offer to buy or sell any security. AI-assisted content; human
+          review is required before external use. Sources: SEC EDGAR, FRED (this product uses
           the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St.
           Louis).
         </footer>
