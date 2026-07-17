@@ -83,7 +83,7 @@ export const RADAR_SUMMARY: Record<NarrativeLang, [string, string, string]> = {
   en: [
     "The US and European closes set the overnight tone first.",
     "Watch Japan and Korea from 08:00, then Taiwan at 09:00 (Taipei time).",
-    "Oil, gold, the dollar and rates gauge risk sentiment — not a buy/sell signal.",
+    "Oil, gold, the dollar and rates gauge risk sentiment. They are not a buy/sell signal.",
   ],
 };
 
@@ -96,7 +96,7 @@ export const RADAR_DISCLAIMER: Record<NarrativeLang, string> = {
 export const CLOCK_NOTES: Record<string, Record<NarrativeLang, string>> = {
   日本: {
     ko: "아시아 첫 타자 — 기술주와 환율을 먼저 봅니다.",
-    en: "Asia's first session — watch tech and FX first.",
+    en: "Asia's first session. Watch tech and FX first.",
   },
   韓國: {
     ko: "메모리·배터리·수출주 참고.",
@@ -112,7 +112,7 @@ export const CLOCK_NOTES: Record<string, Record<NarrativeLang, string>> = {
   },
   歐洲: {
     ko: "오후에 유럽 증시와 유로를 이어서 관찰.",
-    en: "The afternoon handoff — European equities and the euro.",
+    en: "The afternoon handoff: European equities and the euro.",
   },
   美國: {
     ko: "대만 아침에는 전날 마감과 선물을 주로 봅니다.",
@@ -158,14 +158,14 @@ export const RISK_WHY: Record<string, Record<NarrativeLang, string>> = {
 
 export const NEWS_WHY: Record<NarrativeLang, { latest: string; coverage: string; readership: string }> = {
   ko: {
-    latest: "해당 시간대에 게시된 BBC RSS 최신 뉴스이며, 조회수 순위가 아닙니다.",
-    coverage: "해당 시간대 GDELT에서 찾은 시장 관련 뉴스로, 트렌드/보도량 신호이며 조회수가 아닙니다.",
-    readership: "NYT Most Popular API 기준 최근 1일 최다 조회 기사 — 실제 열독량 데이터입니다.",
+    latest: "해당 시간대에 게시된 금융 RSS 최신 뉴스이며, 조회수 순위가 아닙니다.",
+    coverage: "해당 시간대 GDELT에서 찾은 시장 관련 뉴스로, 보도량 신호이며 조회수가 아닙니다.",
+    readership: "NYT Most Popular API 기준 최다 조회 기사이며, 실제 열독량 데이터입니다.",
   },
   en: {
-    latest: "Latest BBC RSS headlines published in this window — not a readership ranking.",
-    coverage: "Market-relevant news GDELT found in this window — a trend/coverage signal, not readership.",
-    readership: "Genuinely most-viewed over the last day via the NYT Most Popular API — real readership data.",
+    latest: "The latest headlines from the finance RSS feeds in this window. Not a readership ranking.",
+    coverage: "Market-relevant news GDELT found in this window. A coverage signal, not readership.",
+    readership: "Most-viewed on the NYT Most Popular API. Real readership data, not coverage.",
   },
 };
 
@@ -179,11 +179,11 @@ export const RADAR_GLOSSARY: Record<NarrativeLang, GlossaryItem[]> = {
     { term: "ADR", english: "American Depositary Receipt", meaning: "해외 기업의 미국 상장 증서 — TSMC 등의 오버나이트 참고로 활용." },
   ],
   en: [
-    { term: "SOX", english: "PHLX Semiconductor Index", meaning: "A leading US semiconductor index, watched as a proxy for AI/chip sentiment." },
+    { term: "SOX", english: "PHLX Semiconductor Index", meaning: "The main US semiconductor index, watched as a proxy for AI and chip sentiment." },
     { term: "VIX", english: "Volatility Index", meaning: "A fear/hedging gauge; higher readings usually mean larger expected swings." },
     { term: "Treasury yield", english: "US 10-year yield", meaning: "The bond-market interest rate. Rising yields tend to pressure growth and tech stocks." },
     { term: "Futures", english: "Index futures", meaning: "A pre-open reference price; not the same as the official cash open." },
-    { term: "ADR", english: "American Depositary Receipt", meaning: "A foreign company's US-traded receipt — an overnight reference for names like TSMC." },
+    { term: "ADR", english: "American Depositary Receipt", meaning: "A foreign company's US-traded receipt, used as an overnight reference for names like TSMC." },
   ],
 };
 
