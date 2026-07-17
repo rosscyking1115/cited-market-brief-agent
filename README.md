@@ -206,7 +206,7 @@ backend/app/
 frontend/
   app/components/    radar dashboard, hero, ETF tool, evidence ledger, brief canvas
   lib/               api client, region profiles, radar i18n
-docs/                product & security plans, design system
+docs/                design system, security posture, architecture and deploy guides
 ```
 
 > [!WARNING]
