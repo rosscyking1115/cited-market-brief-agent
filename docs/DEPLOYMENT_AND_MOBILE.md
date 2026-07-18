@@ -1,6 +1,6 @@
 # Deployment & Mobile Roadmap
 
-Companion to `docs/PRODUCTION_PLAN.md` §4 (stack) and `docs/SECURITY.md` (gates). Status: everything currently runs locally; this is the path out.
+Companion to `docs/SECURITY.md` (security gates). Status: everything currently runs locally; this is the path out.
 
 ## 0. Where we are
 
@@ -67,7 +67,7 @@ Per plan §4, Terraform/OpenTofu in `infra/`:
 - GitHub Actions deploy job after the existing test/eval/security gates; SHA-pin actions, cosign-sign images (the two remaining supply-chain gates)
 - Blocking before external users: the ⏳ rows in `docs/SECURITY.md` — pen test, privacy notice/DPA with counsel, IdP hardening
 
-### Explicitly not: App Runner (maintenance mode) and OpenSearch Serverless (idle-cost floor) — see EVALUATION_REPORT.md §2.
+### Explicitly not: App Runner (maintenance mode) and OpenSearch Serverless (idle-cost floor).
 
 ## 3. From "built" to MVP
 

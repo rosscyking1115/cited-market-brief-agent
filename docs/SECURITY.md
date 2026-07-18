@@ -1,6 +1,6 @@
 # Cited Market Brief Agent Security Posture
 
-Engineering reference for the controls in `docs/PRODUCTION_PLAN.md` §9. Status legend: ✅ implemented · 🔶 implemented, needs production wiring · ⏳ pending.
+Engineering reference for the app's security controls and launch gates. Status legend: ✅ implemented · 🔶 implemented, needs production wiring · ⏳ pending.
 
 ## Reporting a vulnerability
 

@@ -6,7 +6,7 @@ which keeps unit tests and tooling import-clean.
 Tenant isolation (Phase 5 gate): every org-scoped table carries org_id and will be
 covered by Postgres Row-Level Security keyed by a session variable
 (SET app.current_org_id = ...). Vector/FTS queries inherit RLS — never rely on
-query-side filters alone. See docs/PRODUCTION_PLAN.md §9.
+query-side filters alone. See docs/SECURITY.md.
 """
 
 from collections.abc import Generator
