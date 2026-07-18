@@ -1,4 +1,4 @@
-"""Core data model (docs/PRODUCTION_PLAN.md §6).
+"""Core data model.
 
 Conventions:
 - UUID primary keys, timezone-aware timestamps.

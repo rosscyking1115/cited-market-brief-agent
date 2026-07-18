@@ -1,5 +1,5 @@
 # NOTE (security gate): pin all actions to commit SHAs before production launch
-# (supply-chain control from docs/EVALUATION_REPORT.md §3.7). Tags used during scaffold only.
+# (a supply-chain control). Tags used during scaffold only.
 name: ci
 
 on:

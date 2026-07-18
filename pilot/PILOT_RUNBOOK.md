@@ -45,4 +45,4 @@ Which section did you stop reading? Which claim made you check the source — an
 - ≥1 watchlist where the analyst says the brief is part of the morning routine
 - ≥95% of material claims citation-validated across the pilot window
 - Top 5 failure modes documented with reproduction notes
-- Demo flow rehearsed from real pilot output (see `docs/Cited_Market_Brief_Agent_Demo.pptx`)
+- Demo flow rehearsed from real pilot output
