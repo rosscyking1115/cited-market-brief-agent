@@ -1,10 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_REGION,
   REGION_PROFILES,
   REGION_STORAGE_KEY,
+  regionQueryValue,
+  resolveRegionPreference,
   regionProfile,
   type RegionProfile,
   type UserRegion,
@@ -23,33 +26,52 @@ const RegionContext = createContext<RegionContextValue | null>(null);
 const REGION_ORDER: UserRegion[] = ["TW", "KR", "UK", "EU"];
 
 export function RegionProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [region, setRegion] = useState<UserRegion>(DEFAULT_REGION);
   const [ready, setReady] = useState(false);
   const [needsChoice, setNeedsChoice] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(REGION_STORAGE_KEY) as UserRegion | null;
-    if (saved && saved in REGION_PROFILES) {
-      setRegion(saved);
-      setNeedsChoice(false);
-    } else {
-      setNeedsChoice(true);
+    const resolved = resolveRegionPreference(pathname === "/" ? window.location.search : "", saved);
+    setRegion(resolved.region);
+    setNeedsChoice(pathname === "/" && resolved.needsChoice);
+    if (pathname === "/" && resolved.source === "url") {
+      window.localStorage.setItem(REGION_STORAGE_KEY, resolved.region);
     }
     setReady(true);
-  }, []);
+  }, [pathname]);
+
+  useEffect(() => {
+    function syncFromHistory() {
+      const resolved = resolveRegionPreference(
+        pathname === "/" ? window.location.search : "",
+        window.localStorage.getItem(REGION_STORAGE_KEY),
+      );
+      setRegion(resolved.region);
+      setNeedsChoice(pathname === "/" && resolved.needsChoice);
+    }
+    window.addEventListener("popstate", syncFromHistory);
+    return () => window.removeEventListener("popstate", syncFromHistory);
+  }, [pathname]);
 
   function chooseRegion(nextRegion: UserRegion) {
     setRegion(nextRegion);
     setNeedsChoice(false);
     window.localStorage.setItem(REGION_STORAGE_KEY, nextRegion);
+    if (pathname === "/") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("region", regionQueryValue(nextRegion));
+      window.history.replaceState(window.history.state, "", url);
+    }
     document.documentElement.dataset.region = nextRegion.toLowerCase();
   }
 
   useEffect(() => {
-    document.documentElement.dataset.region = region.toLowerCase();
+    document.documentElement.dataset.region = pathname === "/brief" ? "brief" : region.toLowerCase();
     document.documentElement.lang =
-      region === "TW" ? "zh-Hant" : region === "KR" ? "ko" : "en";
-  }, [region]);
+      pathname === "/brief" ? "en" : region === "TW" ? "zh-Hant" : region === "KR" ? "ko" : "en";
+  }, [pathname, region]);
 
   const value = useMemo(
     () => ({
@@ -78,22 +100,43 @@ export function useRegion() {
 
 function RegionPrompt() {
   const { chooseRegion, needsChoice, ready } = useRegion();
+  const pathname = usePathname();
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  if (!ready || !needsChoice) return null;
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const shouldOpen = pathname === "/" && ready && needsChoice;
+    if (shouldOpen && !dialog.open) dialog.showModal();
+    if (!shouldOpen && dialog.open) dialog.close();
+  }, [needsChoice, pathname, ready]);
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end bg-black/55 px-3 py-4 sm:items-center sm:justify-center">
-      <section
-        role="dialog"
-        aria-modal="true"
+    <dialog
+        ref={dialogRef}
+        onCancel={(event) => event.preventDefault()}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not([disabled])"));
+          const first = buttons[0];
+          const last = buttons.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }}
         aria-labelledby="region-title"
-        className="w-full max-w-xl rounded-(--radius-modal) border border-elevated bg-card p-4 shadow-2xl sm:p-5"
+        aria-describedby="region-description"
+        className="m-auto w-[calc(100%-1.5rem)] max-w-xl rounded-(--radius-modal) border border-elevated bg-card p-4 text-neutral-30 shadow-2xl backdrop:bg-black/55 sm:p-5"
       >
         <p className="th-label">Choose your edition</p>
         <h2 id="region-title" className="mt-2 font-serif text-xl font-semibold leading-tight text-neutral-30">
           Which region are you reading from?
         </h2>
-        <p className="reader-body mt-2 text-[14px] leading-relaxed text-neutral-70">
+        <p id="region-description" className="reader-body mt-2 text-[14px] leading-relaxed text-neutral-70">
           The page language, labels, and market focus will adapt automatically. You can change this later.
         </p>
 
@@ -116,22 +159,21 @@ function RegionPrompt() {
             );
           })}
         </div>
-      </section>
-    </div>
+    </dialog>
   );
 }
 
-export function RegionSwitcher() {
+export function RegionSwitcher({ label = "Region", ariaLabel = "Choose region edition" }: { label?: string; ariaLabel?: string }) {
   const { chooseRegion, profile, region } = useRegion();
 
   return (
     <label className="flex items-center gap-1.5 rounded-(--radius-ctl) border border-elevated bg-page px-2 py-1 text-[11px] text-neutral-70 transition-shadow hover:shadow-md">
-      <span className="th-label hidden sm:inline">Region</span>
+      <span className="th-label hidden sm:inline">{label}</span>
       <select
         value={region}
         onChange={(event) => chooseRegion(event.target.value as UserRegion)}
         className="bg-transparent font-mono text-[11px] text-neutral-40 outline-none"
-        aria-label="Choose region edition"
+        aria-label={ariaLabel}
       >
         {REGION_ORDER.map((item) => (
           <option key={item} value={item}>

@@ -3,7 +3,8 @@
 import { useRegion } from "@/app/components/RegionProvider";
 import type { FundAttributionPayload, MorningRadarPayload } from "@/lib/api";
 import {
-  MARKET_LABELS,
+  MARKET_ID_LABELS,
+  HERO_COPY,
   STATUS_LABELS,
   localizedHeadline,
   localizedSummary,
@@ -19,39 +20,6 @@ function heroFigureColor(value: number) {
 function signed(value: number, decimals = 2) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(decimals)}`;
 }
-
-const COPY: Record<
-  RadarLang,
-  { today: string; rel: string; now: string; emptyGist: string; detailLink: string; setupPrompt: string; setupLink: string }
-> = {
-  tw: {
-    today: "今日重點 · AI 摘要",
-    rel: "相對表現 · 今日",
-    now: "目前焦點",
-    emptyGist: "今日市場摘要會在新聞與行情回傳後自動生成。",
-    detailLink: "查看歸因明細",
-    setupPrompt: "設定你的基金後，這裡會顯示今日相對加權指數的表現。",
-    setupLink: "前往設定",
-  },
-  ko: {
-    today: "오늘의 핵심 · AI 요약",
-    rel: "상대 성과 · 오늘",
-    now: "현재 포커스",
-    emptyGist: "오늘의 시장 요약은 뉴스와 시세가 들어오면 자동 생성됩니다.",
-    detailLink: "기여도 상세 보기",
-    setupPrompt: "펀드를 설정하면 오늘 벤치마크 대비 성과가 여기에 표시됩니다.",
-    setupLink: "설정으로",
-  },
-  en: {
-    today: "Today's brief · AI summary",
-    rel: "Relative · today",
-    now: "Now",
-    emptyGist: "Today's market summary is generated once news and prices arrive.",
-    detailLink: "See attribution detail",
-    setupPrompt: "Set up your fund and today's performance vs the benchmark shows here.",
-    setupLink: "Set up",
-  },
-};
 
 function Arrow({ up, color, size = 22 }: { up: boolean; color: string; size?: number }) {
   return (
@@ -76,14 +44,14 @@ export default function TodayHero({
 }) {
   const { profile } = useRegion();
   const lang = radarLang(profile.region);
-  const copy = COPY[lang];
+  const copy = HERO_COPY[lang];
 
   const headline = localizedHeadline(lang, radar.headline);
   const gist =
     lang === "tw"
-      ? radar.today_overview?.trim() || copy.emptyGist
+      ? radar.today_overview?.trim() || copy.emptySummary
       : localizedSummary(lang, radar.summary_points).join(" ");
-  // Right rail: TW shows fund-vs-TAIEX; other editions show the live market focus.
+  // Right rail: TW shows fund-vs-TAIEX; other editions show the scheduled market focus.
   const showFund = lang === "tw";
 
   return (
@@ -128,7 +96,7 @@ export default function TodayHero({
           ) : showFund ? (
             <div className="flex h-full flex-col justify-center">
               <span className="th-label" style={{ color: "var(--hero-muted)" }}>
-                {copy.rel}
+                {copy.relative}
               </span>
               <p className="mt-2 text-[15px]" style={{ color: "#CBD8E6" }}>
                 {copy.setupPrompt}
@@ -141,7 +109,7 @@ export default function TodayHero({
               </a>
             </div>
           ) : (
-            <FocusPanel radar={radar} lang={lang} copy={copy} anchor={profile.marketAnchor} />
+            <FocusPanel radar={radar} lang={lang} copy={copy} anchor={profile.marketAnchor} marketId={profile.primaryMarketId} />
           )}
         </div>
       </div>
@@ -154,17 +122,20 @@ function FocusPanel({
   lang,
   copy,
   anchor,
+  marketId,
 }: {
   radar: MorningRadarPayload;
   lang: RadarLang;
-  copy: (typeof COPY)[RadarLang];
+  copy: (typeof HERO_COPY)[RadarLang];
   anchor: string;
+  marketId: import("@/lib/api").MarketId;
 }) {
   const pick =
+    radar.market_clock.find((item) => item.market_id === marketId) ??
     radar.market_clock.find((item) => item.status === "open") ??
     radar.market_clock.find((item) => item.status === "not_open") ??
     radar.market_clock[0];
-  const focus = pick ? `${MARKET_LABELS[pick.market]?.[lang] ?? pick.market} · ${STATUS_LABELS[pick.status][lang]}` : anchor;
+  const focus = pick ? `${MARKET_ID_LABELS[pick.market_id][lang]} · ${STATUS_LABELS[pick.status][lang]}` : anchor;
   return (
     <div className="flex h-full flex-col justify-center">
       <span className="th-label" style={{ color: "var(--hero-muted)" }}>
@@ -174,20 +145,20 @@ function FocusPanel({
         {focus}
       </p>
       <p className="mt-2 text-[13.5px]" style={{ color: "#A9BDD2" }}>
-        {anchor} · {radar.timezone}
+        {anchor} · {lang === "tw" ? "預定一般交易時段" : lang === "ko" ? "예정 정규장" : "scheduled regular session"}
       </p>
     </div>
   );
 }
 
-function FundHeadline({ a, copy }: { a: FundAttributionPayload; copy: (typeof COPY)[RadarLang] }) {
+function FundHeadline({ a, copy }: { a: FundAttributionPayload; copy: (typeof HERO_COPY)[RadarLang] }) {
   const active = a.active_return_pct;
   const color = heroFigureColor(active);
   return (
     <>
       <div className="flex items-baseline justify-between gap-2">
         <span className="th-label" style={{ color: "var(--hero-muted)" }}>
-          {copy.rel}
+          {copy.relative}
         </span>
         <span className="font-mono text-[12.5px]" style={{ color: "var(--hero-muted)" }}>
           {a.as_of}

@@ -363,7 +363,7 @@ export default function FundHoldingsParser({
             type="button"
             onClick={parse}
             disabled={busy !== null || !text.trim()}
-            className={`min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
+            className={`min-h-9 rounded-(--radius-ctl) border border-action bg-action px-3 py-1.5 text-[13px] font-semibold text-on-action disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion}`}
           >
             {busy === "parse" ? "解析中..." : "解析持股"}
           </button>

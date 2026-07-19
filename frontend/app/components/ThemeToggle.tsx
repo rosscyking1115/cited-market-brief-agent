@@ -4,7 +4,17 @@ import { useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({
+  lightLabel = "Light",
+  darkLabel = "Dark",
+  switchToLightLabel = "Switch to light theme",
+  switchToDarkLabel = "Switch to dark theme",
+}: {
+  lightLabel?: string;
+  darkLabel?: string;
+  switchToLightLabel?: string;
+  switchToDarkLabel?: string;
+}) {
   // Default light to match the pre-paint script in layout.tsx (avoids a flash).
   const [theme, setTheme] = useState<Theme>("light");
 
@@ -27,9 +37,9 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       className="rounded-(--radius-ctl) border border-elevated px-2.5 py-1 font-mono text-[11px] text-neutral-70 transition-colors hover:border-action hover:text-neutral-30"
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+      title={theme === "dark" ? switchToLightLabel : switchToDarkLabel}
     >
-      {theme === "dark" ? "Light" : "Dark"}
+      {theme === "dark" ? lightLabel : darkLabel}
     </button>
   );
 }

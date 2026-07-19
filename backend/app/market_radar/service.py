@@ -1,5 +1,6 @@
 import logging
 import re
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
@@ -13,6 +14,7 @@ from app.core.config import settings
 from app.market_radar.schemas import (
     GlossaryItem,
     MarketClockItem,
+    MarketSession,
     MarketSnapshotItem,
     MarketStatus,
     MarketStoryItem,
@@ -112,62 +114,76 @@ def _status_text(status: MarketStatus) -> str:
     }[status]
 
 
+@dataclass(frozen=True)
+class _MarketSpec:
+    market_id: Literal["jpx", "krx", "twse", "hkex", "lse", "xetra", "nyse"]
+    time_zone: str
+    market: str
+    label: str
+    windows: tuple[tuple[int, int], ...]
+    note: str
+
+
+_MARKET_SPECS = (
+    _MarketSpec(
+        "jpx", "Asia/Tokyo", "日本", "Nikkei 225 / TOPIX", ((540, 690), (750, 930)), "亞洲第一棒，先看科技與匯率。"
+    ),
+    _MarketSpec("krx", "Asia/Seoul", "韓國", "KOSPI / KOSDAQ", ((540, 930),), "記憶體、電池、出口股參考。"),
+    _MarketSpec(
+        "twse", "Asia/Taipei", "台灣", "TAIEX / Taiwan index futures", ((540, 810),), "開盤前先看台幣、台指期與半導體。"
+    ),
+    _MarketSpec(
+        "hkex",
+        "Asia/Hong_Kong",
+        "香港",
+        "Hang Seng / HKEX",
+        ((570, 720), (780, 960)),
+        "香港需求、政策與港股科技股。",
+    ),
+    _MarketSpec("lse", "Europe/London", "英國", "FTSE 100 / LSE", ((480, 990),), "倫敦核心交易時段。"),
+    _MarketSpec("xetra", "Europe/Berlin", "歐洲", "DAX / Xetra", ((540, 1050),), "Xetra 核心交易時段。"),
+    _MarketSpec(
+        "nyse", "America/New_York", "美國", "S&P 500 / Nasdaq / NYSE", ((570, 960),), "台灣早上主要看昨晚收盤與期貨。"
+    ),
+)
+
+
+def _format_window(windows: tuple[tuple[int, int], ...]) -> str:
+    def clock(value: int) -> str:
+        return f"{value // 60:02d}:{value % 60:02d}"
+
+    return ", ".join(f"{clock(start)}-{clock(end)}" for start, end in windows)
+
+
 def _market_clock(now: datetime) -> list[MarketClockItem]:
-    local = now.astimezone(TAIPEI_TZ)
-    minutes = local.hour * 60 + local.minute
-    weekend = local.weekday() >= 5
-    return [
-        MarketClockItem(
-            market="日本",
-            label="日經225 / TOPIX",
-            window="08:00-10:30, 11:30-14:30",
-            status=_status_for(
-                minutes,
-                [(8 * 60, 10 * 60 + 30), (11 * 60 + 30, 14 * 60 + 30)],
-                weekend=weekend,
-            ),
-            note="亞洲第一棒，先看科技與匯率。",
-        ),
-        MarketClockItem(
-            market="韓國",
-            label="KOSPI / KOSDAQ",
-            window="08:00-14:30",
-            status=_status_for(minutes, [(8 * 60, 14 * 60 + 30)], weekend=weekend),
-            note="記憶體、電池、出口股參考。",
-        ),
-        MarketClockItem(
-            market="台灣",
-            label="加權指數 / 台指期",
-            window="09:00-13:30",
-            status=_status_for(minutes, [(9 * 60, 13 * 60 + 30)], weekend=weekend),
-            note="開盤前先看台幣、台指期與半導體。",
-        ),
-        MarketClockItem(
-            market="香港 / A股",
-            label="恆生 / 上證 / 滬深300",
-            window="09:30-12:00, 13:00-16:00",
-            status=_status_for(
-                minutes,
-                [(9 * 60 + 30, 12 * 60), (13 * 60, 16 * 60)],
-                weekend=weekend,
-            ),
-            note="中國需求、政策與港股科技股。",
-        ),
-        MarketClockItem(
-            market="歐洲",
-            label="Stoxx 600 / DAX / FTSE 100",
-            window="夏令約 15:00 後",
-            status=_status_for(minutes, [(15 * 60, 23 * 60 + 30)], weekend=weekend),
-            note="下午接力觀察歐股與歐元。",
-        ),
-        MarketClockItem(
-            market="美國",
-            label="道瓊 / 標普500 / 那斯達克",
-            window="夏令 21:30-04:00",
-            status=("weekend" if weekend else "open" if minutes < 4 * 60 or minutes >= 21 * 60 + 30 else "closed"),
-            note="台灣早上主要看昨晚收盤與期貨。",
-        ),
-    ]
+    rows: list[MarketClockItem] = []
+    for spec in _MARKET_SPECS:
+        local = now.astimezone(ZoneInfo(spec.time_zone))
+        windows = list(spec.windows)
+        sessions = [
+            MarketSession(
+                opens_at=local.replace(hour=start // 60, minute=start % 60, second=0, microsecond=0).isoformat(),
+                closes_at=local.replace(hour=end // 60, minute=end % 60, second=0, microsecond=0).isoformat(),
+            )
+            for start, end in windows
+        ]
+        rows.append(
+            MarketClockItem(
+                market_id=spec.market_id,
+                time_zone=spec.time_zone,
+                sessions=sessions,
+                market=spec.market,
+                label=spec.label,
+                window=_format_window(spec.windows),
+                status=_status_for(
+                    local.hour * 60 + local.minute,
+                    windows,
+                    weekend=local.weekday() >= 5,
+                ),
+                note=spec.note,
+            )
+        )
+    return rows
 
 
 def _snapshots() -> list[MarketSnapshotItem]:
@@ -743,10 +759,28 @@ def generate_today_overview(items: list[PopularNewsItem]) -> str | None:
     return generate_news_overview(items, "今日")
 
 
-def translate_news_items_zh(items: list[PopularNewsItem]) -> list[PopularNewsItem]:
-    """Batch-translate each headline + summary to Traditional Chinese key points in a
-    single LLM call. Best-effort: items unchanged without a key or on any failure."""
-    if not items or not settings.anthropic_api_key.strip():
+def translate_news_items(items: list[PopularNewsItem]) -> list[PopularNewsItem]:
+    """Batch-translate headlines and summaries into zh-Hant and Korean once.
+
+    Best-effort: without a configured model key, or on any failure, the source
+    English stays untouched and clients label it as original-language content.
+    """
+    model_candidates = (settings.translation_model.strip(), settings.generation_model.strip())
+    model: str | None = None
+    for candidate in dict.fromkeys(candidate for candidate in model_candidates if candidate):
+        provider = candidate.lower()
+        has_key = (
+            bool(settings.openai_api_key.strip())
+            if provider.startswith(("openai/", "gpt-"))
+            else bool(settings.anthropic_api_key.strip())
+            if provider.startswith(("anthropic/", "claude"))
+            else bool(settings.openai_api_key.strip() or settings.anthropic_api_key.strip())
+        )
+        if has_key:
+            model = candidate
+            break
+
+    if not items or model is None:
         return items
     payload = [{"i": idx, "title": item.title, "summary": (item.summary or "")[:400]} for idx, item in enumerate(items)]
     try:
@@ -755,14 +789,17 @@ def translate_news_items_zh(items: list[PopularNewsItem]) -> list[PopularNewsIte
         import litellm  # noqa: PLC0415
 
         response = litellm.completion(
-            model=settings.generation_model,
+            model=model,
             messages=[
                 {
                     "role": "system",
                     "content": (
-                        "你是財經新聞編譯。把每則新聞翻成繁體中文：t = 精簡中文標題，"
-                        "s = 1-2 句重點摘要（擷取重點，不是全文翻譯）。只輸出 JSON 陣列，"
-                        '每個元素為 {"i":原序號, "t":"中文標題", "s":"中文重點"}，不要任何其他文字。'
+                        "Translate each finance-news item into Traditional Chinese and Korean. "
+                        "Return only a JSON array. Each object must be "
+                        '{"i":source_index,"zh_t":"concise Traditional Chinese title",'
+                        '"zh_s":"one or two sentence Traditional Chinese key-point summary",'
+                        '"ko_t":"concise Korean title","ko_s":"one or two sentence Korean key-point summary"}. '
+                        "Do not translate product names or add facts."
                     ),
                 },
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
@@ -784,10 +821,25 @@ def translate_news_items_zh(items: list[PopularNewsItem]) -> list[PopularNewsIte
         if not entry:
             translated.append(item)
             continue
-        title_zh = str(entry.get("t") or "").strip() or item.title
-        summary_zh = str(entry.get("s") or "").strip() or None
-        translated.append(item.model_copy(update={"title_zh_hant": title_zh, "summary_zh": summary_zh}))
+        title_zh = str(entry.get("zh_t") or "").strip() or item.title
+        summary_zh = str(entry.get("zh_s") or "").strip() or None
+        title_ko = str(entry.get("ko_t") or "").strip() or None
+        summary_ko = str(entry.get("ko_s") or "").strip() or None
+        translated.append(
+            item.model_copy(
+                update={
+                    "title_zh_hant": title_zh,
+                    "summary_zh": summary_zh,
+                    "title_ko": title_ko,
+                    "summary_ko": summary_ko,
+                }
+            )
+        )
     return translated
+
+
+# Retained for callers using the pre-1.1 helper name.
+translate_news_items_zh = translate_news_items
 
 
 def build_morning_radar(

@@ -34,7 +34,7 @@ export default function RepairClaimButton({
         type="button"
         onClick={repair}
         disabled={!live || busy}
-        className="rounded-(--radius-ctl) border border-action/70 px-2 py-0.5 text-[11px] font-medium text-action transition-colors hover:bg-action hover:text-white disabled:opacity-40"
+        className="rounded-(--radius-ctl) border border-action/70 px-2 py-0.5 text-[11px] font-medium text-action transition-colors hover:bg-action hover:text-on-action disabled:opacity-40"
         title="Rewrite this claim using only its stored evidence quote"
       >
         {busy ? "Repairing..." : "Repair"}
