@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRegion } from "@/app/components/RegionProvider";
-import { API_URL } from "@/lib/api";
 import { NEWS_WINDOWS, cumulativeNewsItems } from "@/lib/news";
 import type {
   GlossaryItem,
@@ -15,15 +14,21 @@ import type {
 } from "@/lib/api";
 import {
   GROUP_LABELS,
-  MARKET_LABELS,
+  CATEGORY_LABELS,
+  MARKET_ID_LABELS,
+  NEWS_UI_COPY,
+  RADAR_COPY,
   SECTION_LABELS,
   STATUS_LABELS,
   localizedClockNote,
   localizedDisclaimer,
   localizedGlossary,
   localizedNewsWhy,
+  localizedNewsCopy,
   localizedRiskWhy,
   radarLang,
+  orderedMarketIds,
+  visibleRiskSymbols,
   type RadarLang,
 } from "@/lib/radar-i18n";
 import type { RegionProfile } from "@/lib/regions";
@@ -56,8 +61,8 @@ function valueTone(tone: SnapshotTone) {
   return "text-neutral-40";
 }
 
-function marketLabel(market: string, lang: RadarLang) {
-  return MARKET_LABELS[market]?.[lang] ?? market;
+function marketLabel(item: MarketClockItem, lang: RadarLang) {
+  return MARKET_ID_LABELS[item.market_id]?.[lang] ?? item.market;
 }
 
 function formatInRegion(value: string, profile: RegionProfile, lang: RadarLang) {
@@ -78,35 +83,6 @@ function publishedText(value: string | null, profile: RegionProfile, lang: Radar
   } catch {
     return null;
   }
-}
-
-function newsTitle(item: PopularNewsItem, lang: RadarLang) {
-  return lang === "tw" ? item.title_zh_hant || item.title : item.title;
-}
-
-function emptyNewsText(lang: RadarLang) {
-  if (lang === "tw") {
-    return {
-      title: "目前沒有可顯示的市場新聞",
-      body: "等財經來源回傳新聞時，這裡才會出現可點擊標題。",
-    };
-  }
-  if (lang === "ko") {
-    return {
-      title: "아직 표시할 시장 뉴스가 없습니다",
-      body: "실제 링크와 출처가 들어오면 이곳에 표시됩니다.",
-    };
-  }
-  return {
-    title: "No market news to show yet",
-    body: "Linked, source-backed headlines will appear here when the feeds return them.",
-  };
-}
-
-function periodNoteText(lang: RadarLang, label: string) {
-  if (lang === "tw") return `本期單篇熱門文章較少；以上為 AI 整理的${label}重點，個別新聞可參考今日列表。`;
-  if (lang === "ko") return `이 기간의 개별 인기 기사는 적습니다. 위 ${label} 요약을 참고하고, 개별 기사는 오늘 탭을 확인하세요.`;
-  return `Not many standalone articles for this window. The ${label} summary above covers it, and individual reads are on the Today tab.`;
 }
 
 function StarIcon({ className }: { className?: string }) {
@@ -137,7 +113,8 @@ function NewsCard({
 }) {
   const why = localizedNewsWhy(lang, item.rank_kind, item.why);
   const published = publishedText(item.published_at, profile, lang);
-  const summary = lang === "tw" ? (item.summary_zh ?? item.summary) : item.summary;
+  const copy = localizedNewsCopy(lang, item);
+  const category = CATEGORY_LABELS[item.category]?.[lang] ?? item.category;
   const Wrapper = item.url ? "a" : "div";
   return (
     <Wrapper
@@ -153,18 +130,31 @@ function NewsCard({
             <span className="inline-flex items-center rounded-(--radius-ctl) bg-action-soft px-1.5 py-0.5 text-[11px] font-semibold text-action">
               {item.source}
             </span>
-            <span className="text-[11px] font-medium text-neutral-70">{item.category}</span>
+            <span className="text-[11px] font-medium text-neutral-70">{category}</span>
             {published && (
               <span className="reader-meta ml-auto font-mono text-neutral-90" suppressHydrationWarning>
                 {published}
               </span>
             )}
           </div>
-          <h3 className="reader-heading mt-1.5 text-[16px] text-neutral-30 [text-underline-offset:3px] group-hover:underline">
-            {newsTitle(item, lang)}
+          <h3
+            lang={copy.titleIsOriginalLanguage ? "en" : undefined}
+            className="reader-heading mt-1.5 text-[16px] text-neutral-30 [text-underline-offset:3px] group-hover:underline"
+          >
+            {copy.title}
           </h3>
-          {summary && (
-            <p className="reader-body mt-1 line-clamp-2 text-[13.5px] text-neutral-50">{summary}</p>
+          {copy.isOriginalLanguage && (
+            <span className="reader-meta mt-1 inline-block rounded-(--radius-ctl) border border-hairline px-1.5 py-0.5 font-mono text-[10px] text-neutral-90">
+              {RADAR_COPY.originalLanguage[lang]}
+            </span>
+          )}
+          {copy.summary && (
+            <p
+              lang={copy.summaryIsOriginalLanguage ? "en" : undefined}
+              className="reader-body mt-1 line-clamp-2 text-[13.5px] text-neutral-50"
+            >
+              {copy.summary}
+            </p>
           )}
           {why && (
             <div className="mt-2 flex items-center gap-1.5">
@@ -194,12 +184,8 @@ function NewsRail({
   overviews?: Record<string, string | null>; // window key -> period report (TW)
 }) {
   const realItems = items.filter((item) => item.url);
-  const periodLabels: Record<string, string> =
-    lang === "tw"
-      ? { "1d": "今日", "1w": "本週", "1m": "本月" }
-      : lang === "ko"
-        ? { "1d": "오늘", "1w": "이번 주", "1m": "이번 달" }
-        : { "1d": "Today", "1w": "This week", "1m": "This month" };
+  const newsCopy = NEWS_UI_COPY[lang];
+  const periodLabels = newsCopy.periods;
   // Windows are cumulative time ranges: 本週 includes today + this week's most-read,
   // 本月 includes everything. A single publisher's week/month-only most-read finance
   // is often empty, so showing the rolling (deduped) set keeps every tab populated
@@ -218,16 +204,10 @@ function NewsRail({
     active && activeCat && cats.includes(activeCat)
       ? active.items.filter((i) => i.category === activeCat)
       : (active?.items ?? []);
-  const allLabel = lang === "tw" ? "全部" : lang === "ko" ? "전체" : "All";
-  const empty = emptyNewsText(lang);
+  const allLabel = newsCopy.all;
 
-  const headerTitle = lang === "tw" ? "市場新聞" : profile.editionTitle;
-  const headerMeta =
-    lang === "tw"
-      ? "今日最值得閱讀的財經要聞"
-      : lang === "ko"
-        ? "오늘 가장 읽을 만한 시장 뉴스"
-        : "Today's most decision-relevant finance reads";
+  const headerTitle = newsCopy.title;
+  const headerMeta = newsCopy.meta;
 
   return (
     <section className={framed ? "border-t border-hairline px-4 py-4 sm:px-5" : "mt-9"}>
@@ -266,7 +246,7 @@ function NewsRail({
             onClick={() => setActiveCat(null)}
             className={`cursor-pointer whitespace-nowrap rounded-full border px-3 py-1 text-[13px] font-medium transition-colors ${
               activeCat === null
-                ? "border-action bg-action text-white"
+                ? "border-action bg-action text-on-action"
                 : "border-hairline text-neutral-70 hover:text-neutral-50"
             }`}
           >
@@ -279,11 +259,11 @@ function NewsRail({
               onClick={() => setActiveCat(category)}
               className={`cursor-pointer whitespace-nowrap rounded-full border px-3 py-1 text-[13px] font-medium transition-colors ${
                 activeCat === category
-                  ? "border-action bg-action text-white"
+                  ? "border-action bg-action text-on-action"
                   : "border-hairline text-neutral-70 hover:text-neutral-50"
               }`}
             >
-              {category}
+              {CATEGORY_LABELS[category]?.[lang] ?? category}
             </button>
           ))}
         </div>
@@ -310,11 +290,11 @@ function NewsRail({
           ))}
         </div>
       ) : active && overviews?.[active.key] ? (
-        <p className="reader-meta mt-3 text-neutral-70">{periodNoteText(lang, active.label)}</p>
+        <p className="reader-meta mt-3 text-neutral-70">{newsCopy.sparse(active.label)}</p>
       ) : (
         <div className="mt-3 rounded-(--radius-card) border border-hairline bg-card px-4 py-5 shadow-[var(--shadow-soft)]">
-          <p className="reader-body font-semibold text-neutral-30">{empty.title}</p>
-          <p className="reader-meta mt-1 text-neutral-70">{empty.body}</p>
+          <p className="reader-body font-semibold text-neutral-30">{newsCopy.emptyTitle}</p>
+          <p className="reader-meta mt-1 text-neutral-70">{newsCopy.emptyBody}</p>
         </div>
       )}
     </section>
@@ -323,24 +303,38 @@ function NewsRail({
 
 // --- Non-TW context sections (analyst editions) ----------------------------
 
-function MarketClock({ items, lang }: { items: MarketClockItem[]; lang: RadarLang }) {
+function sessionWindow(item: MarketClockItem, profile: RegionProfile, lang: RadarLang) {
+  const formatter = new Intl.DateTimeFormat(localeForRegion(lang), {
+    timeZone: profile.timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return item.sessions
+    .map((session) => `${formatter.format(new Date(session.opens_at))}–${formatter.format(new Date(session.closes_at))}`)
+    .join(", ");
+}
+
+function MarketClock({ items, lang, profile }: { items: MarketClockItem[]; lang: RadarLang; profile: RegionProfile }) {
   if (items.length === 0) return null;
+  const order = orderedMarketIds(profile.region);
+  const ordered = [...items].sort((a, b) => order.indexOf(a.market_id) - order.indexOf(b.market_id));
   return (
     <section className="border-t border-hairline px-4 py-4 sm:px-5">
       <p className="th-label">{SECTION_LABELS.clock[lang]}</p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((item) => {
-          const note = localizedClockNote(lang, item.market, item.note);
+        {ordered.map((item) => {
+          const note = localizedClockNote(lang, item.market_id, item.note);
           return (
-            <article key={item.market} className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-3 py-2.5">
+            <article key={item.market_id} className="rounded-(--radius-ctl) border border-hairline bg-page/50 px-3 py-2.5">
               <div className="flex items-center justify-between gap-2">
-                <p className="reader-body font-semibold text-neutral-40">{marketLabel(item.market, lang)}</p>
+                <p className="reader-body font-semibold text-neutral-40">{marketLabel(item, lang)}</p>
                 <span className={`shrink-0 rounded-(--radius-ctl) border px-1.5 py-0.5 font-mono text-[10px] ${statusTone(item.status)}`}>
                   {STATUS_LABELS[item.status][lang]}
                 </span>
               </div>
               <p className="reader-meta mt-1 font-mono text-neutral-90">{item.label}</p>
-              <p className="reader-meta mt-0.5 font-mono text-[10px] text-neutral-90">{item.window}</p>
+              <p className="reader-meta mt-0.5 font-mono text-[10px] text-neutral-90">{sessionWindow(item, profile, lang)} · {profile.marketAnchor}</p>
               {note && <p className="reader-meta mt-1 text-neutral-70">{note}</p>}
             </article>
           );
@@ -361,7 +355,7 @@ function OvernightRiskRail({ items, lang }: { items: OvernightRiskItem[]; lang: 
     <section className="border-t border-hairline px-4 py-4 sm:px-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="th-label">{SECTION_LABELS.risk[lang]}</p>
-        <span className="reader-meta font-mono text-[10px] text-neutral-90">{items.length} rows</span>
+        <span className="reader-meta font-mono text-[10px] text-neutral-90">{items.length} {RADAR_COPY.rows[lang]}</span>
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         {groups.map(({ group, rows }) => (
@@ -382,7 +376,7 @@ function OvernightRiskRail({ items, lang }: { items: OvernightRiskItem[]; lang: 
                     <span className="reader-meta truncate font-mono text-[10px] text-neutral-90">{row.source}</span>
                     <span className={`shrink-0 font-mono text-[11px] ${valueTone(row.tone)}`}>{row.change}</span>
                   </div>
-                  {lang === "tw" && <p className="reader-meta mt-1 text-neutral-70">{localizedRiskWhy(lang, row.symbol, row.why)}</p>}
+                  <p className="reader-meta mt-1 text-neutral-70">{localizedRiskWhy(lang, row.symbol, row.why)}</p>
                 </div>
               ))}
             </div>
@@ -413,27 +407,9 @@ function Glossary({ items, lang }: { items: GlossaryItem[]; lang: RadarLang }) {
   );
 }
 
-export default function MorningMarketDashboard({ radar: initialRadar }: { radar: MorningRadarPayload }) {
+export default function MorningMarketDashboard({ radar }: { radar: MorningRadarPayload }) {
   const { profile } = useRegion();
   const lang = radarLang(profile.region);
-  const [radar, setRadar] = useState(initialRadar);
-
-  // Refresh from the API on the client (same-origin /api) so live data always wins
-  // even if the server render fell back to demo data. Skipped on the backend-less
-  // public demo so it doesn't fire failing requests.
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEMO_MODE === "1") return;
-    let cancelled = false;
-    fetch(`${API_URL}/market-radar`, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: MorningRadarPayload | null) => {
-        if (data && !cancelled) setRadar(data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // One identical layout for every region (the localized hero sits above this card):
   // market clock → overnight risk → news → glossary. The 本週/本月 AI report cards are
@@ -441,6 +417,8 @@ export default function MorningMarketDashboard({ radar: initialRadar }: { radar:
   // gets the same article list (each card already localizes its own summary/why).
   const glossary = localizedGlossary(lang, radar.glossary);
   const disclaimer = localizedDisclaimer(lang, radar.disclaimer);
+  const visibleSymbols = new Set(visibleRiskSymbols(profile.region, radar.overnight_risk.map((item) => item.symbol)));
+  const visibleRisk = radar.overnight_risk.filter((item) => visibleSymbols.has(item.symbol));
   const newsOverviews =
     lang === "tw" ? { "1w": radar.week_overview ?? null, "1m": radar.month_overview ?? null } : undefined;
 
@@ -448,15 +426,20 @@ export default function MorningMarketDashboard({ radar: initialRadar }: { radar:
     <section className="overflow-hidden rounded-(--radius-card) border border-hairline bg-card shadow-[var(--shadow-soft)]">
       <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:px-5">
         <p className="th-label">
-          {profile.label} · {profile.marketAnchor}
+          {MARKET_ID_LABELS[profile.primaryMarketId][lang]} · {profile.marketAnchor}
         </p>
         <p className="font-mono text-[11px] text-neutral-90" suppressHydrationWarning>
           {SECTION_LABELS.dataTime[lang]} {formatInRegion(radar.generated_at, profile, lang)}
         </p>
       </div>
 
-      <MarketClock items={radar.market_clock} lang={lang} />
-      <OvernightRiskRail items={radar.overnight_risk} lang={lang} />
+      <MarketClock items={radar.market_clock} lang={lang} profile={profile} />
+      <p className="reader-meta border-t border-hairline px-4 py-3 text-neutral-70 sm:px-5">
+        <strong className="font-semibold text-neutral-50">{RADAR_COPY.scheduled[lang]}.</strong>{" "}
+        {RADAR_COPY.holidayCaveat[lang]}
+      </p>
+      <OvernightRiskRail items={visibleRisk} lang={lang} />
+      <p className="reader-meta border-t border-hairline px-4 py-3 text-neutral-70 sm:px-5">{RADAR_COPY.globalScope[lang]}</p>
       <NewsRail items={radar.popular_news} profile={profile} lang={lang} framed overviews={newsOverviews} />
       <Glossary items={glossary} lang={lang} />
 

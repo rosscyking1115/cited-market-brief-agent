@@ -1,4 +1,6 @@
+import sys
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
@@ -17,8 +19,10 @@ from app.connectors.bbc import BbcArticle, parse_bbc_rss
 from app.connectors.gdelt import GdeltArticle
 from app.connectors.nyt import NytArticle, parse_nyt_most_popular
 from app.main import app
+from app.market_radar.schemas import PopularNewsItem
 from app.market_radar.service import (
     _market_category,
+    _market_clock,
     build_morning_radar,
     build_overnight_risk,
     build_snapshots,
@@ -27,9 +31,28 @@ from app.market_radar.service import (
     popular_news_from_bbc,
     popular_news_from_gdelt,
     popular_news_from_nyt,
+    translate_news_items,
 )
 
 client = TestClient(app)
+
+
+def _news_item() -> PopularNewsItem:
+    return PopularNewsItem(
+        rank=1,
+        title="Markets steady as inflation cools",
+        title_zh_hant="Markets steady as inflation cools",
+        source="Example",
+        url="https://example.com/markets",
+        published_at="2026-07-15T08:00:00+00:00",
+        window="1d",
+        rank_kind="latest",
+        source_status="rss",
+        category="市場",
+        why="",
+        rights_note="Test fixture.",
+        summary="Investors held positions before the central-bank decision.",
+    )
 
 
 def test_market_radar_endpoint_contract() -> None:
@@ -382,6 +405,104 @@ def test_market_clock_taiwan_preopen_sequence() -> None:
     assert statuses["日本"] == "open"
     assert statuses["韓國"] == "open"
     assert statuses["台灣"] == "not_open"
+
+
+def test_market_clock_exposes_seven_stable_timezone_sessions() -> None:
+    rows = _market_clock(datetime(2026, 7, 15, 10, 0, tzinfo=UTC))
+    by_id = {row.market_id: row for row in rows}
+
+    assert set(by_id) == {"jpx", "krx", "twse", "hkex", "lse", "xetra", "nyse"}
+    assert by_id["twse"].time_zone == "Asia/Taipei"
+    assert by_id["lse"].time_zone == "Europe/London"
+    assert by_id["xetra"].time_zone == "Europe/Berlin"
+    assert by_id["nyse"].time_zone == "America/New_York"
+    assert by_id["hkex"].market == "香港"
+    assert by_id["hkex"].label == "Hang Seng / HKEX"
+    assert by_id["lse"].status == "open"
+    assert by_id["xetra"].status == "open"
+    assert by_id["twse"].status == "closed"
+    assert by_id["nyse"].status == "not_open"
+    assert all(row.sessions for row in rows)
+
+
+def test_market_clock_session_offsets_follow_dst() -> None:
+    summer = {row.market_id: row for row in _market_clock(datetime(2026, 7, 15, 10, 0, tzinfo=UTC))}
+    winter = {row.market_id: row for row in _market_clock(datetime(2026, 1, 15, 10, 0, tzinfo=UTC))}
+
+    assert summer["lse"].sessions[0].opens_at.endswith("+01:00")
+    assert winter["lse"].sessions[0].opens_at.endswith("+00:00")
+    assert summer["xetra"].sessions[0].opens_at.endswith("+02:00")
+    assert winter["xetra"].sessions[0].opens_at.endswith("+01:00")
+    assert summer["nyse"].sessions[0].opens_at.endswith("-04:00")
+    assert winter["nyse"].sessions[0].opens_at.endswith("-05:00")
+
+
+def test_market_clock_uses_each_markets_local_weekday() -> None:
+    # Sunday in London/New York is already Monday morning in East Asia.
+    rows = {row.market_id: row for row in _market_clock(datetime(2026, 7, 19, 22, 30, tzinfo=UTC))}
+
+    assert rows["jpx"].status == "not_open"
+    assert rows["krx"].status == "not_open"
+    assert rows["lse"].status == "weekend"
+    assert rows["nyse"].status == "weekend"
+
+
+def test_news_translation_batches_traditional_chinese_and_korean(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_completion(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content='[{"i":0,"zh_t":"通膨降溫，市場持穩","zh_s":"投資人等待央行決策。",'
+                        '"ko_t":"인플레이션 둔화에 시장 보합","ko_s":"투자자들은 중앙은행 결정을 기다렸습니다."}]'
+                    )
+                )
+            ]
+        )
+
+    monkeypatch.setattr(market_radar_route.settings, "anthropic_api_key", "test-key")
+    monkeypatch.setitem(sys.modules, "litellm", SimpleNamespace(completion=fake_completion))
+
+    translated = translate_news_items([_news_item()])
+
+    assert len(calls) == 1
+    assert translated[0].title_zh_hant == "通膨降溫，市場持穩"
+    assert translated[0].summary_zh == "投資人等待央行決策。"
+    assert translated[0].title_ko == "인플레이션 둔화에 시장 보합"
+    assert translated[0].summary_ko == "투자자들은 중앙은행 결정을 기다렸습니다."
+
+
+def test_news_translation_without_model_key_keeps_english_original(monkeypatch) -> None:
+    monkeypatch.setattr(market_radar_route.settings, "anthropic_api_key", "")
+    monkeypatch.setattr(market_radar_route.settings, "openai_api_key", "")
+    source = _news_item()
+
+    translated = translate_news_items([source])
+
+    assert translated[0].title == source.title
+    assert translated[0].title_ko is None
+    assert translated[0].summary_ko is None
+
+
+def test_news_translation_uses_configured_openai_translation_model(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_completion(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="[]"))])
+
+    monkeypatch.setattr(market_radar_route.settings, "anthropic_api_key", "")
+    monkeypatch.setattr(market_radar_route.settings, "openai_api_key", "test-openai-key")
+    monkeypatch.setattr(market_radar_route.settings, "translation_model", "openai/gpt-4o-mini")
+    monkeypatch.setitem(sys.modules, "litellm", SimpleNamespace(completion=fake_completion))
+
+    translate_news_items([_news_item()])
+
+    assert len(calls) == 1
+    assert calls[0]["model"] == "openai/gpt-4o-mini"
 
 
 def test_overnight_risk_is_separate_from_cash_indices() -> None:

@@ -3,12 +3,21 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 MarketStatus = Literal["not_open", "open", "lunch", "closed", "weekend"]
+MarketId = Literal["jpx", "krx", "twse", "hkex", "lse", "xetra", "nyse"]
 SnapshotTone = Literal["up", "down", "flat", "pending"]
 NewsRankKind = Literal["most_read", "most_viewed", "most_covered", "trending", "latest"]
 SourceStatus = Literal["official_api", "rss", "licensed", "planned", "manual_reference"]
 
 
+class MarketSession(BaseModel):
+    opens_at: str
+    closes_at: str
+
+
 class MarketClockItem(BaseModel):
+    market_id: MarketId
+    time_zone: str
+    sessions: list[MarketSession]
     market: str
     label: str
     window: str
@@ -36,6 +45,7 @@ class PopularNewsItem(BaseModel):
     rank: int
     title: str
     title_zh_hant: str
+    title_ko: str | None = None
     source: str
     url: str | None = None
     published_at: str | None = None
@@ -47,6 +57,7 @@ class PopularNewsItem(BaseModel):
     rights_note: str
     summary: str | None = None
     summary_zh: str | None = None
+    summary_ko: str | None = None
 
 
 class OvernightRiskItem(BaseModel):

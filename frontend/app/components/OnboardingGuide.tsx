@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useRegion } from "@/app/components/RegionProvider";
 import type { UserRegion } from "@/lib/regions";
 
@@ -14,7 +15,7 @@ const STEPS: Record<UserRegion, { title: string; body: string }[]> = {
     },
     {
       title: "語言已自動選好",
-      body: "選台灣後，文章會自動使用繁體中文閱讀輔助；原文仍保留，方便回到最準確的來源。",
+      body: "有快取翻譯時會顯示繁體中文閱讀輔助；否則清楚標示來源語言原文，並保留原始連結。",
     },
     {
       title: "基金歸因可以上傳檔案",
@@ -32,7 +33,7 @@ const STEPS: Record<UserRegion, { title: string; body: string }[]> = {
     },
     {
       title: "언어는 자동으로 바뀝니다",
-      body: "한국을 선택하면 브리프가 자동으로 한국어 읽기 모드로 열립니다. 감사용 원문은 그대로 보관됩니다.",
+      body: "캐시된 번역이 있으면 한국어로 표시하고, 없으면 원문임을 명확히 표시합니다. 기업 브리프는 별도 영어 감사 워크스페이스입니다.",
     },
     {
       title: "펀드 분석은 다음 단계입니다",
@@ -42,11 +43,11 @@ const STEPS: Record<UserRegion, { title: string; body: string }[]> = {
   UK: [
     {
       title: "Start with the market tape",
-      body: "The UK edition frames the page around the London morning: US close, sterling, gilts, Europe and macro context.",
+      body: "The UK edition puts London's scheduled core session first and localises the sourced global indicators already available.",
     },
     {
       title: "No translation click needed",
-      body: "English is the source language here, so the audited brief opens directly without a separate translation step.",
+      body: "This radar does not claim complete UK price, sterling or gilt coverage. The audited company brief lives in its own workspace.",
     },
     {
       title: "Fund attribution comes by region",
@@ -56,11 +57,11 @@ const STEPS: Record<UserRegion, { title: string; body: string }[]> = {
   EU: [
     {
       title: "Start with the European open",
-      body: "The Europe edition frames the page around US close, euro, Bunds, STOXX sectors, energy and macro context.",
+      body: "The Europe edition puts Xetra's scheduled core session first and localises the sourced global indicators already available.",
     },
     {
       title: "No translation click needed",
-      body: "English is the source language here, so the audited brief opens directly without a separate translation step.",
+      body: "This radar does not claim complete euro-area price, euro or Bund coverage. The audited company brief lives in its own workspace.",
     },
     {
       title: "Fund attribution comes by region",
@@ -77,9 +78,11 @@ const GUIDE_UI: Record<UserRegion, { guide: string; skip: string; next: string; 
 };
 
 export default function OnboardingGuide() {
+  const pathname = usePathname();
   const { needsChoice, profile, ready } = useRegion();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const steps = STEPS[profile.region];
   const ui = GUIDE_UI[profile.region];
 
@@ -96,18 +99,23 @@ export default function OnboardingGuide() {
     setOpen(false);
   }
 
-  if (!open || !ready || needsChoice) return null;
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const shouldOpen = pathname === "/" && open && ready && !needsChoice;
+    if (shouldOpen && !dialog.open) dialog.showModal();
+    if (!shouldOpen && dialog.open) dialog.close();
+  }, [needsChoice, open, pathname, ready]);
 
   const current = steps[step];
   const last = step === steps.length - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/55 px-3 py-4 sm:items-center sm:justify-center">
-      <section
-        role="dialog"
-        aria-modal="true"
+    <dialog
+        ref={dialogRef}
+        onCancel={close}
         aria-labelledby="onboarding-title"
-        className="w-full max-w-md rounded-(--radius-modal) border border-elevated bg-card p-4 shadow-2xl sm:p-5"
+        className="m-auto w-[calc(100%-1.5rem)] max-w-md rounded-(--radius-modal) border border-elevated bg-card p-4 text-neutral-30 shadow-2xl backdrop:bg-black/55 sm:p-5"
       >
         <div className="flex items-center justify-between gap-3">
           <p className="th-label">
@@ -143,12 +151,11 @@ export default function OnboardingGuide() {
           <button
             type="button"
             onClick={() => (last ? close() : setStep((currentStep) => currentStep + 1))}
-            className="min-h-10 rounded-(--radius-ctl) bg-action px-4 py-2 text-[14px] font-semibold text-white transition-[background-color,box-shadow,transform] hover:bg-action-hover hover:shadow-md active:translate-y-px"
+            className="min-h-10 rounded-(--radius-ctl) bg-action px-4 py-2 text-[14px] font-semibold text-on-action transition-[background-color,box-shadow,transform] hover:bg-action-hover hover:shadow-md active:translate-y-px"
           >
             {last ? ui.done : ui.next}
           </button>
         </div>
-      </section>
-    </div>
+    </dialog>
   );
 }

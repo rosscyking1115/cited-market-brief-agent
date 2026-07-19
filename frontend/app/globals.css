@@ -14,6 +14,7 @@
   --color-action: #4e9bd6;
   --color-action-hover: #6fb0e0;
   --color-action-soft: #10202e;
+  --color-on-action: #07111b;
 
   /* Dark surfaces (app default) */
   --color-page: #0a0e14;
@@ -27,12 +28,12 @@
   --color-neutral-40: #cdd6e0;
   --color-neutral-50: #b4c0ce; /* body */
   --color-neutral-70: #7e8d9e; /* meta */
-  --color-neutral-90: #586472; /* faint / labels */
+  --color-neutral-90: #95a3b3; /* quiet text; still WCAG AA on dark surfaces */
 
   /* Semantic — Western default (green up / red down); Taiwan view flips below.
      Always paired with +/- and ▲/▼, never color alone (WCAG 1.4.1). */
-  --color-up: #2ea877;
-  --color-down: #e5564b;
+  --color-up: #6fe0b0;
+  --color-down: #ff7a6e;
   --color-up-soft: #11261d;
   --color-down-soft: #2a1714;
   --color-flag: #d79a2b;
@@ -82,6 +83,7 @@
   --color-action: #1f5c8f;     /* harbor blue */
   --color-action-hover: #184b76;
   --color-action-soft: #e9f1f8;
+  --color-on-action: #ffffff;
 
   --color-page: #f4f6f8;       /* cool porcelain */
   --color-bar: #ffffff;
@@ -92,14 +94,14 @@
   --color-neutral-30: #0e1b2a; /* strongest text */
   --color-neutral-40: #22303f;
   --color-neutral-50: #36465a; /* body */
-  --color-neutral-70: #67768a; /* meta */
-  --color-neutral-90: #9aa6b6; /* faint / labels */
+  --color-neutral-70: #5f6d80; /* meta */
+  --color-neutral-90: #5f6d80; /* quiet text; WCAG AA on white/page surfaces */
 
-  --color-up: #1c7a50;         /* green (Western up) */
-  --color-down: #c5362e;       /* red (Western down) */
+  --color-up: #176b45;         /* green (Western up) */
+  --color-down: #b52d27;       /* red (Western down) */
   --color-up-soft: #e8f3ee;
   --color-down-soft: #fbedec;
-  --color-flag: #b07514;
+  --color-flag: #86530a;
 
   --hero-bg: #0e2742;
   --hero-bg-2: #133358;
@@ -118,15 +120,15 @@
 /* Taiwan market convention: 漲/up = RED, 跌/down = GREEN — Taiwan edition only.
    Every directional number still carries +/- and ▲/▼ so meaning is never color-only. */
 :root[data-region="tw"] {
-  --color-up: #e5564b;         /* red (dark) */
-  --color-down: #2ea877;       /* green (dark) */
+  --color-up: #ff7a6e;         /* red (dark) */
+  --color-down: #6fe0b0;       /* green (dark) */
   --color-up-soft: #2a1714;
   --color-down-soft: #11261d;
 }
 
 :root[data-theme="light"][data-region="tw"] {
-  --color-up: #c5362e;         /* red (light) */
-  --color-down: #1c7a50;       /* green (light) */
+  --color-up: #b52d27;         /* red (light) */
+  --color-down: #176b45;       /* green (light) */
   --color-up-soft: #fbedec;
   --color-down-soft: #e8f3ee;
 }
@@ -278,6 +280,24 @@ section {
 :focus-visible {
   outline: 2px solid var(--color-action);
   outline-offset: 2px;
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  z-index: 60;
+  transform: translateY(-150%);
+  border-radius: var(--radius-ctl);
+  background: var(--color-action);
+  color: var(--color-on-action);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {

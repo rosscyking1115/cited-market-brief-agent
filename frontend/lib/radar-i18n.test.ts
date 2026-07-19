@@ -3,6 +3,7 @@ import {
   RADAR_GLOSSARY,
   RADAR_HEADLINE,
   RADAR_SUMMARY,
+  MARKET_LABELS,
   localizedGlossary,
   localizedHeadline,
   localizedSummary,
@@ -34,5 +35,15 @@ describe("localized* fallbacks", () => {
     expect(localizedHeadline("ko", twHeadline)).toBe(RADAR_HEADLINE.ko);
     expect(localizedSummary("ko", twSummary)).toEqual(RADAR_SUMMARY.ko);
     expect(localizedGlossary("en", twGlossary)).toEqual(RADAR_GLOSSARY.en);
+  });
+});
+
+describe("legacy market labels", () => {
+  it("does not imply mainland-China coverage for the HKEX session", () => {
+    expect(MARKET_LABELS["香港 / A股"]).toEqual({
+      tw: "香港",
+      ko: "홍콩",
+      en: "Hong Kong",
+    });
   });
 });

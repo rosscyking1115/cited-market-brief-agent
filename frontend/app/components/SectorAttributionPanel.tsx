@@ -96,7 +96,7 @@ function DivergingRow({ row }: { row: SectorAttributionRow }) {
         {row.allocation_effect_pct !== null && (
           <span className="font-mono text-[13px] font-semibold" style={{ color: tokenColor(row.allocation_effect_pct) }}>
             {signed(row.allocation_effect_pct, 2)}
-            <span className="text-[10px] opacity-70"> pp</span>
+            <span className="text-[10px]"> pp</span>
           </span>
         )}
       </div>
@@ -268,7 +268,7 @@ export default function SectorAttributionPanel() {
                     {row.sector_return_pct === null ? "—" : (<><Arrow up={row.sector_return_pct >= 0} /> {signed(row.sector_return_pct, 2)}%</>)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-[14px] font-semibold" style={{ color: tokenColor(row.allocation_effect_pct) }}>
-                    {row.allocation_effect_pct === null ? "—" : (<>{signed(row.allocation_effect_pct, 2)}<span className="text-[10px] opacity-70">pp</span></>)}
+                    {row.allocation_effect_pct === null ? "—" : (<>{signed(row.allocation_effect_pct, 2)}<span className="text-[10px]">pp</span></>)}
                   </td>
                 </tr>
               ))}
@@ -282,7 +282,7 @@ export default function SectorAttributionPanel() {
                 <div className="flex items-center justify-between">
                   <span className="text-[15px] font-semibold text-neutral-30">{row.sector}</span>
                   <span className="font-mono text-[15px] font-semibold" style={{ color: tokenColor(row.allocation_effect_pct) }}>
-                    配置效果 {row.allocation_effect_pct === null ? "—" : (<>{signed(row.allocation_effect_pct, 2)}<span className="text-[10px] opacity-70">pp</span></>)}
+                    配置效果 {row.allocation_effect_pct === null ? "—" : (<>{signed(row.allocation_effect_pct, 2)}<span className="text-[10px]">pp</span></>)}
                   </span>
                 </div>
                 <div className="reader-meta mt-2 flex items-center justify-between text-neutral-70">
@@ -344,7 +344,7 @@ export default function SectorAttributionPanel() {
               type="button"
               onClick={save}
               disabled={busy !== null}
-              className="min-h-9 cursor-pointer rounded-(--radius-ctl) bg-action px-4 py-1.5 text-[13px] font-semibold text-white transition-[transform,box-shadow] hover:shadow-[var(--shadow-lift)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-h-9 cursor-pointer rounded-(--radius-ctl) bg-action px-4 py-1.5 text-[13px] font-semibold text-on-action transition-[transform,box-shadow] hover:shadow-[var(--shadow-lift)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy === "save" ? "儲存中…" : "儲存並重新計算"}
             </button>

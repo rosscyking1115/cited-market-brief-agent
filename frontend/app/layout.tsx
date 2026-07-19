@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Inter, Source_Serif_4 } from "next/font/google";
 import OnboardingGuide from "@/app/components/OnboardingGuide";
 import { RegionProvider } from "@/app/components/RegionProvider";
 import ServiceWorkerRegister from "@/app/components/ServiceWorkerRegister";
+import SkipLink from "@/app/components/SkipLink";
 import "./globals.css";
 
 // Self-hosted via next/font (perf budget: fonts ≤100KB woff2, display swap)
@@ -26,13 +27,13 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  applicationName: "Morning Market Radar",
+  applicationName: "Cited Market Brief Agent",
   title: {
-    default: "Morning Market Radar",
-    template: "%s · Morning Market Radar",
+    default: "Morning Market Radar · Cited Market Brief Agent",
+    template: "%s · Cited Market Brief Agent",
   },
   description:
-    "A morning market radar from public data: what moved overnight, what opens next in Asia, and the headlines that matter — plus an evidence-backed company brief where every claim is validated against a stored source span.",
+    "One research workbench with a region-aware morning market radar and a separate evidence-backed company brief workspace.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -63,6 +64,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${sourceSerif.variable} ${plexMono.variable}`}
     >
       <body>
@@ -74,11 +76,13 @@ export default function RootLayout({
               "(function(){try{var d=document.documentElement;" +
               "var t=localStorage.getItem('cmb-theme');d.dataset.theme=t==='dark'?'dark':'light';" +
               "var s=localStorage.getItem('cmb-text-size');if(s==='large'||s==='xl')d.dataset.textSize=s;" +
-              "var r=localStorage.getItem('cmb-region-v1');if(r)d.dataset.region=String(r).toLowerCase();" +
+              "var p=location.pathname,q=new URLSearchParams(location.search).get('region'),r=(q&&/^(tw|kr|uk|eu)$/.test(q))?q:localStorage.getItem('cmb-region-v1');" +
+              "if(p==='/brief'){d.dataset.region='brief';d.lang='en';}else if(r){d.dataset.region=String(r).toLowerCase();d.lang=r==='TW'||r==='tw'?'zh-Hant':r==='KR'||r==='kr'?'ko':'en';}" +
               "}catch(e){}})();",
           }}
         />
         <RegionProvider>
+          <SkipLink />
           {children}
           <OnboardingGuide />
         </RegionProvider>

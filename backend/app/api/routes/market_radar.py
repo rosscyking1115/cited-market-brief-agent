@@ -26,7 +26,7 @@ from app.market_radar.service import (
     popular_news_from_finance_rss,
     popular_news_from_gdelt,
     popular_news_from_nyt,
-    translate_news_items_zh,
+    translate_news_items,
 )
 
 router = APIRouter(prefix="/market-radar", tags=["market-radar"])
@@ -121,7 +121,7 @@ def _rebuild_news_cache(*, now: datetime) -> tuple[list[PopularNewsItem], tuple[
         if _NEWS_CACHE is not None:
             return _NEWS_CACHE.items, _NEWS_CACHE.overviews
         return [], (None, None, None)
-    fetched = translate_news_items_zh(fetched)
+    fetched = translate_news_items(fetched)
     # Windows are cumulative time ranges: this week's report covers today + the week's
     # most-read finance, this month's covers all of it. A single publisher's week-only
     # most-read finance is often empty, so summarizing the rolling window keeps the

@@ -84,7 +84,12 @@ export default function ChangesPanel({ changes }: { changes: ChangesPayload }) {
       {changes.macro_deltas.length > 0 && (
         <div className="border-t border-hairline px-4 py-3">
           <p className="reader-heading text-[13px] font-semibold text-neutral-30">Macro deltas</p>
-          <div className="mt-1.5 overflow-x-auto">
+          <div
+            className="mt-1.5 overflow-x-auto"
+            role="region"
+            aria-label="Filing changes comparison"
+            tabIndex={0}
+          >
             <table className="w-full min-w-[520px] text-[12px]">
               <thead>
                 <tr className="th-label">
@@ -138,7 +143,7 @@ export default function ChangesPanel({ changes }: { changes: ChangesPayload }) {
           <ul className="mt-1">
             {changes.new_documents.slice(0, 8).map((doc) => (
               <li key={doc.document_id} className="flex flex-wrap items-baseline gap-2 py-0.5 text-[12px]">
-                <span className="rounded-(--radius-ctl) bg-navy-900 px-1.5 py-0.5 font-mono text-[10px] text-neutral-50">
+                <span className="rounded-(--radius-ctl) bg-navy-900 px-1.5 py-0.5 font-mono text-[10px] text-white">
                   {doc.doc_type}
                 </span>
                 <span className="text-neutral-50">{doc.publisher}</span>

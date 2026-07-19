@@ -2,214 +2,196 @@
 
 [![CI](https://github.com/rosscyking1115/cited-market-brief-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/rosscyking1115/cited-market-brief-agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Live demo](https://img.shields.io/badge/demo-live-1f5c8f)](https://cited-market-brief-agent.vercel.app)
 ![Frontend](https://img.shields.io/badge/Next.js%2016-React%2019-000000?logo=nextdotjs&logoColor=white)
 ![Backend](https://img.shields.io/badge/FastAPI-Python%203.13-009688?logo=fastapi&logoColor=white)
 ![Database](https://img.shields.io/badge/Postgres%2018-pgvector-4169E1?logo=postgresql&logoColor=white)
 
-Two things in one web app: a region-aware **Morning Market Radar** for everyday investors,
-and an **evidence-backed brief engine** for research teams. The radar puts market context
-and news in plain language, with Traditional-Chinese key points on the Taiwan edition. The
-brief engine checks every claim against a stored source span before it ships.
+One market-intelligence workbench with two deliberately separate routes:
 
-> Bridges my fintech cluster
-> ([responsible-neobank-growth](https://github.com/rosscyking1115/responsible-neobank-growth))
-> and AI-safety cluster
-> ([agent-release-gates](https://github.com/rosscyking1115/agent-release-gates)) —
-> evidence-grounded LLM output, gated in CI. Full project map →
-> [profile](https://github.com/rosscyking1115).
+- `/` is the region-aware **Morning Market Radar** for a quick, sourced view of the trading day.
+- `/brief` is the **evidence-backed company research workspace**, where supported claims map to stored source spans and unsupported claims are flagged for human review.
 
-![Cited Market Brief Agent — overview](docs/assets/overview.svg)
+The split matters. The radar is built for scanning; the brief is the project's original cited-AI proof and remains the English audited source of record. Traditional Chinese and Korean versions of the brief are labelled reading aids.
 
-A claim that has no validated source span does not ship. The CI eval gate holds citation
-precision at ≥ 0.95 and recall at ≥ 0.90, and fails the build on any advice-boundary leak.
+![Cited Market Brief Agent — two-route architecture](docs/assets/overview.svg)
 
-> [!NOTE]
-> **Scope.** I built this as a morning market tool for a family member who invests in Taiwan.
-> It runs on free and end-of-day data (TWSE, FRED, NYT Most Popular, RSS). That is enough for
-> a daily digest; it is not a trading terminal. It is not a commercial product, and nothing it
-> produces is investment advice. See the disclaimer at the bottom.
+> [!IMPORTANT]
+> This is a research and portfolio project, not a trading terminal. It provides factual, non-personalised information and is not investment advice, a recommendation, or an offer to buy or sell a security.
 
-## Live demo
+## What is included
 
-[cited-market-brief-agent.vercel.app](https://cited-market-brief-agent.vercel.app) runs the
-whole UI on built-in demo data, with no backend and no login. Pick any region and click
-through the radar, news, ETF attribution, and the evidence brief. Deploy steps are in
-[docs/DEPLOY_DEMO.md](docs/DEPLOY_DEMO.md).
+### Morning Market Radar — `/`
 
-The full app, on live data, runs privately and is available on request.
+- Four editions selected with `?region=tw|kr|uk|eu`. A valid URL value wins over the saved preference; otherwise the app uses local storage and then the edition chooser.
+- A typed Traditional Chinese, Korean and English catalogue for the radar shell, categories, controls, market labels and limitations.
+- Seven separate scheduled regular/core sessions: Japan, Korea, Taiwan, Hong Kong, London, Xetra and New York. Each is calculated in its exchange's IANA time zone and displayed in Taipei, Seoul, London or Brussels time for the chosen edition.
+- A sourced global overnight-risk rail and finance-news feed. Korea, UK and EU localise that existing global coverage; they do not claim complete local-market feeds.
+- Taiwan-only USD/TWD context and ETF-versus-TAIEX attribution. These modules are not implied for other regions.
+- One cached news-translation batch for Traditional Chinese and Korean. If no suitable model key is configured, the English source text remains visible and is clearly marked as original-language content.
 
-## Overview
+The session clock is schedule-derived. It handles local weekdays and daylight-saving changes, but it does **not** account for exchange holidays, exceptional closures or live market state.
 
-The app has two surfaces on one page.
+### Company research workspace — `/brief`
 
-1. **Morning Market Radar** (primary, consumer). An Asia→US market clock, a FRED-backed
-   overnight-risk rail, most-read finance news over day/week/month windows with AI
-   summaries, and a Taiwan ETF-vs-benchmark attribution tool.
-2. **Evidence-backed company brief** (secondary, professional). SEC filing changes and macro
-   deltas, checked claim-by-claim against primary sources, with an exportable evidence ledger.
+- SEC filing changes and FRED/ALFRED macro deltas assembled into a cited company brief.
+- Claim-level validation maps supported statements to stored source spans, with document, section, accession and checksum evidence; unsupported statements are flagged for review.
+- An approval checklist and review states that stop unresolved claims from being presented as approved output.
+- English as the audited source of record. Traditional Chinese and Korean are optional reading aids and do not alter the reviewed English wording.
+- Markdown, PDF, PPTX and XLSX export paths that preserve review state and provenance.
 
-All four editions (Taiwan, Korea, UK, EU) render the same core radar, localised. Each then
-carries one module suited to its reader: Taiwan gets the ETF tool, the other editions get
-the evidence brief.
+The CI evaluation gate requires citation precision of at least 0.95, recall of at least 0.90 and zero advice-boundary leaks.
 
-## Screenshots
+## Verified local captures
 
-Four localised editions (English · 繁體中文 · 한국어) render the same UI. The English edition
-is shown first; the Taiwan edition adds a TWSE ETF-vs-benchmark tool.
+These images come from the deterministic frontend demo build after the full test and accessibility gates passed. The four route captures are 1440×900.
 
-| Morning radar — UK edition | Evidence ledger — UK/EU edition |
+| UK radar | Korea radar |
 | --- | --- |
-| ![UK morning radar — English hero, market clock, overnight-risk rail](docs/screenshots/radar-uk.png) | ![A claim expanded to its validated SEC source span](docs/screenshots/evidence-ledger.png) |
-| **Taiwan edition — ETF vs. TAIEX attribution** | **Taiwan edition — most-read news (day / week / month)** |
-| ![ETF vs TAIEX attribution — contributors, drags, full holdings, sector bars](docs/screenshots/etf-attribution.png) | ![Switching the 今日 / 本週 / 本月 news tabs with Traditional-Chinese key points](docs/screenshots/news-windows.gif) |
+| ![UK edition of the Morning Market Radar with London time, seven scheduled sessions and global risk indicators](docs/screenshots/radar-uk.png) | ![Korean edition of the Morning Market Radar with Korean structural copy and Seoul session times](docs/screenshots/radar-korea.png) |
+| **Taiwan radar** | **Company research workspace** |
+| ![Taiwan edition of the Morning Market Radar with Traditional Chinese structural copy and Taiwan-only ETF context](docs/screenshots/radar-taiwan.png) | ![English evidence-backed company brief workspace with audit status, source tape and reader editions](docs/screenshots/brief-workspace.png) |
 
-> From the [live demo](https://cited-market-brief-agent.vercel.app) (demo data). The same radar
-> renders in English, 繁體中文 and 한국어. Even the up/down colours follow the region: Taiwan
-> uses red for up.
+Static, repeatable Taiwan news capture:
 
-## Features
+![Taiwan market-news cards with Traditional Chinese summaries and source labels](docs/screenshots/news-taiwan.png)
 
-**Morning Market Radar**
-- Region editions in 繁體中文, 한국어 and English, picked by region. Language, market anchor
-  and copy all follow.
-- A market clock covering Japan → Korea → Taiwan → HK/China → Europe → US, with live
-  open/closed status.
-- An overnight-risk rail: VIX, USD/TWD·JPY·CNY, the broad dollar, WTI and the US 10Y, from
-  FRED (end-of-day) and Alpha Vantage (FX). Values are cached and persisted.
-- Most-read finance news from the NYT Most Popular API over cumulative 1-day, 1-week and
-  1-month windows. Finance RSS and GDELT add coverage; everything is finance-filtered.
-- Taiwan digests: each headline cut down to Traditional-Chinese key points, plus
-  today/this-week/this-month AI summaries. Best-effort and cached; it falls back to English.
+The existing [public demo](https://cited-market-brief-agent.vercel.app) is a frontend-only demo deployment and may trail this repository until a separate deployment is approved. Deployment instructions are in [docs/DEPLOY_DEMO.md](docs/DEPLOY_DEMO.md).
 
-**Taiwan ETF / fund attribution**
-- Paste or upload holdings; missing daily returns are filled from TWSE.
-- Fund vs. TAIEX active return, top contributors, biggest drags, and the full holdings table.
-- Sector (產業) allocation attribution with a diverging-bar view, refreshed daily.
+## Regional scope, without overclaiming
 
-**Evidence-backed brief engine**
-- Cited generation from SEC EDGAR filings and FRED/ALFRED macro series. The claim→span
-  validator gates what ships.
-- Click-through evidence ledger (quote, document, section, accession, checksum).
-- Change detection: filing paragraph diffs and vintage-aware macro deltas.
-- Per-section analyst review with approval gating, plus Markdown/PDF/PPTX/XLSX exports that
-  respect review state, carry the watermark, and embed the EU AI-Act Art. 50 marking.
+| Edition | Interface and clock | Data scope |
+| --- | --- | --- |
+| Taiwan | Traditional Chinese; Taipei time | Global radar plus Taiwan-specific USD/TWD and ETF attribution |
+| Korea | Korean; Seoul time | Localised view of the sourced global radar |
+| UK | English; London time | Localised view of the sourced global radar |
+| EU | English; Brussels time | Localised view of the sourced global radar |
 
-## Tech stack
+Published session hours are checked against the exchanges' primary documentation. The exact sources, public wording and retained tests are recorded in the [public claim ledger](docs/claims/claim-ledger.md).
 
-- Frontend: Next.js 16 (App Router, RSC), React 19, TypeScript, Tailwind v4 with CSS-variable tokens.
-- Backend: FastAPI on Python 3.13, SQLAlchemy 2.0, Alembic, Postgres 18 + pgvector (hybrid FTS + vector, RRF).
-- AI: LiteLLM in library mode. Anthropic for generation and summaries, OpenAI for optional embeddings.
-- Infra: Docker Compose, Caddy, Valkey, S3/MinIO.
+## Technology
 
-Design tokens come from Salt, JPMorgan Chase's open-source design system.
+- **Frontend:** Next.js 16 App Router, React 19, TypeScript and Tailwind CSS v4.
+- **Backend:** FastAPI, Python 3.13, SQLAlchemy 2, Alembic and Postgres with pgvector.
+- **Retrieval and generation:** hybrid full-text/vector retrieval with reciprocal-rank fusion; LiteLLM in library mode for configured Anthropic or OpenAI models.
+- **Infrastructure:** Docker Compose, Caddy, Valkey and S3/MinIO.
+- **Design:** a Salt-derived token system implemented locally. The project does not depend on shadcn, TanStack or TradingView components.
 
 ## Getting started
 
-> [!IMPORTANT]
-> Prerequisites: Docker, Python 3.13, Node 20+. A `SEC_USER_AGENT` is required by SEC EDGAR;
-> a `FRED_API_KEY` powers the overnight-risk rail. Everything else degrades gracefully.
+Prerequisites: Docker, Python 3.13 and Node 20+. SEC EDGAR requires a declared `SEC_USER_AGENT`; the FRED rail requires `FRED_API_KEY`. Other integrations degrade gracefully when their keys are absent.
 
 ```bash
-cp .env.example .env          # fill in SEC_USER_AGENT and FRED_API_KEY at minimum
+cp .env.example .env
 docker compose up -d db valkey minio
 
 # Backend
 cd backend
-python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 pip install -e ".[dev]"
-python scripts/bootstrap_db.py                   # pgvector extension + tables
-uvicorn app.main:app --reload                    # http://localhost:8000/docs
+python scripts/bootstrap_db.py
+uvicorn app.main:app --reload
 
-# Frontend
-cd ../frontend
+# Frontend, in another terminal
+cd frontend
 npm install
-npm run dev                                       # http://localhost:3000
+npm run dev
 ```
 
-With both running, http://localhost:3000 shows live data; without the backend it renders
-demo data so the UI always works. The frontend proxies `/api/*` to the backend, so no CORS
-setup is needed in dev.
+The frontend is available at `http://localhost:3000`; FastAPI documentation is at `http://localhost:8000/docs`. With no backend, the frontend falls back to labelled demo data.
 
-Run the brief vertical slice end to end:
+Run the brief vertical slice:
 
 ```bash
-cd backend && python scripts/demo_brief.py
+cd backend
+python scripts/demo_brief.py
 ```
 
-This ingests recent NVDA/AMD/AVGO filings plus CPI and 10Y series, generates a cited brief,
-validates every claim, and exports `brief_<id>.md` + `.manifest.json` to `.data/exports/`.
+This ingests the configured filing and macro sources, generates a cited draft, validates its claims and writes review-aware export artefacts under `.data/exports/`.
 
 ## Configuration
 
-Key environment variables (full list in `.env.example`):
+The full list is in [.env.example](.env.example). The main controls are:
 
 | Variable | Purpose |
 | --- | --- |
-| `SEC_USER_AGENT` | Required by SEC EDGAR: a declared identifying User-Agent. |
-| `FRED_API_KEY` | Overnight-risk rail and macro series. |
-| `NYT_ENABLED`, `NYT_API_KEY` | Most-read finance news (1d/1w/1m most-viewed). |
-| `BBC_RSS_ENABLED`, `GDELT_ENABLED` | Finance RSS feeds and coverage discovery. |
-| `ALPHA_VANTAGE_ENABLED`, `ALPHA_VANTAGE_API_KEY` | Live FX rates. |
-| `ANTHROPIC_API_KEY`, `GENERATION_MODEL` | Brief generation and news report summaries. |
-| `TRANSLATION_MODEL` | Traditional-Chinese key-point translation. |
-| `OPENAI_API_KEY` | Optional embeddings for hybrid retrieval. |
-| `DATABASE_URL`, `VALKEY_URL`, `S3_*` | Postgres, cache, raw source storage. |
+| `SEC_USER_AGENT` | Required identifying user agent for SEC EDGAR. |
+| `FRED_API_KEY` | Macro series and the global overnight-risk rail. |
+| `NYT_ENABLED`, `NYT_API_KEY` | NYT Most Popular headline and link data. |
+| `BBC_RSS_ENABLED`, `GDELT_ENABLED` | Latest-headline and coverage-discovery sources. |
+| `ALPHA_VANTAGE_ENABLED`, `ALPHA_VANTAGE_API_KEY` | Optional market-data pilot, including Taiwan FX context. |
+| `GENERATION_MODEL` | LiteLLM model identifier for brief generation and summaries. |
+| `TRANSLATION_MODEL` | LiteLLM model identifier for Traditional Chinese and Korean reading aids. |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | Provider keys selected according to the configured model. OpenAI also supports optional embeddings. |
+| `DATABASE_URL`, `VALKEY_URL`, `S3_*` | Database, cache and raw-source storage. |
+| `NEXT_PUBLIC_DEMO_MODE=1` | Builds the deterministic, backend-free frontend demo. |
 
-If a data-source key is missing, that source switches off and the page still renders.
+## Data and source boundaries
 
-## Deployment
+- **SEC EDGAR:** declared user agent and a maximum request rate enforced by the connector.
+- **FRED / ALFRED:** macro series and historical revisions. This project uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.
+- **NYT Most Popular:** headline and link only, with links back to the original publisher. Article bodies are not reproduced.
+- **TWSE:** end-of-day prices and classifications for the Taiwan attribution workflow.
+- **GDELT and finance RSS:** coverage discovery and latest headlines. They are never described as readership data.
+- **Exchange schedules:** JPX, KRX, TWSE, HKEX, LSE, Deutsche Börse and NYSE primary documentation, linked from the [claim ledger](docs/claims/claim-ledger.md).
 
-The staging stack (`docker-compose.staging.yml`) runs Caddy, the Next.js frontend, the
-FastAPI backend, a scheduler, a one-shot DB bootstrap, Postgres, and Valkey. Caddy serves
-the frontend and reverse-proxies `/api/*` to the backend.
-
-```bash
-dc() { docker compose --env-file .env.staging -f docker-compose.staging.yml "$@"; }
-dc build backend frontend && dc up -d
-```
-
-Put real keys in `.env.staging` (gitignored). News is prewarmed at startup and refreshed in
-the background (stale-while-revalidate), so pages never block on the live fetch + translation.
-
-## Data sources and compliance
-
-- SEC EDGAR: declared User-Agent, ≤10 req/s, enforced in `backend/app/connectors/sec_edgar.py`.
-- FRED / ALFRED: macro series and revisions. This product uses the FRED® API but is not
-  endorsed or certified by the Federal Reserve Bank of St. Louis.
-- NYT Most Popular: headline and link only, linked back to nytimes.com per the developer
-  terms. Article body text is never reproduced.
-- TWSE: end-of-day prices and industry classification for the ETF attribution.
-- GDELT and finance RSS: coverage and latest headlines, labelled as such. Neither is called
-  "most read".
-
-## Testing
+## Verification
 
 ```bash
-cd backend && python -m pytest -q            # unit + integration (116 tests)
-cd backend && python scripts/run_evals.py    # citation precision ≥0.95, recall ≥0.90, zero advice leaks
-cd frontend && npx tsc --noEmit && npx next build
+# Backend
+cd backend
+ruff check .
+ruff format --check .
+pytest -q
+python scripts/run_evals.py
+
+# Frontend
+cd frontend
+npm test
+npm run typecheck
+# PowerShell
+$env:NEXT_PUBLIC_DEMO_MODE="1"; npm run build
+# macOS/Linux
+NEXT_PUBLIC_DEMO_MODE=1 npm run build
+npm run test:e2e
 ```
 
-## Project structure
+The retained suite currently covers 122 backend tests, 29 frontend unit tests and 8 Playwright/axe browser cases. The browser matrix exercises all four editions and `/brief` at desktop, mobile and a 200%-zoom-equivalent width, across light/dark and reduced-motion modes. It also checks route separation, language metadata, keyboard/modal behaviour, horizontal overflow and serious/critical accessibility findings.
 
+To reproduce the documentation images after a verified demo-mode build:
+
+```bash
+cd frontend
+npm run capture:readme
 ```
-backend/app/
-  api/routes/        health, watchlists, ingest, briefs, market-radar, fund-attribution
-  connectors/        SEC EDGAR, FRED, NYT, GDELT, finance RSS, TWSE, Alpha Vantage
-  ingestion/         structure-aware filing parser (char spans), pipeline
-  rag/               embeddings (optional), hybrid FTS+vector retrieval, RRF
-  briefs/            cited generator + offline fallback, claim→span validator, exports
-  market_radar/      clock, overnight risk, news assembly + translation + summaries
-  fund_attribution/  holdings parsing, fund/sector attribution, daily refresh
-  storage/ db/ services/   raw source store, SQLAlchemy models, append-only audit log
+
+## Project map
+
+```text
 frontend/
-  app/components/    radar dashboard, hero, ETF tool, evidence ledger, brief canvas
-  lib/               api client, region profiles, radar i18n
-docs/                design system, security posture, architecture and deploy guides
+  app/page.tsx             Morning Market Radar route
+  app/brief/page.tsx       company research workspace route
+  app/components/          shared navigation and route-specific interfaces
+  lib/radar-i18n.ts        typed regional catalogue
+  lib/demo-data.ts         deterministic demo fixtures
+  e2e/                     regional, route and accessibility matrix
+
+backend/app/
+  market_radar/            session schedules, risk data, news and translations
+  briefs/                  generation, validation, review and reading aids
+  connectors/              SEC, FRED, news, TWSE and optional market data
+  fund_attribution/        Taiwan holdings and benchmark attribution
+  rag/                     hybrid retrieval
+
+docs/
+  claims/claim-ledger.md   public claims, limitations, sources and retained evidence
+  adr/                     architecture decisions
+  screenshots/             deterministic README captures
 ```
 
-> [!WARNING]
-> Factual, cited, non-personalised. Not investment advice, not a recommendation, and not an
-> offer to buy or sell any security. AI-assisted content; human review is required before any
-> external use.
+## Licence and disclaimer
+
+The code is available under the [MIT licence](LICENSE).
+
+Outputs are AI-assisted and require human review before external use. They are factual and non-personalised, not investment advice, not a recommendation and not an offer to buy or sell any security.

@@ -5,35 +5,35 @@
 
   <!-- header -->
   <text x="48" y="66" font-size="34" font-weight="700" fill="#16202e">Cited Market Brief Agent</text>
-  <text x="48" y="96" font-size="16" fill="#5b6b7d">Region-aware Morning Market Radar · audit-ready evidence briefs · one web app</text>
+  <text x="48" y="96" font-size="16" fill="#5b6b7d">One research workbench · two focused routes · claims bounded by retained evidence</text>
 
   <!-- two surfaces -->
   <!-- Surface A: radar -->
   <rect x="48" y="124" width="536" height="216" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
   <rect x="48" y="124" width="6" height="216" rx="3" fill="#1f5c8f"/>
-  <text x="76" y="156" font-size="12" font-weight="700" letter-spacing="1.2" fill="#1f5c8f">PRIMARY · CONSUMER</text>
+  <text x="76" y="156" font-size="12" font-weight="700" letter-spacing="1.2" fill="#1f5c8f">ROUTE / · REGION-AWARE RADAR</text>
   <text x="76" y="184" font-size="22" font-weight="700" fill="#16202e">Morning Market Radar</text>
   <g font-size="15" fill="#3c4a5a">
-    <circle cx="82" cy="214" r="3" fill="#4e9bd6"/><text x="96" y="219">Asia → US market clock + overnight-risk rail (FRED)</text>
-    <circle cx="82" cy="244" r="3" fill="#4e9bd6"/><text x="96" y="249">Most-read finance news — day / week / month</text>
-    <circle cx="82" cy="274" r="3" fill="#4e9bd6"/><text x="96" y="279">Traditional-Chinese key points + AI summaries</text>
-    <circle cx="82" cy="304" r="3" fill="#4e9bd6"/><text x="96" y="309">Taiwan ETF-vs-TAIEX attribution</text>
+    <circle cx="82" cy="214" r="3" fill="#4e9bd6"/><text x="96" y="219">Seven scheduled exchange sessions in their own time zones</text>
+    <circle cx="82" cy="244" r="3" fill="#4e9bd6"/><text x="96" y="249">Source-linked finance news — day / week / month</text>
+    <circle cx="82" cy="274" r="3" fill="#4e9bd6"/><text x="96" y="279">Traditional Chinese / Korean cached reading aids</text>
+    <circle cx="82" cy="304" r="3" fill="#4e9bd6"/><text x="96" y="309">Taiwan-only FX context + ETF-vs-TAIEX attribution</text>
   </g>
 
   <!-- Surface B: brief -->
   <rect x="616" y="124" width="536" height="216" rx="12" fill="#ffffff" stroke="#dbe3ec"/>
   <rect x="616" y="124" width="6" height="216" rx="3" fill="#7e8d9e"/>
-  <text x="644" y="156" font-size="12" font-weight="700" letter-spacing="1.2" fill="#6b7888">SECONDARY · PROFESSIONAL</text>
+  <text x="644" y="156" font-size="12" font-weight="700" letter-spacing="1.2" fill="#6b7888">ROUTE /BRIEF · RESEARCH WORKSPACE</text>
   <text x="644" y="184" font-size="22" font-weight="700" fill="#16202e">Evidence-backed Brief</text>
   <g font-size="15" fill="#3c4a5a">
     <circle cx="650" cy="214" r="3" fill="#7e8d9e"/><text x="664" y="219">SEC filing diffs + vintage-aware macro deltas</text>
-    <circle cx="650" cy="244" r="3" fill="#7e8d9e"/><text x="664" y="249">Every claim validated against a stored source span</text>
-    <circle cx="650" cy="274" r="3" fill="#7e8d9e"/><text x="664" y="279">Click-through evidence ledger</text>
+    <circle cx="650" cy="244" r="3" fill="#7e8d9e"/><text x="664" y="249">Every claim checked; unsupported claims are flagged</text>
+    <circle cx="650" cy="274" r="3" fill="#7e8d9e"/><text x="664" y="279">English source of record + labelled reading aids</text>
     <circle cx="650" cy="304" r="3" fill="#7e8d9e"/><text x="664" y="309">Markdown / PDF / PPTX / XLSX exports</text>
   </g>
 
   <!-- regions -->
-  <text x="48" y="386" font-size="13" font-weight="700" letter-spacing="1.2" fill="#6b7888">FOUR EDITIONS · ONE UNIFIED UI</text>
+  <text x="48" y="386" font-size="13" font-weight="700" letter-spacing="1.2" fill="#6b7888">FOUR RADAR EDITIONS · GLOBAL DATA LOCALISED WITHOUT OVERCLAIMING</text>
   <g font-size="15" fill="#16202e">
     <rect x="48" y="400" width="150" height="40" rx="20" fill="#eef3f8" stroke="#cdd9e6"/><text x="123" y="425" text-anchor="middle">🇹🇼 Taiwan · 繁中</text>
     <rect x="214" y="400" width="150" height="40" rx="20" fill="#eef3f8" stroke="#cdd9e6"/><text x="289" y="425" text-anchor="middle">🇰🇷 Korea · 한국어</text>

@@ -99,11 +99,15 @@ export type ChangesPayload = {
 };
 
 export type MarketStatus = "not_open" | "open" | "lunch" | "closed" | "weekend";
+export type MarketId = "jpx" | "krx" | "twse" | "hkex" | "lse" | "xetra" | "nyse";
 export type SnapshotTone = "up" | "down" | "flat" | "pending";
 export type NewsRankKind = "most_read" | "most_viewed" | "most_covered" | "trending" | "latest";
 export type NewsSourceStatus = "official_api" | "rss" | "licensed" | "planned" | "manual_reference";
 
 export type MarketClockItem = {
+  market_id: MarketId;
+  time_zone: string;
+  sessions: { opens_at: string; closes_at: string }[];
   market: string;
   label: string;
   window: string;
@@ -131,6 +135,7 @@ export type PopularNewsItem = {
   rank: number;
   title: string;
   title_zh_hant: string;
+  title_ko?: string | null;
   source: string;
   url: string | null;
   published_at: string | null;
@@ -142,6 +147,7 @@ export type PopularNewsItem = {
   rights_note: string;
   summary?: string | null;
   summary_zh?: string | null;
+  summary_ko?: string | null;
 };
 
 export type OvernightRiskItem = {

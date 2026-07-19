@@ -9,7 +9,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "capture:readme": "playwright test --config=playwright.capture.config.ts"
   },
   "dependencies": {
     "next": "16.2.7",
@@ -17,6 +19,8 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22",
     "@types/react": "^19",

@@ -4,13 +4,19 @@ import { useEffect, useState } from "react";
 
 type TextSize = "normal" | "large" | "xl";
 
-const OPTIONS: { size: TextSize; label: string; title: string }[] = [
-  { size: "normal", label: "A", title: "Normal text" },
-  { size: "large", label: "A+", title: "Large text" },
-  { size: "xl", label: "A++", title: "Extra large text" },
+const OPTIONS: { size: TextSize; label: string }[] = [
+  { size: "normal", label: "A" },
+  { size: "large", label: "A+" },
+  { size: "xl", label: "A++" },
 ];
 
-export default function TextSizeToggle() {
+export default function TextSizeToggle({
+  label = "Text size",
+  optionTitles = { normal: "Normal text", large: "Large text", xl: "Extra large text" },
+}: {
+  label?: string;
+  optionTitles?: Record<TextSize, string>;
+}) {
   const [size, setSize] = useState<TextSize>("normal");
 
   useEffect(() => {
@@ -29,18 +35,19 @@ export default function TextSizeToggle() {
   return (
     <div
       className="flex rounded-(--radius-ctl) border border-elevated p-0.5"
-      aria-label="Text size"
+      role="group"
+      aria-label={label}
     >
       {OPTIONS.map((option) => (
         <button
           key={option.size}
           type="button"
           onClick={() => choose(option.size)}
-          title={option.title}
+          title={optionTitles[option.size]}
           aria-pressed={size === option.size}
           className={`min-h-7 min-w-8 rounded-(--radius-ctl) px-1.5 font-mono text-[11px] transition-colors ${
             size === option.size
-              ? "bg-action text-white"
+              ? "bg-action text-on-action"
               : "text-neutral-70 hover:bg-card hover:text-neutral-30"
           }`}
         >
