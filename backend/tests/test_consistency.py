@@ -54,14 +54,15 @@ def test_modal_and_lowercase_month_words_are_not_period_references(text: str) ->
     """Hedging language must not be read as a date.
 
     "may" is the commonest modal verb in filing prose, and a claim it wrongly
-    flags never exports. Three defences stack: the month must be capitalised as
-    a proper noun, its neighbour must be day- or year-shaped, and a duration
-    noun after the number disqualifies it.
+    flags never exports. Two defences: the month must be capitalised as a proper
+    noun, and a year must be present unless the day precedes the month.
 
     These cases are enumerated from the DEFECT CLASS — modal with and without a
     following number, comma-separated, enumerations, percentages, durations —
     not from the examples in any one review. The first cut of this fix passed a
-    battery drawn from a reviewer's report and still failed half the class.
+    battery drawn from a reviewer's report and still failed half the class; see
+    test_capitalised_modal_with_a_number_is_not_a_date for the other side of the
+    boundary, which that cut left unprobed.
     """
     assert claim_periods(text) == set()
 
@@ -242,3 +243,70 @@ def test_unambiguous_filing_locators_are_always_removed() -> None:
     assert claim_numbers("Reported in Item 8.01 of the filing.") == set()
     assert claim_numbers("Attached as Exhibit 99.1.") == set()
     assert claim_numbers("See Annex 2 for detail.") == set()
+
+
+# --------------------------------------------------------------------------
+# Boundaries created by the case-sensitivity defence itself
+#
+# The previous cut of this battery tested only LOWERCASE modal constructions —
+# it guarded the defence but not the boundary the defence introduced. These
+# cases come from the other side: a CAPITALISED "May" in modal position, which
+# is where defence 1 cannot help and defence 2 has to carry the weight.
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Title-case body prose — capitalised modal AND capitalised measure word
+        "The Company May 30 Days After Closing Request An Increase.",
+        "Revenue May 15 Times Higher Than Guidance.",
+        # Measure words no blocklist would reliably enumerate
+        "The Company May 30 basis points reduce the margin.",
+        "Costs May 12 percentage points exceed plan.",
+        "The facility May 5 times be extended.",
+        # Sentence-initial modal, where capitalisation carries no information
+        "May 30 days elapse before the notice takes effect.",
+        "May 15 lenders participate in the syndicate.",
+    ],
+)
+def test_capitalised_modal_with_a_number_is_not_a_date(text: str) -> None:
+    """A year is required, so none of these can be read as a date.
+
+    This is why the duration-noun blocklist was removed: it had to enumerate
+    every measure word English might use, and review escaped it twice in a
+    minute. Requiring a year is structural and subsumes the class.
+    """
+    assert claim_periods(text) == set()
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("The agreement was signed May 3, 2026.", {"may"}),
+        ("The agreement was signed May 3rd, 2026.", {"may"}),
+        ("dated as of April 29, 2022", {"april"}),
+        ("the quarter ended 3 May", {"may"}),
+        ("reported for May 2026", {"may"}),
+    ],
+)
+def test_genuine_dates_still_resolve_after_the_year_requirement(text: str, expected: set[str]) -> None:
+    assert claim_periods(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "MAY 3, 2026 WAS THE CLOSING DATE.",  # all-caps
+        "The agreement was signed May 3.",  # bare month + day, no year
+        "reported for may 2026",  # lowercase month
+    ],
+)
+def test_known_temporal_blind_spots_are_pinned(text: str) -> None:
+    """Documented capability losses, all in the safe (false-acceptance) direction.
+
+    Pinned rather than left implicit so that closing one is a visible change
+    rather than an accident. Recorded in the Limits section of
+    docs/EVAL_METHODOLOGY.md.
+    """
+    assert claim_periods(text) == set()

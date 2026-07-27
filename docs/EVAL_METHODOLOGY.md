@@ -296,12 +296,21 @@ a wrong return type and that the perimeter still names the critical modules.
   superlatives, spelled-out quantities, entity substitution and vintage
   attribution all pass today.
 - **The temporal rule's date-shape requirement costs real detection, and the
-  cost is not visible in either score.** A wrong-month claim that omits the year
-  ("the index for May stood at 334.5", cited to a span saying June 2026) is no
-  longer caught; with the year it is. The requirement exists because the month
-  "May" collides with the commonest modal verb in filing prose, and a bare-month
-  rule flagged properly-cited hedged claims — a false rejection, which is the
-  worse direction. The trade is deliberate and it is a loss, not a free fix.
+  cost is not visible in either score.** Three losses, all deliberate, all in
+  the false-acceptance direction, and all pinned by
+  `backend/tests/test_consistency.py`:
+  a wrong-month claim that omits the year ("the index for May stood at 334.5",
+  cited to a span saying June 2026); a bare "May 3" with no year; and any date
+  written in ALL-CAPS, since the month must be capitalised as a proper noun and
+  not merely upper-cased. The requirement exists because "May" collides with the
+  commonest modal verb in filing prose, and a bare-month rule flagged
+  properly-cited hedged claims — a false rejection, which is the worse
+  direction. It is a loss, not a free fix.
+  An earlier version instead blocklisted duration nouns after the number
+  ("not followed by days/weeks/percent"). That was the wrong shape: it had to
+  enumerate every measure word English might use, and review escaped it twice in
+  a minute ("May 15 Times Higher", "May 30 basis points"). Requiring a year is
+  structural rather than enumerative and subsumes the class.
 - **The numeric rule ignores tokens it classifies as identifiers or locators.**
   Accession numbers, zero-padded CIKs and filing locators ("Item 8.01") are
   skipped on the claim side. ISO dates are deliberately NOT skipped — treating

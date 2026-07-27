@@ -48,32 +48,38 @@ _MONTH_NAMES = "January|February|March|April|May|June|July|August|September|Octo
 
 #: A month counts as a PERIOD REFERENCE only when it is written as a DATE.
 #:
-#: Three defences stack, because "may" is both a month and the commonest modal
-#: verb in filing prose, and a bare-month rule rejected any hedged claim whose
-#: evidence happened not to contain the word:
+#: Two defences, because "may" is both a month and the commonest modal verb in
+#: filing prose, and a bare-month rule rejected any hedged claim whose evidence
+#: happened not to contain the word:
 #:
 #: 1. CASE-SENSITIVE. The month is a proper noun ("May 2026"); the modal is not
-#:    ("the Company may"). This alone removes almost all of the collision. It is
-#:    the signal `re.IGNORECASE` was throwing away.
-#: 2. DATE-SHAPED NEIGHBOUR. A day (1-31) or a year (19xx/20xx) — not any
-#:    1-4 digit run. "may 60 days" and "may 10%" are not dates.
-#: 3. NO DURATION NOUN AFTER IT. "May 30 days after the Closing Date" is a
-#:    notice period, not a date.
+#:    ("the Company may"). This is the signal `re.IGNORECASE` was throwing away.
+#: 2. A YEAR IS REQUIRED unless the day precedes the month. So "May 2026",
+#:    "May 3, 2026" and "29 April" qualify; a bare "Month + number" does not.
 #:
-#: Defences 2 and 3 exist because case alone fails on a sentence-initial modal.
+#: Defence 2 replaced an earlier duration-noun blocklist ("not followed by
+#: days/weeks/percent"). The blocklist was the wrong shape: it had to enumerate
+#: every measure word English might put after a number, and review escaped it
+#: twice in a minute ("May 15 Times Higher", "May 30 basis points"). Requiring a
+#: year is structural rather than enumerative, and it subsumes the whole class —
+#: "The Company May 30 Days After Closing" carries no year and cannot match.
+#:
 #: There is no comma alternative between month and number: a date writes
 #: "May 3, 2026" (comma after the day), never "May, 30".
+#:
+#: The costs are two, both in the safe direction and both recorded in the
+#: Limits section of docs/EVAL_METHODOLOGY.md: a bare "May 3" with no year is
+#: not detected, and neither is a date in ALL-CAPS text.
 _DAY = r"(?:0?[1-9]|[12]\d|3[01])"
 _YEAR = r"(?:19|20)\d{2}"
-_NOT_A_DURATION = r"(?!\s*(?:days?|weeks?|months?|years?|business|calendar|percent|%))"
 
 _MONTH_IN_DATE = re.compile(
-    # 29 April, 3rd May
+    # 29 April, 3rd May — the day precedes, so no modal reading is possible
     rf"\b{_DAY}(?:st|nd|rd|th)?\s+({_MONTH_NAMES})\b"
     # May 2026
     rf"|\b({_MONTH_NAMES})\s+{_YEAR}\b"
-    # May 3 / May 3, 2026 — but not "May 30 days"
-    rf"|\b({_MONTH_NAMES})\s+{_DAY}\b{_NOT_A_DURATION}"
+    # May 3, 2026 — day then year, comma optional
+    rf"|\b({_MONTH_NAMES})\s+{_DAY}(?:st|nd|rd|th)?,?\s+{_YEAR}\b"
 )
 
 #: ISO dates are DATES, not identifiers: "2026-07-04" asserts a specific
