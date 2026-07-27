@@ -299,10 +299,17 @@ a wrong return type and that the perimeter still names the critical modules.
   cost is not visible in either score.** Three losses, all deliberate, all in
   the false-acceptance direction, and all pinned by
   `backend/tests/test_consistency.py`:
-  a wrong-month claim that omits the year ("the index for May stood at 334.5",
-  cited to a span saying June 2026); a bare "May 3" with no year; and any date
-  written in ALL-CAPS, since the month must be capitalised as a proper noun and
-  not merely upper-cased. The requirement exists because "May" collides with the
+  a bare "May 3" with no year; any date written in ALL-CAPS or lower-case, since
+  the month must be in canonical capitalisation; and — the one that matters most
+  — **any date whose year is not immediately adjacent to the month**. "May of
+  2026", "May, 2026" and "May and June 2026" all carry a year and none is
+  detected. The last is the sharp case: a claim that widens the period it covers
+  ("revenue rose in May and June 2026", cited to a span about June alone) adds a
+  month the evidence does not support and is not rejected.
+  An earlier version of this note said the loss was "a date with no year", which
+  was narrower than the behaviour — the year must be adjacent, not merely
+  present. That gap was found in review, not by either corpus: both contain zero
+  months that are not immediately followed by a digit. The requirement exists because "May" collides with the
   commonest modal verb in filing prose, and a bare-month rule flagged
   properly-cited hedged claims — a false rejection, which is the worse
   direction. It is a loss, not a free fix.

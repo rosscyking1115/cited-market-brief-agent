@@ -310,3 +310,84 @@ def test_known_temporal_blind_spots_are_pinned(text: str) -> None:
     docs/EVAL_METHODOLOGY.md.
     """
     assert claim_periods(text) == set()
+
+
+# --------------------------------------------------------------------------
+# Systematic date-shape classification
+#
+# Every previous round of this module ended the same way: a new defence landed,
+# and the boundary THAT defence created was the thing left untested. Three
+# rounds, three times, each caught by a reviewer rather than by the suite.
+#
+# A hand-picked list cannot end that pattern, because the cases you think to
+# write are the ones you already understand. This enumerates the cross-product
+# of date shape x letter case instead, and declares the expected classification
+# for every cell. A rule change that moves any cell fails here — including the
+# cells nobody thought to worry about.
+# --------------------------------------------------------------------------
+
+_MONTHS = ("January February March April May June July August September October November December").split()
+
+#: shape -> is it recognised as a period reference, in canonical capitalisation?
+#: False entries are DELIBERATE losses, each recorded in the Limits section of
+#: docs/EVAL_METHODOLOGY.md. They are not aspirations; changing one to True
+#: means the rule changed and the disclosure must change with it.
+DATE_SHAPES = {
+    "{m} {y}": True,  # May 2026
+    "{m} {d}, {y}": True,  # May 3, 2026
+    "{m} {d} {y}": True,  # May 3 2026
+    "{m} {o}, {y}": True,  # May 3rd, 2026
+    "{d} {m} {y}": True,  # 3 May 2026
+    "{o} {m} {y}": True,  # 3rd May 2026
+    "{d} {m}": True,  # 3 May — day first, no modal reading possible
+    "{m} {d}": False,  # May 3 — indistinguishable from "may 3 times"
+    "{m} of {y}": False,  # May of 2026 — year not adjacent
+    "{m}, {y}": False,  # May, 2026 — year not adjacent
+    "{m} in fiscal {y}": False,  # year not adjacent
+    "{m}": False,  # bare month
+}
+
+
+def _render(shape: str, month: str) -> str:
+    return shape.format(m=month, d="3", o="3rd", y="2026")
+
+
+@pytest.mark.parametrize("shape,recognised", sorted(DATE_SHAPES.items()))
+@pytest.mark.parametrize("month", _MONTHS)
+def test_date_shape_classification_is_uniform_across_months(shape: str, recognised: bool, month: str) -> None:
+    """Every month behaves identically. No month is special-cased, including May."""
+    text = f"Revenue rose in {_render(shape, month)} on strong demand."
+    detected = month.lower() in claim_periods(text)
+    assert detected is recognised, (
+        f"shape {shape!r} with {month}: expected recognised={recognised}, got {detected}. "
+        "If the rule changed deliberately, update DATE_SHAPES and the Limits section "
+        "of docs/EVAL_METHODOLOGY.md together."
+    )
+
+
+@pytest.mark.parametrize("shape", sorted(DATE_SHAPES))
+@pytest.mark.parametrize("transform", ["lower", "upper"], ids=["lowercase", "ALLCAPS"])
+def test_no_date_shape_is_recognised_outside_canonical_capitalisation(shape: str, transform: str) -> None:
+    """Case-sensitivity is what separates the month May from the modal "may".
+
+    The cost is that lowercase and ALL-CAPS dates are invisible, uniformly and
+    for every shape. That is a deliberate loss in the false-acceptance
+    direction, pinned here so that closing it is a visible change.
+    """
+    rendered = _render(shape, "May")
+    text = f"Revenue rose in {getattr(rendered, transform)()} on strong demand."
+    assert claim_periods(text) == set()
+
+
+def test_a_month_range_hides_the_month_the_evidence_lacks() -> None:
+    """ "May and June 2026" resolves only June — the added month escapes.
+
+    Found in review. The Limits section said the loss was "a date with no year",
+    which was narrower than the behaviour: the year must be ADJACENT. A claim
+    that widens the period it covers is not rejected.
+    """
+    assert claim_periods("Revenue rose in May and June 2026.") == {"june"}
+
+    claim = _claim("Revenue rose in May and June 2026.")
+    span = "The CPI-U index for June 2026 stood at 334.5."
+    assert check_claim_consistency(claim, span) == [], "documented blind spot; see Limits"
