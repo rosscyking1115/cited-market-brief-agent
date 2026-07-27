@@ -59,12 +59,16 @@ def apply_guardrails(claims: list[GeneratedClaim], validations: list[ClaimValida
         claim = claims[v.claim_index]
         flags = scan_text(claim.text)
         if flags:
+            # Keep any consistency reason the validator already recorded: a
+            # claim can fail both, and dropping rule 5's diagnostic loses the
+            # only clue about why the citation was wrong.
+            advice = f"advice-boundary: {', '.join(flags)}"
             out.append(
                 replace(
                     v,
                     support_status="flagged",
                     needs_review=True,
-                    reason=f"advice-boundary: {', '.join(flags)}",
+                    reason=f"{advice}; {v.reason}" if v.reason else advice,
                 )
             )
         else:

@@ -1,0 +1,324 @@
+{
+  "corpus_version": "1.0.0-holdout",
+  "labelling": {
+    "annotator": "claude-opus-5 (single annotator, unreviewed)",
+    "labelled_on": "2026-07-27",
+    "inter_annotator_agreement": null,
+    "limits": "Single-annotator ground truth, same annotator as the development corpus. HELD OUT: authored after the consistency rules in app/briefs/consistency.py were written and frozen, over documents and sections the development corpus never used, and scored exactly once. That guards against tuning the checker to the fixture. It does NOT guard against a blind spot shared by the checker's author and the corpus's author, because they are the same author — this is a held-out test set, not an independent replication.",
+    "label_definition": "label = does the CITED SPAN, on its own, support the claim as written? Not 'is the claim true' — that is world_truth.",
+    "world_truth_definition": "true = holds according to the corpus taken as a whole; false = contradicted by the corpus; unknown = not determinable from the corpus.",
+    "design": "Distribution fixed before any measurement: 8 supported, 8 not-supported whose defect is a wrong quantity or period (the shapes the frozen rules target), and 11 not-supported whose defect is semantic (the shapes no lexical rule reaches). The point is to find out whether the rules generalise beyond the corpus they were built against, and to size the residual honestly."
+  },
+  "claims": [
+    {
+      "claim_id": "ho-sup-revolver",
+      "text": "AMD's new credit agreement provides for a five-year, $5.0 billion unsecured revolving credit facility.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "The Credit Agreement provides for a five-year, $5.0 billion unsecured revolving credit facility",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Term and amount both stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-lc-cap",
+      "text": "Up to $250 million of the Revolving Facility may be used for the issuance of letters of credit.",
+      "cited_span_ids": ["ho-amd-letters-of-credit"],
+      "evidence_quote": "Up to $250 million of the Revolving Facility may be utilized for the issuance of letters of credit.",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Near-verbatim restatement of the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-no-borrowings",
+      "text": "As of the Closing Date there were no borrowings outstanding under the Revolving Facility.",
+      "cited_span_ids": ["ho-amd-letters-of-credit"],
+      "evidence_quote": "As of the Closing Date, there are no borrowings outstanding under the Revolving Facility.",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-agent",
+      "text": "JPMorgan Chase Bank, N.A. is the administrative agent under the credit agreement AMD entered into in May 2026.",
+      "cited_span_ids": ["ho-amd-credit-agreement"],
+      "evidence_quote": "JPMorgan Chase Bank, N.A., as administrative agent",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Agent and date both stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-replaces-2022",
+      "text": "The new facility replaces AMD's existing credit agreement dated as of April 29, 2022.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "existing Credit Agreement dated as of April 29, 2022",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Date and replacement both stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-tender-launch",
+      "text": "Broadcom announced the launch of cash tender offers for certain of its debt securities on June 11, 2026.",
+      "cited_span_ids": ["ho-avgo-tender-offer"],
+      "evidence_quote": "On June 11, 2026, Broadcom Inc. issued a press release announcing the launch of cash tender offers for certain of its debt securities.",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Verbatim restatement of the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-avgo-semis-oi",
+      "text": "Broadcom semiconductor solutions segment operating income increased for the fiscal quarter ended May 3, 2026, on demand for networking solutions.",
+      "cited_span_ids": ["ho-avgo-semis-operating-income"],
+      "evidence_quote": "Operating income from our semiconductor solutions segment increased for the fiscal quarter and two fiscal quarters ended May 3, 2026",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Direction, period and driver all stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-sup-cpi-march",
+      "text": "The CPI-U index for March 2026 stood at 330.293.",
+      "cited_span_ids": ["ho-fred-cpiaucsl-v20260612"],
+      "evidence_quote": "2026-03-01: 330.293",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Observation present in the cited vintage.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+
+    {
+      "claim_id": "ho-neg-revolver-amount",
+      "text": "AMD's new revolving credit facility totals $7.5 billion.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "The Credit Agreement provides for a five-year, $5.0 billion unsecured revolving credit facility",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "numeric_alteration",
+      "rationale": "The span says $5.0 billion.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-lc-amount",
+      "text": "Up to $500 million of the Revolving Facility may be used for letters of credit.",
+      "cited_span_ids": ["ho-amd-letters-of-credit"],
+      "evidence_quote": "Up to $250 million of the Revolving Facility may be utilized for the issuance of letters of credit.",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "numeric_alteration",
+      "rationale": "The span says $250 million, and the quote carried contradicts the claim.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-wrong-month",
+      "text": "AMD entered into the Credit Agreement in June 2026.",
+      "cited_span_ids": ["ho-amd-credit-agreement"],
+      "evidence_quote": "entered into a Credit Agreement with the lenders named therein",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "temporal_shift",
+      "rationale": "The span dates the agreement to May 14, 2026.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-tender-date",
+      "text": "Broadcom announced the tender offers on June 12, 2026.",
+      "cited_span_ids": ["ho-avgo-tender-offer"],
+      "evidence_quote": "issued a press release announcing the launch of cash tender offers",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "temporal_shift",
+      "rationale": "The span says June 11, 2026.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-cpi-value",
+      "text": "The CPI-U index for March 2026 stood at 331.293.",
+      "cited_span_ids": ["ho-fred-cpiaucsl-v20260612"],
+      "evidence_quote": "2026-03-01: 330.293",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "numeric_alteration",
+      "rationale": "One digit changed against a quote that contradicts it.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-dgs10-wrong-month",
+      "text": "The 10-year Treasury yield averaged 4.47% during July 2026.",
+      "cited_span_ids": ["ho-fred-dgs10-v20260611"],
+      "evidence_quote": "2026-06-04: 4.47",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "temporal_shift",
+      "rationale": "The cited vintage ends on 2026-06-10 and contains no July observations.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-tbu-wells-fargo-old-agreement",
+      "text": "Wells Fargo Bank, National Association was administrative agent under AMD's existing credit agreement dated as of April 29, 2022.",
+      "cited_span_ids": ["ho-amd-credit-agreement"],
+      "evidence_quote": "entered into a Credit Agreement with the lenders named therein",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "True per ho-amd-revolver-terms. The cited span names JPMorgan as agent for the NEW agreement and says nothing about the 2022 one.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-tbu-lc-cap-wrong-span",
+      "text": "Up to $250 million of the facility may be used for letters of credit.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "The proceeds of any borrowings under the Revolving Facility may be used for general corporate purposes.",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "True per ho-amd-letters-of-credit, which is not cited. The cited span carries no letter-of-credit sublimit.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+
+    {
+      "claim_id": "ho-neg-facility-term-words",
+      "text": "The revolving facility has a three-year term.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "The Credit Agreement provides for a five-year, $5.0 billion unsecured revolving credit facility",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "spelled_number",
+      "rationale": "The span says five-year. The wrong quantity is spelled out rather than written in digits, so a numeric-literal rule cannot see it.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-wrong-agent",
+      "text": "Wells Fargo Bank is the administrative agent under AMD's new credit agreement.",
+      "cited_span_ids": ["ho-amd-credit-agreement"],
+      "evidence_quote": "JPMorgan Chase Bank, N.A., as administrative agent",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "wrong_entity",
+      "rationale": "The cited span names JPMorgan. No quantity or period differs, so only entity comparison could catch it.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-borrowed",
+      "text": "AMD borrowed $5.0 billion under the new revolving facility.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "The Credit Agreement provides for a five-year, $5.0 billion unsecured revolving credit facility",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "modal_strength",
+      "rationale": "A facility being provided is not a drawdown. The amount matches the span exactly, which is what makes it invisible to a quantity check.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-lc-issued",
+      "text": "AMD issued $250 million of letters of credit under the Revolving Facility.",
+      "cited_span_ids": ["ho-amd-letters-of-credit"],
+      "evidence_quote": "Up to $250 million of the Revolving Facility may be utilized for the issuance of letters of credit.",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "modal_strength",
+      "rationale": "'may be utilized' up to a cap is not 'issued', and the same span states there are no borrowings outstanding.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-tender-completed",
+      "text": "Broadcom completed cash tender offers for certain of its debt securities on June 11, 2026.",
+      "cited_span_ids": ["ho-avgo-tender-offer"],
+      "evidence_quote": "On June 11, 2026, Broadcom Inc. issued a press release announcing the launch of cash tender offers for certain of its debt securities.",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "modal_strength",
+      "rationale": "Announcing the launch of a tender offer is not completing it. Date and issuer both match the span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-tbu-agent-wrong-span",
+      "text": "JPMorgan Chase Bank, N.A. serves as administrative agent under the Credit Agreement.",
+      "cited_span_ids": ["ho-amd-letters-of-credit"],
+      "evidence_quote": "Subject to the terms of the Credit Agreement, the Company may borrow, repay and reborrow revolving loans",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "True per ho-amd-credit-agreement, which is not cited. The cited span never names the agent, and the claim carries no quantity or period to compare.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-tbu-no-borrowings-wrong-span",
+      "text": "There were no borrowings outstanding under the Revolving Facility as of the Closing Date.",
+      "cited_span_ids": ["ho-amd-revolver-terms"],
+      "evidence_quote": "The proceeds of any borrowings under the Revolving Facility may be used for general corporate purposes.",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "True per ho-amd-letters-of-credit, which is not cited. The cited span discusses permitted use of proceeds, not outstanding balances.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-tbu-cpi-vintage",
+      "text": "The CPI-U index for March 2026 stood at 330.293 in the 2026-06-11 vintage.",
+      "cited_span_ids": ["ho-fred-cpiaucsl-v20260612"],
+      "evidence_quote": "2026-03-01: 330.293",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "vintage_mismatch",
+      "rationale": "The value is right and the 2026-06-11 vintage does carry it, but the CITED span is the 2026-06-12 vintage and cannot attest to what an earlier vintage said. Vintage attribution is the whole point of a point-in-time macro store.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-tbu-avgo-oi-partial",
+      "text": "Broadcom semiconductor solutions segment operating income increased on demand for custom AI accelerators, while infrastructure software carries a higher gross margin.",
+      "cited_span_ids": ["ho-avgo-semis-operating-income"],
+      "evidence_quote": "primarily custom AI accelerators and AI networking products",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "partial_support",
+      "rationale": "The first half is supported by the cited span. The gross-margin comparison is true but lives in a different span that is not cited.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-avgo-oi-cause",
+      "text": "Broadcom semiconductor solutions operating income rose because of higher pricing on infrastructure software.",
+      "cited_span_ids": ["ho-avgo-semis-operating-income"],
+      "evidence_quote": "Operating income from our semiconductor solutions segment increased",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "causal_swap",
+      "rationale": "The span attributes the increase to demand for networking solutions and custom AI accelerators.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-dgs10-superlative",
+      "text": "The 10-year Treasury yield reached its highest level of the year on June 8, 2026.",
+      "cited_span_ids": ["ho-fred-dgs10-v20260611"],
+      "evidence_quote": "2026-06-08: 4.56",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "unsupported_superlative",
+      "rationale": "The cited vintage covers roughly three weeks and cannot support a claim about the year.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "ho-neg-dc-segment-addition",
+      "text": "AMD's Data Center segment includes FPGAs and quantum processing units.",
+      "cited_span_ids": ["ho-amd-datacenter-scope"],
+      "evidence_quote": "Field Programmable Gate Arrays (FPGAs)",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "fabricated_addition",
+      "rationale": "The span lists the segment's products and quantum processing units are not among them. The claim appends a fabricated item to an otherwise accurate list, with no quantity or period to compare.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    }
+  ]
+}

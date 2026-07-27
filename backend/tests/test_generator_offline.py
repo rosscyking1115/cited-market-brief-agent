@@ -19,11 +19,22 @@ PACK = [
 
 
 def test_offline_brief_is_citation_perfect() -> None:
+    """Citation-perfect BY CONSTRUCTION — this is a smoke check, not a measurement.
+
+    Labels are passed alongside the span texts because the deterministic
+    generator prefixes each claim with its document label, so the accession
+    number is part of the claim. Without the labels the validator's consistency
+    rule would treat the accession digits as an uncited quantity and reject a
+    claim that is in fact fully cited.
+    """
     brief = generate_deterministic("demo", PACK)
     assert brief.claims, "expected extractive claims"
     span_texts = {item.span_id: item.text for item in PACK}
-    validations = validate_claims(brief.claims, span_texts)
-    assert all(v.support_status == "supported" for v in validations)
+    span_labels = {item.span_id: item.doc_label for item in PACK}
+    validations = validate_claims(brief.claims, span_texts, span_labels)
+    assert all(v.support_status == "supported" for v in validations), [
+        (v.claim_index, v.reason) for v in validations if v.support_status != "supported"
+    ]
 
 
 def test_offline_brief_sections_reference_claims() -> None:

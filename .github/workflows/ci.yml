@@ -24,9 +24,19 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: ruff format --check .
+      # Narrow type gate: the citation validator, the eval scoring path and the
+      # script that prints the figures — the modules where a type error would
+      # corrupt a reported number. Perimeter is [tool.mypy].files in pyproject.
+      # The rest of the backend is annotated but deliberately unchecked.
+      - run: mypy
       - run: pytest -q
-      # Eval gate (plan §11): blocks promotion if citation precision/recall fall
-      # below thresholds or any advice-boundary leak occurs
+      # Eval gate (plan §11). ALL THREE parts are blocking: the grounded
+      # precision/recall ratchet over both corpora, the negative controls (each
+      # deliberately breaks the pipeline and must score badly — if one passes,
+      # the eval has stopped measuring), and the advice-boundary leak count.
+      # EVAL_ALLOW_REGRESSION=1 demotes a grounded regression to a warning; it is
+      # for a deliberate, explained trade, not for turning a red build green.
+      # Method and current figures: docs/EVAL_METHODOLOGY.md
       - run: python scripts/run_evals.py
 
   frontend:
