@@ -1,5 +1,18 @@
 """Eval harness (plan §11): runs the generate -> validate -> guardrail pipeline
-against fixed cases and computes the RAG/citation metrics that gate CI.
+against fixed cases and reports the system's own citation verdicts.
+
+SCOPE — read before trusting a number out of this module.
+--------------------------------------------------------
+These metrics are SELF-REPORTS, not measurements. `citation_precision` counts
+how often the validator said "pass"; nothing here checks whether saying "pass"
+was correct. Run against `generate_deterministic` — which copies its
+`evidence_quote` out of the very span it cites — every citation passes by
+construction and this harness reports 1.000/1.000 whatever the system does.
+
+That makes this a useful smoke test (the pipeline runs end to end, guardrails
+fire, nothing throws) and a useless gate. The measurement lives in
+`app.evals.grounded`, which scores the same validator against independently
+labelled claims and can therefore fail.
 
 Metrics:
 - citation_precision: passing citations / total citations emitted
@@ -18,6 +31,14 @@ from app.briefs.validator import validate_claims
 from app.evals.fixtures import CASES, EvalCase
 
 GenerateFn = Callable[[str, list[EvidenceItem]], GeneratedBrief]
+
+SMOKE_ONLY_WARNING = (
+    "SMOKE TEST ONLY — not a measurement. These figures are the system's own "
+    "verdicts counted back to it. With the deterministic generator the evidence_quote "
+    "is copied from the cited span, so every citation passes by construction and "
+    "precision/recall are 1.000 regardless of citation quality. For a score that can "
+    "fail, see the grounded eval (app.evals.grounded)."
+)
 
 
 @dataclass
@@ -63,7 +84,8 @@ class EvalReport:
 def run_case(generate_fn: GenerateFn, case: EvalCase) -> CaseResult:
     brief = generate_fn(case.name, case.pack)
     span_texts = {item.span_id: item.text for item in case.pack}
-    validations = apply_guardrails(brief.claims, validate_claims(brief.claims, span_texts))
+    span_labels = {item.span_id: item.doc_label for item in case.pack}
+    validations = apply_guardrails(brief.claims, validate_claims(brief.claims, span_texts, span_labels))
 
     result = CaseResult(name=case.name, claims=len(brief.claims))
     for v in validations:

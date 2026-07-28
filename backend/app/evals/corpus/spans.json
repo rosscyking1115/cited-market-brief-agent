@@ -1,0 +1,210 @@
+{
+  "corpus_version": "1.0.0",
+  "note": "Verbatim excerpts from real public filings and real FRED vintages. Extracted mechanically by scratchpad/build_corpus.py from locally cached source documents; sha256 is of the whole cached source file.",
+  "spans": [
+    {
+      "span_id": "nvda-dc-revenue",
+      "doc_label": "NVDA 10-Q Q1 FY2027 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "Data Center revenue was $75.2 billion, up 92% from a year ago and up 21% sequentially, driven by the ramp of our Blackwell 300 products and demand for our InfiniBand, Spectrum-X Ethernet, and NVLink solutions. Hyperscaler revenue increased sequentially and remained at approximately 50% of Data Center revenue, while the remaining 50% came from a continued diversification of customers, including AI Clouds, industrial, enterprise, and sovereign customers. No shipments of Data Center Hopper products to China occurred during the quarter, compared with $4.6 billion in the first quarter of fiscal year 2026.",
+      "source": {
+        "file": "nvda-20260426.htm",
+        "sha256": "1b5de37b973da4a3f1cd31a09aa455c01c519ea7cc409c73de2250ad156f99e4",
+        "retrieved": "2026-06-11",
+        "issuer": "NVIDIA Corporation",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "form": "10-Q",
+        "period_end": "2026-04-26",
+        "fiscal_period": "Q1 FY2027"
+      }
+    },
+    {
+      "span_id": "nvda-gross-margin",
+      "doc_label": "NVDA 10-Q Q1 FY2027 · Item 2 · Gross Margin",
+      "section": "Item 2 · Gross Margin",
+      "text": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027 compared to 60.5% for the first quarter of fiscal year 2026, primarily due to the prior year's $4.5 billion charge associated with H20 excess inventory and purchase obligations.",
+      "source": {
+        "file": "nvda-20260426.htm",
+        "sha256": "1b5de37b973da4a3f1cd31a09aa455c01c519ea7cc409c73de2250ad156f99e4",
+        "retrieved": "2026-06-11",
+        "issuer": "NVIDIA Corporation",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "form": "10-Q",
+        "period_end": "2026-04-26",
+        "fiscal_period": "Q1 FY2027"
+      }
+    },
+    {
+      "span_id": "nvda-gm-drivers",
+      "doc_label": "NVDA 10-Q Q1 FY2027 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "Gross margin increased from a year ago on lower inventory provisions, primarily due to the prior year's $4.5 billion charge associated with H20 excess inventory and purchase obligations. Gross margin was approximately flat sequentially as our Blackwell architecture remains the majority of our revenue.",
+      "source": {
+        "file": "nvda-20260426.htm",
+        "sha256": "1b5de37b973da4a3f1cd31a09aa455c01c519ea7cc409c73de2250ad156f99e4",
+        "retrieved": "2026-06-11",
+        "issuer": "NVIDIA Corporation",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "form": "10-Q",
+        "period_end": "2026-04-26",
+        "fiscal_period": "Q1 FY2027"
+      }
+    },
+    {
+      "span_id": "nvda-h20-license-2025",
+      "doc_label": "NVDA 10-Q Q1 FY2027 · Item 1A · Risk Factors",
+      "section": "Item 1A · Risk Factors",
+      "text": "In April 2025, the USG informed us that it requires a license for export to China (including Hong Kong and Macau) and D:5 countries, or to companies headquartered or with an ultimate parent therein, of our H20 integrated circuits and any other circuits achieving the H20’s memory bandwidth, interconnect bandwidth, or combination thereof. As a result of these requirements, we incurred a $4.5 billion charge in the first quarter of fiscal year 2026 associated with H20 for excess inventory and purchase obligations, as the demand for H20 products diminished.",
+      "source": {
+        "file": "nvda-20260426.htm",
+        "sha256": "1b5de37b973da4a3f1cd31a09aa455c01c519ea7cc409c73de2250ad156f99e4",
+        "retrieved": "2026-06-11",
+        "issuer": "NVIDIA Corporation",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "form": "10-Q",
+        "period_end": "2026-04-26",
+        "fiscal_period": "Q1 FY2027"
+      }
+    },
+    {
+      "span_id": "nvda-h20-aug2025",
+      "doc_label": "NVDA 10-Q Q1 FY2027 · Item 1A · Risk Factors",
+      "section": "Item 1A · Risk Factors",
+      "text": "Beginning in August 2025, the USG granted licenses that would allow us to ship certain H20 products to certain China-based customers. USG officials expressed an expectation that the USG will receive 15% or more of the revenue generated from licensed sales of our products, but the USG did not publish a regulation codifying such requirement.",
+      "source": {
+        "file": "nvda-20260426.htm",
+        "sha256": "1b5de37b973da4a3f1cd31a09aa455c01c519ea7cc409c73de2250ad156f99e4",
+        "retrieved": "2026-06-11",
+        "issuer": "NVIDIA Corporation",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "form": "10-Q",
+        "period_end": "2026-04-26",
+        "fiscal_period": "Q1 FY2027"
+      }
+    },
+    {
+      "span_id": "nvda-h200-feb2026",
+      "doc_label": "NVDA 10-Q Q1 FY2027 · Item 1A · Risk Factors",
+      "section": "Item 1A · Risk Factors",
+      "text": "Beginning in February 2026, the USG granted licenses that would allow us to ship small amounts of H200 products to specific China-based customers. To date, we have not generated any revenue under the H200 licensing program, and do not yet know whether any imports will be allowed into China. The license requires that the H200s go through an inspection process in the United States prior to any shipment to the customer. As a result, any H200 shipped under the new licensing program will be subject to a 25% tariff upon importation into the United States.",
+      "source": {
+        "file": "nvda-20260426.htm",
+        "sha256": "1b5de37b973da4a3f1cd31a09aa455c01c519ea7cc409c73de2250ad156f99e4",
+        "retrieved": "2026-06-11",
+        "issuer": "NVIDIA Corporation",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "form": "10-Q",
+        "period_end": "2026-04-26",
+        "fiscal_period": "Q1 FY2027"
+      }
+    },
+    {
+      "span_id": "amd-net-revenue",
+      "doc_label": "AMD 10-Q Q1 2026 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "Net revenue for the three months ended March 28, 2026 was $10.3 billion, a 38% increase compared to the prior year period. The increase in net revenue was driven by an increase in Data Center segment revenue primarily driven by strong demand for our 5th generation AMD EPYC™ processors and AMD Instinct™ MI350 Series GPUs, an increase in Client and Gaming segment revenue, primarily driven by strong demand for our AMD Ryzen™ processors and an increase in Embedded segment revenue as certain end market demand increased.",
+      "source": {
+        "file": "amd-20260328.htm",
+        "sha256": "fe6aefeda503ef71f004758d18f13a1898ce521e579e8be1f95ec1fc550a7a61",
+        "retrieved": "2026-06-11",
+        "issuer": "Advanced Micro Devices, Inc.",
+        "ticker": "AMD",
+        "cik": "0000002488",
+        "form": "10-Q",
+        "period_end": "2026-03-28",
+        "fiscal_period": "Q1 2026"
+      }
+    },
+    {
+      "span_id": "amd-gross-margin",
+      "doc_label": "AMD 10-Q Q1 2026 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "Gross margin for the three months ended March 28, 2026 was 53% compared to gross margin of 50% for the prior year period, a 3% increase primarily driven by a favorable product mix, including higher Data Center segment revenue.",
+      "source": {
+        "file": "amd-20260328.htm",
+        "sha256": "fe6aefeda503ef71f004758d18f13a1898ce521e579e8be1f95ec1fc550a7a61",
+        "retrieved": "2026-06-11",
+        "issuer": "Advanced Micro Devices, Inc.",
+        "ticker": "AMD",
+        "cik": "0000002488",
+        "form": "10-Q",
+        "period_end": "2026-03-28",
+        "fiscal_period": "Q1 2026"
+      }
+    },
+    {
+      "span_id": "avgo-gross-margin-pct",
+      "doc_label": "AVGO 10-Q Q2 FY2026 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "As a percentage of net revenue, gross margin was 69% for each of the fiscal quarter and two fiscal quarters ended May 3, 2026, and 68% for each of the fiscal quarter and two fiscal quarters ended May 4, 2025. The increases were primarily due to the gross margin benefit from our net revenue growth, partially offset by a higher mix of semiconductor solutions net revenue, which has a lower gross margin than infrastructure software.",
+      "source": {
+        "file": "avgo-20260503.htm",
+        "sha256": "f9153a39a88955227ae1389eb961e5befea4b4bb99bd4b7b5010c01cbfda1494",
+        "retrieved": "2026-06-11",
+        "issuer": "Broadcom Inc.",
+        "ticker": "AVGO",
+        "cik": "0001730168",
+        "form": "10-Q",
+        "period_end": "2026-05-03",
+        "fiscal_period": "Q2 FY2026"
+      }
+    },
+    {
+      "span_id": "avgo-gross-margin-usd",
+      "doc_label": "AVGO 10-Q Q2 FY2026 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "Gross margin was $15,415 million for the fiscal quarter ended May 3, 2026 compared to $10,197 million for the fiscal quarter ended May 4, 2025 and $28,572 million for the two fiscal quarters ended May 3, 2026 compared to $20,342 million for the two fiscal quarters ended May 4, 2025. The increases were primarily due to strong product demand for our AI-related semiconductor solutions.",
+      "source": {
+        "file": "avgo-20260503.htm",
+        "sha256": "f9153a39a88955227ae1389eb961e5befea4b4bb99bd4b7b5010c01cbfda1494",
+        "retrieved": "2026-06-11",
+        "issuer": "Broadcom Inc.",
+        "ticker": "AVGO",
+        "cik": "0001730168",
+        "form": "10-Q",
+        "period_end": "2026-05-03",
+        "fiscal_period": "Q2 FY2026"
+      }
+    },
+    {
+      "span_id": "fred-cpiaucsl-v20260611",
+      "doc_label": "FRED macro_series CPIAUCSL · vintage 2026-06-11",
+      "section": "CPIAUCSL",
+      "text": "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCSL). Units: Index 1982-1984=100. Frequency: Monthly. Data vintage: 2026-06-11.\nObservations:\n2025-05-01: 320.620\n2025-06-01: 321.435\n2025-07-01: 322.169\n2025-08-01: 323.291\n2025-09-01: 324.245\n2025-10-01: .\n2025-11-01: 325.063\n2025-12-01: 326.031\n2026-01-01: 326.588\n2026-02-01: 327.460\n2026-03-01: 330.293\n2026-04-01: 332.407\n2026-05-01: 333.979",
+      "source": {
+        "file": "CPIAUCSL.txt",
+        "sha256": "194da7f3ddac85230491cb43226d9a36c80847d6c874edd3b1207e2060691d59",
+        "retrieved": "2026-06-11",
+        "issuer": "Federal Reserve Bank of St. Louis (FRED)",
+        "ticker": null,
+        "cik": null,
+        "form": "macro_series",
+        "period_end": null,
+        "fiscal_period": null
+      }
+    },
+    {
+      "span_id": "fred-dgs10-v20260612",
+      "doc_label": "FRED macro_series DGS10 · vintage 2026-06-12",
+      "section": "DGS10",
+      "text": "Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis (DGS10). Units: Percent. Frequency: Daily. Data vintage: 2026-06-12.\nObservations:\n2026-05-25: .\n2026-05-26: 4.5\n2026-05-27: 4.48\n2026-05-28: 4.45\n2026-05-29: 4.45\n2026-06-01: 4.47\n2026-06-02: 4.46\n2026-06-03: 4.49\n2026-06-04: 4.47\n2026-06-05: 4.55\n2026-06-08: 4.56\n2026-06-09: 4.53\n2026-06-10: 4.55",
+      "source": {
+        "file": "DGS10.txt",
+        "sha256": "81d4bba72b31286686d5769c9920b53b26c9289bdf3b0d32d718cb498a48405d",
+        "retrieved": "2026-06-12",
+        "issuer": "Federal Reserve Bank of St. Louis (FRED)",
+        "ticker": null,
+        "cik": null,
+        "form": "macro_series",
+        "period_end": null,
+        "fiscal_period": null
+      }
+    }
+  ]
+}

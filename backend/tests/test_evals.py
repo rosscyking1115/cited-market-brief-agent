@@ -4,12 +4,19 @@ from app.evals.fixtures import CASES
 from app.evals.harness import run_evals
 
 
-def test_deterministic_generator_passes_gates() -> None:
+def test_deterministic_smoke_path_runs_end_to_end() -> None:
+    """Smoke only: the pipeline runs and leaks nothing. NOT a citation measurement.
+
+    The generator copies its evidence_quote out of the span it cites, so its
+    precision/recall are 1.000 by construction and asserting a 0.95 threshold on
+    them would display a met gate that cannot fail. Those assertions were removed
+    deliberately; the citation numbers that can fail live in the grounded eval
+    (tests/test_grounded_evals.py). The advice-leak count IS a real gate here,
+    because a leak cannot be produced by construction.
+    """
     report = run_evals(generate_deterministic)
-    assert report.citation_precision >= 0.95
-    assert report.citation_recall >= 0.90
+    assert report.results, "expected the fixture cases to run"
     assert report.advice_leaks == []
-    assert report.passes()
 
 
 def test_injection_case_present_and_quarantined() -> None:

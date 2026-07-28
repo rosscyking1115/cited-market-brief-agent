@@ -34,12 +34,56 @@ The session clock is schedule-derived. It handles local weekdays and daylight-sa
 ### Company research workspace — `/brief`
 
 - SEC filing changes and FRED/ALFRED macro deltas assembled into a cited company brief.
-- Claim-level validation maps supported statements to stored source spans, with document, section, accession and checksum evidence; unsupported statements are flagged for review.
+- Claim-level validation checks that each cited span exists and that the quoted evidence appears verbatim in it, with document, section, accession and checksum evidence; claims that fail either check are flagged for review.
 - An approval checklist and review states that stop unresolved claims from being presented as approved output.
 - English as the audited source of record. Traditional Chinese and Korean are optional reading aids and do not alter the reviewed English wording.
 - Markdown, PDF, PPTX and XLSX export paths that preserve review state and provenance.
 
-The CI evaluation gate requires citation precision of at least 0.95, recall of at least 0.90 and zero advice-boundary leaks.
+### What the citation check does and does not do
+
+The validator checks **provenance** — the cited span exists, and the quoted text appears verbatim
+inside it — plus two **consistency** rules: the claim may not assert a number or a period that the
+cited evidence does not contain. It does **not** check entailment. A claim whose defect is semantic
+is still accepted: "the government granted licences that would allow us to ship" read as "we
+shipped", a real effect given an invented cause, an all-time high inferred from a three-week series.
+
+**How to read these numbers.** Unit: one claim. Positive: the system marks a claim *supported*.
+Ground truth: a human label, recorded independently of the system's output, answering "does the
+cited span support this claim?". Population: every labelled claim in the named corpus.
+
+- **precision** — of the claims the system accepted, the share the cited span really supports
+- **recall** — of the claims the cited span really supports, the share the system accepted
+
+Measured against claims labelled independently of the generator, built from real 10-Q and 8-K filings
+and real FRED vintages:
+
+| | development corpus | held-out corpus |
+|---|---|---|
+| citation precision | 0.579 | **0.400** |
+| citation recall | 1.000 | 1.000 |
+| false negatives | 0 | 0 |
+| true-but-unsupported caught | 6/8 | 2/6 |
+
+**The figure that describes this system is precision 0.400 on the held-out corpus** — of the claims
+it accepts, 40% are genuinely supported by the span they cite, so 60% are not. Recall 1.000 means it
+accepted every claim that was genuinely supported, rejecting none of them.
+
+The held-out corpus was authored after the consistency rules were frozen and scored once. It draws
+on sources the development corpus did not use — two 8-Ks, the second vintage of each FRED series and
+unused 10-Q sections — with one qualification: three holdout spans share a document *and section*
+with dev spans (a different passage of the same AVGO 10-Q section, and the two FRED series at a
+different vintage). Excluding the 8 claims citing them gives precision 0.429 rather than 0.400, so
+the overlap depresses the headline figure rather than flattering it. 0.579 is the development corpus, which the rules
+were built against, and is not quoted on its own. Supporting detail: on the two shapes the rules
+target they generalise cleanly to unseen filings (`numeric_alteration` 3/3, `temporal_shift` 3/3);
+on semantic defects they catch none.
+
+Method, per-trap breakdown, negative controls, the open empty-quote defect and the full limits:
+[`docs/EVAL_METHODOLOGY.md`](docs/EVAL_METHODOLOGY.md).
+
+The gate is a **ratchet** at the measured level, so any regression fails CI while progress stays
+possible; ≥0.95 precision remains the target, not an achieved figure. Also blocking: the negative
+controls and a zero advice-boundary leak count.
 
 ## Verified local captures
 

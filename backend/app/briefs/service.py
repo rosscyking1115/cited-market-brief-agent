@@ -121,7 +121,7 @@ def generate_and_store_brief(db: Session, watchlist: Watchlist) -> Brief:
     model_used = settings.generation_model if llm_available() else "deterministic/extractive-v1"
 
     generated = generate_brief_json(watchlist.name, pack)
-    validations = validate_claims(generated.claims, {sid: c.text for sid, c in chunks_by_id.items()})
+    validations = validate_claims(generated.claims, {sid: c.text for sid, c in chunks_by_id.items()}, span_labels)
     validations = apply_guardrails(generated.claims, validations)
 
     brief = Brief(
@@ -266,7 +266,7 @@ def export_brief_markdown(db: Session, brief: Brief, watchlist: Watchlist) -> tu
 
     generated = GeneratedBrief.model_validate(brief.generated_draft)
     span_texts, span_labels, span_meta = _stored_spans(db, generated.claims, watchlist.org_id)
-    validations = apply_guardrails(generated.claims, validate_claims(generated.claims, span_texts))
+    validations = apply_guardrails(generated.claims, validate_claims(generated.claims, span_texts, span_labels))
     model_used = settings.generation_model if llm_available() else "deterministic/extractive-v1"
 
     md = render_markdown(

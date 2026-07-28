@@ -34,6 +34,7 @@ dependencies = [
 dev = [
     "pytest>=8.3",
     "ruff>=0.9",
+    "mypy>=1.15",             # narrow type gate; perimeter defined in [tool.mypy] below
 ]
 parsing = [
     "docling>=2.15",         # IR PDFs (Phase 1+); EDGAR uses edgartools
@@ -60,6 +61,31 @@ ignore = ["S101", "UP042"]
 [tool.ruff.lint.per-file-ignores]
 # FastAPI Depends()/Query() in signature defaults are idiomatic (B008).
 "app/api/routes/*" = ["B008"]
+# S603: the type-gate test shells out to `sys.executable -m mypy` with a
+# literal argv and a tmp_path it wrote itself — no untrusted input involved.
+"tests/test_type_gate.py" = ["S603"]
+
+[tool.mypy]
+# Deliberately NARROW perimeter, not a whole-codebase gate.
+#
+# Scope rule: the modules where a type error would corrupt a REPORTED NUMBER —
+# the citation validator, the eval scoring path, and the script that prints the
+# figures. Everything else in the backend is annotated but unchecked, and no
+# claim anywhere asserts otherwise (docs/EVAL_METHODOLOGY.md, "Limits").
+#
+# The whole perimeter passed --strict with zero errors on first run, so this
+# gate cost nothing to adopt and starts clean. Widening it is cheap; do that
+# module by module rather than flipping it on repo-wide and adding overrides.
+python_version = "3.13"
+strict = true
+files = [
+    "app/briefs/validator.py",
+    "app/briefs/consistency.py",
+    "app/briefs/guardrails.py",
+    "app/briefs/schemas.py",
+    "app/evals",
+    "scripts/run_evals.py",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

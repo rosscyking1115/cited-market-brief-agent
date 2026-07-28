@@ -1,0 +1,142 @@
+{
+  "corpus_version": "1.0.0-holdout",
+  "note": "HELD-OUT spans. Cut from documents and sections the development corpus (spans.json) never used: two 8-K filings, the second FRED vintage of each series, and unused 10-Q sections. Extracted mechanically by scratchpad/build_holdout.py; sha256 is of the whole cached source file.",
+  "spans": [
+    {
+      "span_id": "ho-amd-credit-agreement",
+      "doc_label": "AMD 8-K 2026-05-14 · Item 1.01",
+      "section": "Item 1.01",
+      "text": "On May 14, 2026 (the “Closing Date”), Advanced Micro Devices, Inc. (the “Company”) entered into a Credit Agreement with the lenders named therein, JPMorgan Chase Bank, N.A., as administrative agent, and the other parties from time to time party thereto (the “Credit Agreement”).",
+      "source": {
+        "file": "d118163d8k.htm",
+        "sha256": "1e6cb3a6412be2a0e1fd2f60d8302ddab06febc2864113b87bb1bed7cdc6a6d1",
+        "retrieved": "2026-06-11",
+        "issuer": "Advanced Micro Devices, Inc.",
+        "ticker": "AMD",
+        "cik": "0000002488",
+        "form": "8-K",
+        "period_end": "2026-05-14",
+        "fiscal_period": "2026-05-14"
+      }
+    },
+    {
+      "span_id": "ho-amd-revolver-terms",
+      "doc_label": "AMD 8-K 2026-05-14 · Item 1.01",
+      "section": "Item 1.01",
+      "text": "The Credit Agreement provides for a five-year, $5.0 billion unsecured revolving credit facility (the “Revolving Facility”) and replaces the Company’s existing Credit Agreement dated as of April 29, 2022, among the Company, the lenders party thereto and Wells Fargo Bank, National Association, as administrative agent (the “Existing Credit Agreement”). The proceeds of any borrowings under the Revolving Facility may be used for general corporate purposes.",
+      "source": {
+        "file": "d118163d8k.htm",
+        "sha256": "1e6cb3a6412be2a0e1fd2f60d8302ddab06febc2864113b87bb1bed7cdc6a6d1",
+        "retrieved": "2026-06-11",
+        "issuer": "Advanced Micro Devices, Inc.",
+        "ticker": "AMD",
+        "cik": "0000002488",
+        "form": "8-K",
+        "period_end": "2026-05-14",
+        "fiscal_period": "2026-05-14"
+      }
+    },
+    {
+      "span_id": "ho-amd-letters-of-credit",
+      "doc_label": "AMD 8-K 2026-05-14 · Item 1.01",
+      "section": "Item 1.01",
+      "text": "Up to $250 million of the Revolving Facility may be utilized for the issuance of letters of credit. The issuance of letters of credit reduces the aggregate amount otherwise available under the Revolving Facility for the making of revolving loans. Subject to the terms of the Credit Agreement, the Company may borrow, repay and reborrow revolving loans at any time prior to the earlier of (a) the fifth anniversary of the Closing Date, and (b) the date of termination in whole of the revolving lenders’ commitments under the Credit Agreement in accordance with the terms thereof. As of the Closing Date, there are no borrowings outstanding under the Revolving Facility.",
+      "source": {
+        "file": "d118163d8k.htm",
+        "sha256": "1e6cb3a6412be2a0e1fd2f60d8302ddab06febc2864113b87bb1bed7cdc6a6d1",
+        "retrieved": "2026-06-11",
+        "issuer": "Advanced Micro Devices, Inc.",
+        "ticker": "AMD",
+        "cik": "0000002488",
+        "form": "8-K",
+        "period_end": "2026-05-14",
+        "fiscal_period": "2026-05-14"
+      }
+    },
+    {
+      "span_id": "ho-avgo-tender-offer",
+      "doc_label": "AVGO 8-K 2026-06-11 · Item 8.01",
+      "section": "Item 8.01",
+      "text": "On June 11, 2026, Broadcom Inc. issued a press release announcing the launch of cash tender offers for certain of its debt securities. A copy of the press release is attached hereto as Exhibit 99.1 and is incorporated by reference herein.",
+      "source": {
+        "file": "d152717d8k.htm",
+        "sha256": "1a9b25781d6c02a78fd64e5788497bd872f972e13aa662815ebe0f8968238cd9",
+        "retrieved": "2026-06-11",
+        "issuer": "Broadcom Inc.",
+        "ticker": "AVGO",
+        "cik": "0001730168",
+        "form": "8-K",
+        "period_end": "2026-06-11",
+        "fiscal_period": "2026-06-11"
+      }
+    },
+    {
+      "span_id": "ho-avgo-semis-operating-income",
+      "doc_label": "AVGO 10-Q Q2 FY2026 · Item 2 · Results of Operations",
+      "section": "Item 2 · Results of Operations",
+      "text": "Operating income from our semiconductor solutions segment increased for the fiscal quarter and two fiscal quarters ended May 3, 2026 compared to the prior year fiscal periods due to strong demand for our networking solutions, primarily custom AI accelerators and AI networking products.",
+      "source": {
+        "file": "avgo-20260503.htm",
+        "sha256": "f9153a39a88955227ae1389eb961e5befea4b4bb99bd4b7b5010c01cbfda1494",
+        "retrieved": "2026-06-11",
+        "issuer": "Broadcom Inc.",
+        "ticker": "AVGO",
+        "cik": "0001730168",
+        "form": "10-Q",
+        "period_end": "2026-05-03",
+        "fiscal_period": "Q2 FY2026"
+      }
+    },
+    {
+      "span_id": "ho-amd-datacenter-scope",
+      "doc_label": "AMD 10-Q Q1 2026 · Item 1 · Notes",
+      "section": "Item 1 · Notes",
+      "text": "the Data Center segment, which primarily includes Artificial Intelligence (AI) accelerators, microprocessors (CPUs) for servers, graphics processing units (GPUs), accelerated processing units (APUs), data processing units (DPUs), AI Network Interface Cards (AI NICs), Field Programmable Gate Arrays (FPGAs) and adaptive System-on-Chip (SoC) products for data centers;",
+      "source": {
+        "file": "amd-20260328.htm",
+        "sha256": "fe6aefeda503ef71f004758d18f13a1898ce521e579e8be1f95ec1fc550a7a61",
+        "retrieved": "2026-06-11",
+        "issuer": "Advanced Micro Devices, Inc.",
+        "ticker": "AMD",
+        "cik": "0000002488",
+        "form": "10-Q",
+        "period_end": "2026-03-28",
+        "fiscal_period": "Q1 2026"
+      }
+    },
+    {
+      "span_id": "ho-fred-cpiaucsl-v20260612",
+      "doc_label": "FRED macro_series CPIAUCSL · vintage 2026-06-12",
+      "section": "CPIAUCSL",
+      "text": "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCSL). Units: Index 1982-1984=100. Frequency: Monthly. Data vintage: 2026-06-12.\nObservations:\n2025-05-01: 320.620\n2025-06-01: 321.435\n2025-07-01: 322.169\n2025-08-01: 323.291\n2025-09-01: 324.245\n2025-10-01: .\n2025-11-01: 325.063\n2025-12-01: 326.031\n2026-01-01: 326.588\n2026-02-01: 327.460\n2026-03-01: 330.293\n2026-04-01: 332.407\n2026-05-01: 333.979",
+      "source": {
+        "file": "CPIAUCSL.txt",
+        "sha256": "5e131773027015295e84d8e8de1fe4856a7317cc5a78bb626a10b5c536c468ea",
+        "retrieved": "2026-06-12",
+        "issuer": "Federal Reserve Bank of St. Louis (FRED)",
+        "ticker": null,
+        "cik": null,
+        "form": "macro_series",
+        "period_end": null,
+        "fiscal_period": null
+      }
+    },
+    {
+      "span_id": "ho-fred-dgs10-v20260611",
+      "doc_label": "FRED macro_series DGS10 · vintage 2026-06-11",
+      "section": "DGS10",
+      "text": "Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis (DGS10). Units: Percent. Frequency: Daily. Data vintage: 2026-06-11.\nObservations:\n2026-05-25: .\n2026-05-26: 4.5\n2026-05-27: 4.48\n2026-05-28: 4.45\n2026-05-29: 4.45\n2026-06-01: 4.47\n2026-06-02: 4.46\n2026-06-03: 4.49\n2026-06-04: 4.47\n2026-06-05: 4.55\n2026-06-08: 4.56\n2026-06-09: 4.53\n2026-06-10: 4.55",
+      "source": {
+        "file": "DGS10.txt",
+        "sha256": "d13d8a4f64d3d2699d06321a95fb13c4008bcf4186a5d901a606c1351cb5e4ad",
+        "retrieved": "2026-06-11",
+        "issuer": "Federal Reserve Bank of St. Louis (FRED)",
+        "ticker": null,
+        "cik": null,
+        "form": "macro_series",
+        "period_end": null,
+        "fiscal_period": null
+      }
+    }
+  ]
+}

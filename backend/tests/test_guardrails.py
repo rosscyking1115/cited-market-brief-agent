@@ -45,11 +45,21 @@ def test_cited_advice_is_still_flagged() -> None:
 
 
 def test_clean_claims_pass_through_unchanged() -> None:
+    """Guardrails must not touch a claim that is both cited and consistent.
+
+    The claim cites a span that actually contains its figure — otherwise the
+    validator's consistency rule flags it first and this test would be asserting
+    guardrail behaviour on an already-flagged claim.
+    """
+    spans = {"span-2": "Revenue increased 12% year over year on datacenter demand."}
     claim = GeneratedClaim(
         text="Revenue increased 12% year over year",
-        citations=["span-1"],
+        citations=["span-2"],
+        evidence_quote="Revenue increased 12% year over year",
     )
-    validations = validate_claims([claim], SPANS)
+    validations = validate_claims([claim], spans)
+    assert validations[0].support_status == "supported"
+
     guarded = apply_guardrails([claim], validations)
     assert guarded[0].support_status == validations[0].support_status
     assert guarded[0].reason == ""

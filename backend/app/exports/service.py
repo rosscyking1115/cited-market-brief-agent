@@ -30,7 +30,7 @@ MEDIA_TYPES = {
 def assemble_bundle(db: Session, brief: Brief, watchlist: Watchlist) -> ExportBundle:
     generated = GeneratedBrief.model_validate(brief.generated_draft)
     span_texts, span_labels, span_meta = _stored_spans(db, generated.claims, watchlist.org_id)
-    validations = apply_guardrails(generated.claims, validate_claims(generated.claims, span_texts))
+    validations = apply_guardrails(generated.claims, validate_claims(generated.claims, span_texts, span_labels))
     approved_by_email = None
     if brief.approved_by:
         user = db.get(User, brief.approved_by)

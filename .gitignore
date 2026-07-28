@@ -43,3 +43,9 @@ pg-data/
 /docs/UI_REDESIGN_BRIEF.md
 /docs/EVALUATION_REPORT.md
 /docs/Cited_Market_Brief_Agent_Demo.pptx
+
+# Internal doctrine working docs — kept out of this PUBLIC repo per the release-wave
+# public-hygiene rule.
+findings.md
+progress.md
+task_plan.md

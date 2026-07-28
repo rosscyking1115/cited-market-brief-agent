@@ -1,0 +1,357 @@
+{
+  "corpus_version": "1.0.0",
+  "labelling": {
+    "annotator": "claude-opus-5 (single annotator, unreviewed)",
+    "labelled_on": "2026-07-27",
+    "inter_annotator_agreement": null,
+    "limits": "Single-annotator ground truth. No second reader, no adjudication, no kappa. Labels are auditable (every record carries a rationale and the cited span is in spans.json) but they are one person's reading. Treat disagreement with a label as a defect report against the corpus, not against the system under test.",
+    "label_definition": "label = does the CITED SPAN, on its own, support the claim as written? It is NOT 'is the claim true'. That is recorded separately as world_truth, so the corpus can measure the true-but-unsupported failure mode explicitly.",
+    "world_truth_definition": "true = the proposition holds according to the corpus taken as a whole; false = contradicted by the corpus; unknown = not determinable from the corpus."
+  },
+  "claims": [
+    {
+      "claim_id": "sup-nvda-gm",
+      "text": "NVIDIA gross margin was 74.9% in the first quarter of fiscal year 2027, compared with 60.5% a year earlier.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027 compared to 60.5% for the first quarter of fiscal year 2026",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Both figures and both periods are stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-nvda-dc-revenue",
+      "text": "NVIDIA Data Center revenue was $75.2 billion, up 92% year over year and up 21% sequentially.",
+      "cited_span_ids": ["nvda-dc-revenue"],
+      "evidence_quote": "Data Center revenue was $75.2 billion, up 92% from a year ago and up 21% sequentially",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Verbatim restatement of the cited span, segment correctly attributed.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-nvda-hopper-china",
+      "text": "NVIDIA made no Data Center Hopper shipments to China during the quarter, against $4.6 billion in the first quarter of fiscal year 2026.",
+      "cited_span_ids": ["nvda-dc-revenue"],
+      "evidence_quote": "No shipments of Data Center Hopper products to China occurred during the quarter, compared with $4.6 billion in the first quarter of fiscal year 2026.",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Stated in the last sentence of the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-amd-revenue",
+      "text": "AMD net revenue for the three months ended March 28, 2026 was $10.3 billion, a 38% increase on the prior-year period.",
+      "cited_span_ids": ["amd-net-revenue"],
+      "evidence_quote": "Net revenue for the three months ended March 28, 2026 was $10.3 billion, a 38% increase compared to the prior year period.",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Verbatim restatement of the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-amd-gm",
+      "text": "AMD gross margin was 53% for the three months ended March 28, 2026, against 50% in the prior-year period.",
+      "cited_span_ids": ["amd-gross-margin"],
+      "evidence_quote": "Gross margin for the three months ended March 28, 2026 was 53% compared to gross margin of 50% for the prior year period",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Both figures and both periods are stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-avgo-gm-pct",
+      "text": "Broadcom gross margin was 69% of net revenue for the fiscal quarter ended May 3, 2026.",
+      "cited_span_ids": ["avgo-gross-margin-pct"],
+      "evidence_quote": "As a percentage of net revenue, gross margin was 69% for each of the fiscal quarter and two fiscal quarters ended May 3, 2026",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Percentage basis and period both match the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-nvda-h20-licence",
+      "text": "In April 2025 the U.S. government informed NVIDIA that it requires a licence to export H20 integrated circuits to China.",
+      "cited_span_ids": ["nvda-h20-license-2025"],
+      "evidence_quote": "In April 2025, the USG informed us that it requires a license for export to China",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Date, actor and requirement all stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-nvda-h20-charge",
+      "text": "NVIDIA incurred a $4.5 billion charge in the first quarter of fiscal year 2026 for H20 excess inventory and purchase obligations.",
+      "cited_span_ids": ["nvda-h20-license-2025"],
+      "evidence_quote": "we incurred a $4.5 billion charge in the first quarter of fiscal year 2026 associated with H20 for excess inventory and purchase obligations",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Verbatim restatement of the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-nvda-h200-no-revenue",
+      "text": "NVIDIA had not generated any revenue under the H200 licensing programme as of this filing.",
+      "cited_span_ids": ["nvda-h200-feb2026"],
+      "evidence_quote": "we have not generated any revenue under the H200 licensing program",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Stated in the cited span.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-cpi-may2026",
+      "text": "The CPI-U index for May 2026 stood at 333.979 in the 2026-06-11 vintage.",
+      "cited_span_ids": ["fred-cpiaucsl-v20260611"],
+      "evidence_quote": "2026-05-01: 333.979",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Observation present in the cited vintage, and the claim names the vintage.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "sup-dgs10-jun10",
+      "text": "The 10-year Treasury constant-maturity yield was 4.55% on 10 June 2026.",
+      "cited_span_ids": ["fred-dgs10-v20260612"],
+      "evidence_quote": "2026-06-10: 4.55",
+      "label": "supported",
+      "world_truth": "true",
+      "trap": "none",
+      "rationale": "Observation present in the cited vintage.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+
+    {
+      "claim_id": "tbu-gm-cause-wrong-span",
+      "text": "NVIDIA gross margin rose year over year primarily because the prior-year quarter carried a $4.5 billion H20 inventory charge.",
+      "cited_span_ids": ["nvda-dc-revenue"],
+      "evidence_quote": "Data Center revenue was $75.2 billion, up 92% from a year ago and up 21% sequentially",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "The proposition is true and is stated in nvda-gross-margin and nvda-gm-drivers. The CITED span is about Data Center revenue and says nothing about gross margin or the charge. The quote is genuinely verbatim, which is exactly why quote-provenance checking cannot catch this.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-amd-gm-cited-to-nvda",
+      "text": "AMD reported gross margin of 53% for the quarter, up from 50% a year earlier.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "cross_issuer",
+      "rationale": "True of AMD per amd-gross-margin. The cited span is NVIDIA's and gives different figures. Issuer misattribution with a verbatim quote.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-h20-aug-cited-to-h200",
+      "text": "The U.S. government granted NVIDIA licences allowing shipment of certain H20 products to China-based customers beginning in August 2025.",
+      "cited_span_ids": ["nvda-h200-feb2026"],
+      "evidence_quote": "Beginning in February 2026, the USG granted licenses that would allow us to ship small amounts of H200 products to specific China-based customers.",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "True per nvda-h20-aug2025. The cited span concerns H200 in February 2026, a different product and a different date. Near-miss retrieval: highly similar text, wrong fact.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-cross-company-comparison",
+      "text": "NVIDIA's Data Center segment alone generated more revenue in the quarter than AMD's entire company net revenue in its comparable quarter.",
+      "cited_span_ids": ["nvda-dc-revenue"],
+      "evidence_quote": "Data Center revenue was $75.2 billion, up 92% from a year ago and up 21% sequentially",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "insufficient_span",
+      "rationale": "True ($75.2bn against $10.3bn) but the comparison requires amd-net-revenue, which is not cited. One of the two figures the claim rests on is absent from the cited evidence.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-avgo-unit-mix",
+      "text": "Broadcom gross margin was $15,415 million, equal to 69% of net revenue, in the fiscal quarter ended May 3, 2026.",
+      "cited_span_ids": ["avgo-gross-margin-pct"],
+      "evidence_quote": "As a percentage of net revenue, gross margin was 69% for each of the fiscal quarter and two fiscal quarters ended May 3, 2026",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "partial_support",
+      "rationale": "Both halves are true, but the dollar figure lives in avgo-gross-margin-usd, which is not cited. Partial support is not support: half the claim is uncited.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-gm-flat-sequential",
+      "text": "NVIDIA gross margin was approximately flat sequentially.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027 compared to 60.5% for the first quarter of fiscal year 2026",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "True per nvda-gm-drivers. The cited span gives only the year-over-year comparison and says nothing about the sequential move.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-gm-spread-arithmetic",
+      "text": "NVIDIA's first-quarter fiscal 2027 gross margin of 74.9% was more than 20 percentage points above AMD's 53% for its comparable quarter.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "insufficient_span",
+      "rationale": "The arithmetic is right (74.9 - 53 = 21.9) but the AMD figure is not in the cited span. Derived cross-document claims need every input cited.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "tbu-usg-15pct-expectation",
+      "text": "The U.S. government stated an expectation of receiving at least 15% of revenue from NVIDIA's licensed China sales but did not codify it in regulation.",
+      "cited_span_ids": ["nvda-h200-feb2026"],
+      "evidence_quote": "Beginning in February 2026, the USG granted licenses that would allow us to ship small amounts of H200 products to specific China-based customers.",
+      "label": "not_supported",
+      "world_truth": "true",
+      "trap": "wrong_span",
+      "rationale": "Accurate paraphrase of nvda-h20-aug2025, but that span is not cited. The cited span does not mention the 15% expectation.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+
+    {
+      "claim_id": "neg-h200-shipped",
+      "text": "NVIDIA shipped H200 products to China-based customers beginning in February 2026.",
+      "cited_span_ids": ["nvda-h200-feb2026"],
+      "evidence_quote": "Beginning in February 2026, the USG granted licenses that would allow us to ship small amounts of H200 products to specific China-based customers.",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "modal_strength",
+      "rationale": "The span says licences were granted that WOULD ALLOW shipment, that no revenue has been generated, and that it is not known whether imports will be allowed. A licence to ship is not a shipment. The quote is verbatim from the correct span, so only entailment checking can catch this.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-usg-15pct-required",
+      "text": "NVIDIA is required to remit 15% or more of the revenue from its licensed China sales to the U.S. government.",
+      "cited_span_ids": ["nvda-h20-aug2025"],
+      "evidence_quote": "USG officials expressed an expectation that the USG will receive 15% or more of the revenue generated from licensed sales of our products, but the USG did not publish a regulation codifying such requirement.",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "modal_strength",
+      "rationale": "The cited span explicitly says no regulation codified the requirement. The claim converts a stated expectation into a legal obligation, and the quote that refutes it is the quote it carries.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-dc-revenue-altered",
+      "text": "NVIDIA Data Center revenue was $85.2 billion in the quarter.",
+      "cited_span_ids": ["nvda-dc-revenue"],
+      "evidence_quote": "Data Center revenue was $75.2 billion, up 92% from a year ago and up 21% sequentially",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "numeric_alteration",
+      "rationale": "The span says $75.2 billion. A single altered digit, carried alongside a verbatim quote that contradicts it.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-gm-wrong-quarter",
+      "text": "NVIDIA gross margin was 74.9% in the fourth quarter of fiscal year 2027.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "temporal_shift",
+      "rationale": "Correct figure, wrong period. The cited span says first quarter; the quote carried says first quarter.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-amd-gm-wrong-cause",
+      "text": "AMD's gross margin improvement was primarily driven by price increases on Ryzen processors.",
+      "cited_span_ids": ["amd-gross-margin"],
+      "evidence_quote": "Gross margin for the three months ended March 28, 2026 was 53% compared to gross margin of 50% for the prior year period",
+      "label": "not_supported",
+      "world_truth": "false",
+      "trap": "causal_swap",
+      "rationale": "The span attributes the increase to favourable product mix including higher Data Center revenue, not to Ryzen pricing. Real effect, invented cause.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-cpi-every-month",
+      "text": "US CPI-U rose in every month from May 2025 through May 2026.",
+      "cited_span_ids": ["fred-cpiaucsl-v20260611"],
+      "evidence_quote": "2026-05-01: 333.979",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "missing_observation",
+      "rationale": "The October 2025 observation in this vintage is '.', i.e. absent. A claim over the whole interval cannot be verified from a series with a hole in it, however plausible it looks.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-dgs10-missing-date",
+      "text": "The 10-year Treasury yield was 4.50% on 25 May 2026.",
+      "cited_span_ids": ["fred-dgs10-v20260612"],
+      "evidence_quote": "2026-05-26: 4.5",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "missing_observation",
+      "rationale": "25 May 2026 has no observation in this vintage ('.'). The quote carried is the 26 May value, one day off. Off-by-one date binding onto a genuine adjacent observation.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "neg-gm-superlative",
+      "text": "NVIDIA's 74.9% gross margin was the highest in the company's history.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin increased to 74.9% for the first quarter of fiscal year 2027",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "unsupported_superlative",
+      "rationale": "The span gives one prior-year comparison. It carries no historical series and cannot support an all-time superlative.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+
+    {
+      "claim_id": "str-no-citation",
+      "text": "Semiconductor demand remained strong across the sector during the quarter.",
+      "cited_span_ids": [],
+      "evidence_quote": "",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "no_citation",
+      "rationale": "No citation at all. Control for the easy case the validator already handles.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "str-phantom-span",
+      "text": "NVIDIA announced the appointment of a new chief financial officer during the quarter.",
+      "cited_span_ids": ["nvda-span-that-does-not-exist"],
+      "evidence_quote": "The company announced the appointment of a new chief financial officer.",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "phantom_span",
+      "rationale": "Cites a span_id absent from the store. Control for the easy case the validator already handles.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "str-empty-quote",
+      "text": "NVIDIA expects gross margin to exceed 80% next quarter.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "empty_quote",
+      "rationale": "Real span_id, no quote, and a forward-looking assertion the span does not make. Probes whether an empty evidence_quote bypasses the substring check and yields support on span existence alone.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    },
+    {
+      "claim_id": "str-fabricated-quote",
+      "text": "NVIDIA guided to 80% gross margin for the next quarter.",
+      "cited_span_ids": ["nvda-gross-margin"],
+      "evidence_quote": "Gross margin is expected to reach 80% in the second quarter of fiscal year 2027.",
+      "label": "not_supported",
+      "world_truth": "unknown",
+      "trap": "fabricated_quote",
+      "rationale": "Quote does not appear in the cited span. Control for the easy case the validator already handles.",
+      "annotator": "claude-opus-5 (single annotator, unreviewed)"
+    }
+  ]
+}
