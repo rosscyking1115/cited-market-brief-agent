@@ -33,33 +33,63 @@ up. No entry in the allowlist mentions it, no entry could, and it is packaged
 anyway. `git ls-files` run from the package root does not list it either, so a
 tracked-members test flags it as a stray without explaining why.
 
-## Reached by a different route than the siblings — and the stated mechanism does not reproduce
+## Correction: the sibling finding's stated mechanism is false as written
 
-This matters more than the leak, because it is the part that generalises.
+**This section overturns existing text rather than adding to it.** Anyone lifting
+the earlier note needs to read this first.
 
-A related finding written up in a sibling project
-(`agent-release-gates`, `docs/finding_gitignore_not_a_packaging_control.md`)
-states that hatchling reads `.gitignore` files it finds *inside* the project
-and therefore ignores anything covered only by a contributor's **global**
-gitignore. Four instances across two repositories were found that way.
+The finding written up in a sibling project (`agent-release-gates`,
+`docs/finding_gitignore_not_a_packaging_control.md`) states its mechanism
+precisely, and describes it as verified empirically rather than assumed:
+hatchling reads `.gitignore` files it finds *inside* the project, does not
+consult `core.excludesFile`, and therefore packages anything hidden only by a
+contributor's **global** gitignore. Four instances across two repositories were
+found by applying it.
 
-**That mechanism does not reproduce here.** Hatchling found the repository-root
-`.gitignore` — a file *outside* the declared project directory — and applied
-every pattern in it. Asking the build backend directly for its own exclude
-specification returns the repo-root patterns verbatim, `node_modules/` and
-`/docs/PRODUCTION_PLAN.md` included, neither of which has anything to do with a
-Python package in `backend/`.
+**Observed here, that mechanism is false.** Hatchling read the **repository-root**
+`.gitignore` — a file outside the declared project directory, one level above the
+`pyproject.toml` it was building — and applied every pattern in it. Asking the
+build backend for its own exclude specification returns the repo-root patterns
+verbatim, including `node_modules/` and `/docs/PRODUCTION_PLAN.md`, neither of
+which has anything to do with a Python package in `backend/`.
 
-So the sibling's rule — *in-project ignore files are honoured, ones above are
-not* — is wrong as stated, or at least version- and layout-dependent. Do not
-carry it forward as a fact. Carry forward the habit instead:
+Do not carry the stated rule forward as a fact. The replacement claim is weaker,
+and it survives:
 
-> **Do not reason about what your build backend selects. Build the artifact and
-> read the file list.**
+> **The set of files a build backend packages is not the set of files your
+> repository tracks, and the relationship between them cannot be derived by
+> reading either one.**
 
-The correct general claim is weaker and more useful: **the set of files a build
-backend packages is not the set of files your repository tracks, and the
-relationship between them is not something you can derive by reading either one.**
+Which leaves only one reliable practice: **build the artifact and read the file
+list.**
+
+### This is the second correction to that document, and they are different kinds
+
+The first came out of the `telemeval` pass, which found that document's own audit
+table wrong: the `telemeval` row records "local-only directories packaged: none"
+across eight published sdists, and those sdists in fact carry an untracked
+`.hypothesis/` cache. *(Recorded here as reported by that pass; not independently
+re-verified in this repository.)*
+
+The two failures are not the same shape, and the distinction is the point:
+
+| | What was wrong | How it behaved |
+|---|---|---|
+| First correction | A **data row** — an audit result | Visibly wrong once anyone re-ran the audit |
+| This correction | The **stated cause** | Invisible, because the conclusion it supports is correct |
+
+A document that is right in its conclusion and wrong in its stated cause is a
+specific and nasty failure mode. Nothing looks broken. The advice it gives —
+declare an allowlist, inspect the artifact — is good advice, and following it
+works. So the error is never contradicted by experience, and **everyone who
+lifted the cause carried the error forward while the conclusion kept looking
+right.** It only surfaces when someone reasons *from* the mechanism instead of
+just obeying the conclusion — as happened here, where the expectation was that
+`backend/` having no `.gitignore` of its own meant `.venv/` would be packaged,
+and the artifact said otherwise.
+
+Which is the general lesson worth more than either correction: **a conclusion
+holding up is not evidence that the reason given for it is true.**
 
 ## The luck that was mistaken for a control
 

@@ -58,9 +58,15 @@ trustworthy, a silent edit reads as nothing until someone finds the diff.
 
 - [`docs/finding_gitignore_injected_into_sdist.md`](docs/finding_gitignore_injected_into_sdist.md)
   — hatchling packages the repository-root `.gitignore`, a file from outside the
-  package root that an allowlist scoped to that root cannot exclude. Records that
-  this project reached the defect class by a different route than the sibling
-  projects did, and that the sibling's stated mechanism does not reproduce here.
+  package root that an allowlist scoped to that root cannot exclude.
+
+  It also records a correction to a sibling project's finding: that document
+  states hatchling reads only ignore files found *inside* the project, and that
+  is false as written — hatchling read the repository-root file, one level above
+  the package being built, and applied every pattern in it. The conclusion that
+  document reaches is sound; the cause it gives for it is not, which is the
+  harder failure to notice, because good advice that works never contradicts the
+  wrong reason offered for it.
 
 - An **sdist allowlist** in `backend/pyproject.toml`, with
   `backend/tests/test_sdist_contents.py` enforcing it. The strongest of its seven
