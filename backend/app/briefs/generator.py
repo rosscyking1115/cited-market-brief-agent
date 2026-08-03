@@ -110,7 +110,8 @@ _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
 
 def generate_deterministic(watchlist_name: str, pack: list[EvidenceItem]) -> GeneratedBrief:
     """Extractive fallback: one factual_summary claim per evidence span, quoting it
-    verbatim. Citation-perfect by construction; useful offline and as an eval floor."""
+    verbatim. Citation-perfect by construction; useful offline and as an eval floor.
+    """
     claims: list[GeneratedClaim] = []
     lines_by_label: dict[str, list[str]] = {}
 

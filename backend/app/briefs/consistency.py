@@ -135,7 +135,7 @@ _MONTH_NUMBER = {
 
 
 def _canonical(raw: str) -> str:
-    """1,234.50 -> 1234.5 ; 04 -> 4 ; 0.50 -> 0.5"""
+    """Canonicalise a numeric literal: 1,234.50 -> 1234.5; 04 -> 4; 0.50 -> 0.5."""
     value = raw.replace(",", "")
     if "." in value:
         value = value.rstrip("0").rstrip(".")
@@ -165,7 +165,8 @@ def claim_numbers(text: str) -> set[str]:
 
 def span_numbers(text: str) -> set[str]:
     """Numbers available in the evidence. Read permissively: every numeric
-    literal anywhere in the span counts, identifiers included."""
+    literal anywhere in the span counts, identifiers included.
+    """
     return {_canonical(m.group()) for m in _NUMBER.finditer(text)}
 
 

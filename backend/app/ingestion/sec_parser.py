@@ -60,7 +60,8 @@ def normalize_html(html: str) -> str:
 
 def split_sections(normalized_text: str) -> list[tuple[str, int]]:
     """Locate Item headings; returns [(section_name, start_offset)], always starting
-    with a 'preamble' section at offset 0."""
+    with a 'preamble' section at offset 0.
+    """
     sections: list[tuple[str, int]] = [("preamble", 0)]
     offset = 0
     for line in normalized_text.split("\n"):

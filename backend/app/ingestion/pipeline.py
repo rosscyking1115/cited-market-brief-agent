@@ -175,7 +175,8 @@ async def ingest_sec_for_watchlist(db: Session, watchlist: Watchlist) -> int:
 
 async def ingest_fred_for_watchlist(db: Session, watchlist: Watchlist) -> int:
     """Snapshot each FRED series as a citable document (one chunk per series),
-    plus a TimeSeries row with vintage metadata (ALFRED awareness, plan §7)."""
+    plus a TimeSeries row with vintage metadata (ALFRED awareness, plan §7).
+    """
     if not settings.fred_api_key.strip() or not watchlist.macro_series:
         return 0
 

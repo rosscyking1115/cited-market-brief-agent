@@ -31,7 +31,8 @@ def test_injection_case_present_and_quarantined() -> None:
 
 def test_harness_catches_a_misbehaving_generator() -> None:
     """A generator that emits uncited advice must fail the gate — proves the
-    harness actually detects violations rather than vacuously passing."""
+    harness actually detects violations rather than vacuously passing.
+    """
 
     def bad_generator(name, pack) -> GeneratedBrief:
         return GeneratedBrief(
@@ -48,7 +49,8 @@ def test_harness_catches_a_misbehaving_generator() -> None:
 
 def test_harness_catches_cited_advice_leak() -> None:
     """Advice language with a VALID citation must still be quarantined (guardrails),
-    so it never counts as supported and never leaks."""
+    so it never counts as supported and never leaks.
+    """
 
     def cited_advice_generator(name, pack) -> GeneratedBrief:
         item = pack[0]

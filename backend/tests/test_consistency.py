@@ -380,7 +380,9 @@ def test_no_date_shape_is_recognised_outside_canonical_capitalisation(shape: str
 
 
 def test_a_month_range_hides_the_month_the_evidence_lacks() -> None:
-    """ "May and June 2026" resolves only June — the added month escapes.
+    """A month range resolves only its second month, so the first one escapes.
+
+    "May and June 2026" yields June alone.
 
     Found in review. The Limits section said the loss was "a date with no year",
     which was narrower than the behaviour: the year must be ADJACENT. A claim

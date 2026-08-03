@@ -171,7 +171,8 @@ class GroundedReport:
     def true_but_unsupported_refusal_rate(self) -> float | None:
         """Of claims that are TRUE but NOT supported by the span they cite,
         the share the system correctly refused. This is the headline number:
-        it isolates the failure mode a provenance-only checker cannot see."""
+        it isolates the failure mode a provenance-only checker cannot see.
+        """
         hard = [d for d in self.decisions if d.world_truth == "true" and not d.truth_supported]
         if not hard:
             return None

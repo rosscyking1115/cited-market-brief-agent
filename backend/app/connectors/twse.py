@@ -149,7 +149,8 @@ def _industry_name(value: str) -> str:
 
 def parse_listed_industry(payload: object) -> dict[str, str]:
     """Build code → 產業別 name from the TWSE listed-company OpenAPI payload, mapping
-    numeric industry codes to names so they match the TWSE sector indices."""
+    numeric industry codes to names so they match the TWSE sector indices.
+    """
     if not isinstance(payload, list):
         return {}
     out: dict[str, str] = {}
@@ -165,7 +166,8 @@ def parse_listed_industry(payload: object) -> dict[str, str]:
 
 def fetch_listed_industry_map() -> dict[str, str]:
     """Code → 產業別 for TWSE-listed companies (public OpenAPI), cached for a day.
-    Best-effort: returns the last good map (or empty) on any failure."""
+    Best-effort: returns the last good map (or empty) on any failure.
+    """
     global _INDUSTRY_CACHE, _INDUSTRY_CACHE_AT
     now = datetime.now(UTC)
     ttl = timedelta(seconds=max(settings.twse_industry_cache_ttl_seconds, 0))
@@ -186,7 +188,8 @@ def fetch_listed_industry_map() -> dict[str, str]:
 
 def twse_sector_returns_from_payload(payload: dict[str, object]) -> dict[str, float]:
     """Pull every TWSE sector class index (e.g. 半導體類指數, 金融保險類指數) and its
-    daily % change from the same MI_INDEX after-close report used for the TAIEX."""
+    daily % change from the same MI_INDEX after-close report used for the TAIEX.
+    """
     out: dict[str, float] = {}
     tables = payload.get("tables")
     candidates = tables if isinstance(tables, list) else [payload]

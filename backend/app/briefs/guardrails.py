@@ -53,7 +53,8 @@ def scan_text(text: str) -> list[str]:
 
 def apply_guardrails(claims: list[GeneratedClaim], validations: list[ClaimValidation]) -> list[ClaimValidation]:
     """Downgrade any claim whose text trips the advice boundary. Citation status is
-    irrelevant: a perfectly-cited recommendation is still a policy violation."""
+    irrelevant: a perfectly-cited recommendation is still a policy violation.
+    """
     out: list[ClaimValidation] = []
     for v in validations:
         claim = claims[v.claim_index]

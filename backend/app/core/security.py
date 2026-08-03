@@ -52,7 +52,8 @@ def _validate_token(token: str) -> dict:
 
 async def require_auth(request: Request) -> None:
     """Router-level dependency. Sets request.state.org_id / user claims when
-    authenticated; no-ops in development mode."""
+    authenticated; no-ops in development mode.
+    """
     if not settings.auth_required:
         return
 

@@ -1,3 +1,19 @@
+"""Taiwan ETF holdings and benchmark attribution.
+
+Decomposes an ETF's return against the TAIEX into the parts a reader can act on:
+which sector allocations differed from the benchmark, and which holdings drove
+the gap. Prices and classifications come from TWSE end-of-day data.
+
+Two things this deliberately is not. It is **not** a risk model — there is no
+factor structure, no covariance estimate and no forward-looking claim. And the
+attribution is arithmetic over a stated window, so it explains what happened and
+predicts nothing.
+
+Holdings arrive as user-supplied CSV, which is why this module carries parsing
+and validation that looks defensive for an internal service: the input is
+untrusted.
+"""
+
 import base64
 import binascii
 import csv
@@ -504,7 +520,8 @@ def analyze_fund_attribution(request: FundAttributionRequest) -> FundAttribution
 def refresh_latest_attribution(as_of: date | None = None) -> FundAttributionOut | None:
     """Recompute today's attribution from the saved config, using TWSE after-close
     data, and persist it so the page can show it pre-computed. Returns None when no
-    fund has been configured yet. Designed to run unattended on an evening cron."""
+    fund has been configured yet. Designed to run unattended on an evening cron.
+    """
     config = load_config()
     if config is None or not config.holdings:
         return None
@@ -600,7 +617,8 @@ _SECTOR_SUFFIXES = ("類股價指數", "類報酬指數", "類指數", "類股�
 def canonical_sector(name: str) -> str:
     """Normalise a sector label so the same sector matches across sources: the
     holdings file (e.g. 半導體業), the TWSE sector index (半導體類指數), and the
-    stored TAIEX weights (半導體) all collapse to one key."""
+    stored TAIEX weights (半導體) all collapse to one key.
+    """
     cleaned = (name or "").strip().replace(" ", "")
     for suffix in _SECTOR_SUFFIXES:
         if len(cleaned) > len(suffix) and cleaned.endswith(suffix):
@@ -695,7 +713,8 @@ def build_sector_attribution(
 def compute_sector_attribution(as_of: date | None = None) -> SectorAttributionOut:
     """Live sector attribution from the saved fund holdings + sector config and
     today's TWSE sector-index returns. Returns an empty (but valid) result when no
-    fund has been configured yet."""
+    fund has been configured yet.
+    """
     day = as_of or datetime.now(TAIPEI_TZ).date()
     iso = day.isoformat()
     fund = load_config()
