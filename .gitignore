@@ -35,7 +35,9 @@ Thumbs.db
 minio-data/
 pg-data/
 
-# internal working docs — kept local, not for the public repo
+# Working drafts, kept local. This file is copied into the built sdist by the
+# packaging backend, so its comments are published too — see
+# backend/tests/test_sdist_contents.py.
 /docs/FUND_ATTRIBUTION_PLAN.md
 /docs/PRODUCTION_DEVELOPMENT_PLAN_LEGACY.md
 /docs/PRODUCTION_PLAN.md
@@ -44,8 +46,7 @@ pg-data/
 /docs/EVALUATION_REPORT.md
 /docs/Cited_Market_Brief_Agent_Demo.pptx
 
-# Internal doctrine working docs — kept out of this PUBLIC repo per the release-wave
-# public-hygiene rule.
+# Local planning notes, not part of the published project.
 findings.md
 progress.md
 task_plan.md

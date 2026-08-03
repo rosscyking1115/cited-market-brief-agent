@@ -1,0 +1,21 @@
+# Normalise line endings to LF in the repository.
+#
+# Without this, a contributor on Windows whose editor or formatter writes CRLF
+# produces a diff in which every line of a touched file appears changed, which
+# buries the real change. That happened while writing the documentation pass this
+# file accompanies: a three-line edit to .gitignore showed as 103 changed lines.
+#
+# Binary assets are declared so git never tries to normalise them.
+* text=auto eol=lf
+
+*.png binary
+*.pptx binary
+*.xlsx binary
+*.pdf binary
+*.ico binary
+*.woff  binary
+*.woff2 binary
+
+# PowerShell scripts are run by Windows shells that tolerate LF, but keeping them
+# CRLF avoids surprising anyone editing them in a Windows-native editor.
+*.ps1 text eol=crlf

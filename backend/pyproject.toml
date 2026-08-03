@@ -35,6 +35,9 @@ dev = [
     "pytest>=8.3",
     "ruff>=0.9",
     "mypy>=1.15",             # narrow type gate; perimeter defined in [tool.mypy] below
+    "hatchling>=1.27",        # tests/test_sdist_contents.py BUILDS the sdist to inspect it.
+                              # Named here so its absence is a test ERROR, not a skip: a
+                              # packaging control that quietly skips is not a control.
 ]
 parsing = [
     "docling>=2.15",         # IR PDFs (Phase 1+); EDGAR uses edgartools
@@ -49,14 +52,66 @@ s3 = [
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 
+# An ALLOWLIST, not an exclude list, and the distinction is the whole point.
+#
+# An sdist is built from the DIRECTORY, not from the git index. With no selection
+# declared, hatchling packages everything the ignore files do not name — which is
+# an exclude list, and an exclude list FAILS OPEN: the next local-only directory
+# to appear here is published silently, because nobody thought to name it. An
+# allowlist FAILS CLOSED: anything not named below is absent from the artifact
+# until someone adds it deliberately.
+#
+# This is not hypothetical here. The repository's .gitignore lives one level up,
+# at the repo root, and covers .venv/, .data/, .pytest_cache/ and .ruff_cache/ —
+# so the sdist looked clean. But .mypy_cache/ is not in that file; it stayed out
+# only because mypy happens to write its own self-ignoring .gitignore. Nothing
+# the project controls excluded it. A probe that dropped three untracked files
+# into this directory saw the selection go from 122 files to 125, including a
+# dot-directory carrying an absolute machine path.
+#
+# tests/test_sdist_contents.py enforces this, and its strongest assertion is that
+# every member of the BUILT sdist is tracked by git — a rule that needs no list of
+# what anyone's local tooling is called, because local-only files are untracked by
+# construction.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/app",
+    "/tests",
+    "/scripts",
+    "/alembic",
+    "/alembic.ini",
+    "/Dockerfile",
+    "/.dockerignore",
+    "/pyproject.toml",
+    "/uv.lock",
+]
+
 [tool.ruff]
 line-length = 120
 target-version = "py313"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "S"]
+select = ["E", "F", "I", "UP", "B", "S", "D2", "D4"]
 # S101: assert in tests. UP042: StrEnum would change SQLAlchemy enum str() semantics.
-ignore = ["S101", "UP042"]
+#
+# D205 (blank line between summary and description) is off for now, and this is a
+# recorded gap rather than a decision. 41 existing docstrings open with a summary
+# that wraps onto a second line. Fixing them means rewriting each summary to stand
+# alone, which is editorial work worth doing deliberately — not a mechanical sweep
+# folded into an unrelated change. Turn it on when someone has the appetite.
+ignore = ["S101", "UP042", "D205"]
+
+# Google style, recorded here so the linter and any doc generator agree. Chosen
+# because it stays readable for short functions, which is most of this codebase.
+#
+# D1 (missing-docstring) is deliberately NOT enabled. A docstring written to
+# satisfy a linter costs maintenance and teaches readers that docstrings here are
+# noise; D2 and D4 are on, so every docstring that does exist is well formed.
+# What to document, in priority order: the public surface, then anything with a
+# non-obvious contract, then anything whose name could mislead, then module
+# docstrings for the modules a reader opens first.
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 # FastAPI Depends()/Query() in signature defaults are idiomatic (B008).
@@ -64,6 +119,10 @@ ignore = ["S101", "UP042"]
 # S603: the type-gate test shells out to `sys.executable -m mypy` with a
 # literal argv and a tmp_path it wrote itself — no untrusted input involved.
 "tests/test_type_gate.py" = ["S603"]
+# S603/S607: the packaging test asks git what it tracks. The argv is literal
+# apart from a member name read out of an sdist this test just built itself, and
+# resolving `git` on PATH is the point — the check must run wherever CI does.
+"tests/test_sdist_contents.py" = ["S603", "S607"]
 
 [tool.mypy]
 # Deliberately NARROW perimeter, not a whole-codebase gate.
