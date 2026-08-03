@@ -190,6 +190,33 @@ def claim_periods(text: str) -> set[str]:
     return periods
 
 
+#: Quarter words in the order their ordinals imply.
+_QUARTER_ORDINAL = {"first": "1", "second": "2", "third": "3", "fourth": "4"}
+
+
+def period_ordinals(text: str) -> set[str]:
+    """Numerals a period reference licenses when the text is rendered elsewhere.
+
+    "May 2026" licenses 5; "first quarter" licenses 1. Nothing else here reads
+    these, but the translation shape checks do: Traditional Chinese and Korean
+    write dates numerically, so a faithful translation of "May 3, 2026" contains
+    a 5 that the English source never spelled as a digit. Licensing the ordinal
+    of a period the source actually names is structural — it derives from the
+    source text rather than enumerating which numerals are acceptable.
+
+    Returns canonicalised numerals, so "05" comes back as "5".
+    """
+    out: set[str] = set()
+    for period in claim_periods(text):
+        month_number = _MONTH_NUMBER.get(period)
+        if month_number:
+            out.add(_canonical(month_number))
+        quarter = _QUARTER_ORDINAL.get(period)
+        if quarter:
+            out.add(quarter)
+    return out
+
+
 def _period_present(period: str, span: str) -> bool:
     if re.search(rf"\b{re.escape(period)}\b", span, re.IGNORECASE):
         return True
