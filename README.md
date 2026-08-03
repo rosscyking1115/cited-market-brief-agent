@@ -38,6 +38,22 @@ assert a number or a period that the cited evidence does not contain. It does
 shipped", a real effect given an invented cause, an all-time high inferred from a
 three-week series.
 
+It also **wrongly refuses** a shape of claim, and this is the sharpest limit
+available. The numeric rule is set-subset over canonicalised numeric literals, so
+a claim restating the cited span's own figure in equivalent notation asserts a
+number the span does not contain. Against the real AMD 8-K span reading
+"$5.0 billion":
+
+| Claim says | Verdict |
+|---|---|
+| `$5.0 billion` | accepted |
+| `$5 billion` | accepted |
+| `$5,000 million` | **refused** — `numeric: 5000 not in the cited evidence` |
+
+Nothing in the corpora triggers it, because every supported claim in them happens
+to restate figures the way its span wrote them. Pinned in
+`backend/tests/test_consistency.py` so it cannot quietly stop being true.
+
 **How to read these numbers.** Unit: one claim. Positive: the system marks a
 claim *supported*. Ground truth: a human label, recorded independently of the
 system's output, answering "does the cited span support this claim?".
@@ -45,31 +61,44 @@ Population: every labelled claim in the named corpus.
 
 - **precision** — of the claims the system accepted, the share the cited span really supports
 - **recall** — of the claims the cited span really supports, the share the system accepted
+- **specificity** — of the claims the cited span does *not* support, the share the system refused
+- **true-but-unsupported refused** — the same, restricted to claims that are true but cited to a span that does not carry them. The hardest cell, and the one a provenance-only checker is blind to
 
 Measured against claims labelled independently of the generator, built from real
-10-Q and 8-K filings and real FRED vintages:
+10-Q and 8-K filings and real FRED vintages. **The "accept everything" column is
+the null this has to beat** — a system that never refuses anything, scored the
+same way:
 
-| | development corpus | held-out corpus |
-|---|---|---|
-| citation precision | 0.579 | **0.400** |
-| citation recall | 1.000 | 1.000 |
-| false negatives | 0 | 0 |
-| true-but-unsupported caught | 6/8 | 2/6 |
+| | development | dev, accept-everything | held-out | held-out, accept-everything |
+|---|---|---|---|---|
+| citation precision | 0.579 | 0.355 | **0.400** | 0.286 |
+| citation recall | 1.000 | 1.000 | 1.000 | 1.000 |
+| false negatives | 0 | 0 | 0 | 0 |
+| specificity | 0.600 | 0.000 | 0.400 | 0.000 |
+| true-but-unsupported refused | 6/8 | 0/8 | 2/6 | 0/6 |
 
 **The figure that describes this system is precision 0.400 on the held-out
 corpus** — of the claims it accepts, 40% are genuinely supported by the span they
-cite, so 60% are not. Recall 1.000 means it accepted every claim that was
-genuinely supported, rejecting none of them.
+cite, so 60% are not.
+
+Read the null column before the rest. **Recall 1.000 and zero false negatives are
+reproduced exactly by accepting everything**, so on their own they do not separate
+this system from a system that does no checking at all. What separates it is
+specificity and the true-but-unsupported row, where the null scores zero and this
+does not: across both corpora it refused 20 claims and every one of those
+refusals was correct.
+
+Recall 1.000 therefore means something narrower than it looks: **no genuinely
+supported claim in either corpus was refused.** That is a property of these
+corpora rather than a guarantee — see the notation limit below.
 
 The held-out corpus was authored after the consistency rules were frozen and
-scored once. It draws on sources the development corpus did not use — two 8-Ks,
-the second vintage of each FRED series and unused 10-Q sections — with one
-qualification: three holdout spans share a document *and section* with dev spans.
-Excluding the 8 claims citing them gives precision 0.429 rather than 0.400, so
-the overlap depresses the headline figure rather than flattering it. 0.579 is the
-development corpus, which the rules were built against, and is not quoted on its
-own. Supporting detail: on the two shapes the rules target they generalise
-cleanly to unseen filings (`numeric_alteration` 3/3, `temporal_shift` 3/3); on
+scored once, over two 8-Ks, second FRED vintages and unused 10-Q sections. Its
+independence is partial, and the overlap is stated rather than glossed: excluding
+the claims that touch a shared document and section gives 0.429, so the overlap
+depresses the headline figure rather than flattering it. 0.579 is the development
+corpus, which the rules were built against, and is not quoted on its own. On the
+two shapes the rules target they generalise cleanly to unseen filings; on
 semantic defects they catch none.
 
 Method, per-trap breakdown, negative controls, the open empty-quote defect and
@@ -143,11 +172,11 @@ and [cashflow-risk](https://github.com/rosscyking1115/cashflow-risk).
 
 ## Sources and boundaries
 
-SEC EDGAR (declared user agent, rate-limited), FRED/ALFRED (this project uses the
-FRED API but is not endorsed or certified by the Federal Reserve Bank of
-St. Louis), NYT Most Popular (headline and link only), TWSE, GDELT and finance
-RSS. The exact sources, public wording and retained evidence are in the
-[public claim ledger](docs/claims/claim-ledger.md).
+SEC EDGAR, FRED/ALFRED, NYT Most Popular, TWSE, GDELT and finance RSS — each with
+a stated access rule and a stated limit, listed in the
+[public claim ledger](docs/claims/claim-ledger.md) and
+[`docs/DEVELOPING.md`](docs/DEVELOPING.md). This project uses the FRED® API but
+is not endorsed or certified by the Federal Reserve Bank of St. Louis.
 
 The code is available under the
 [MIT licence](https://github.com/rosscyking1115/cited-market-brief-agent/blob/main/LICENSE).

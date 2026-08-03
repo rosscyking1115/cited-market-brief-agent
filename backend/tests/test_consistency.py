@@ -393,3 +393,38 @@ def test_a_month_range_hides_the_month_the_evidence_lacks() -> None:
     claim = _claim("Revenue rose in May and June 2026.")
     span = "The CPI-U index for June 2026 stood at 334.5."
     assert check_claim_consistency(claim, span) == [], "documented blind spot; see Limits"
+
+
+def test_equivalent_notation_is_wrongly_rejected() -> None:
+    """The README's fourth example: a supported claim refused over notation.
+
+    The numeric rule is set-subset over canonicalised numeric literals, so a
+    claim that restates the span's own figure in an equivalent form asserts a
+    number the span does not contain and is refused. `$5.0 billion` canonicalises
+    to 5 and passes; `$5,000 million` canonicalises to 5000 and does not.
+
+    This is the concrete reason recall 1.000 is a property of these corpora
+    rather than a guarantee: every supported claim in them happens to restate
+    figures in the span's own notation. Pinned here so the README's example
+    cannot quietly become false if canonicalisation changes — if this test goes
+    red, the README paragraph beside it needs rewriting, not this assertion.
+
+    The span is the real AMD 8-K text from the held-out corpus.
+    """
+    span = (
+        "The Credit Agreement provides for a five-year, $5.0 billion unsecured "
+        "revolving credit facility (the “Revolving Facility”)."
+    )
+
+    accepted = "AMD entered into a $5.0 billion revolving credit facility."
+    assert check_claim_consistency(_claim(accepted), span) == []
+
+    rounded = "AMD entered into a $5 billion revolving credit facility."
+    assert check_claim_consistency(_claim(rounded), span) == []
+
+    restated = "AMD entered into a $5,000 million revolving credit facility."
+    failures = check_claim_consistency(_claim(restated), span)
+    assert failures == ["numeric: 5000 not in the cited evidence"], (
+        "the equivalent-notation false negative documented in the README no longer "
+        "reproduces; update the README's limit example in the same change"
+    )
