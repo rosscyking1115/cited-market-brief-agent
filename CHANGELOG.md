@@ -21,6 +21,47 @@ trustworthy, a silent edit reads as nothing until someone finds the diff.
 
 ### Added
 
+- **The always-accept baseline is now a column in the README's results table**,
+  beside specificity and the true-but-unsupported refusal rate. Recall 1.000 and
+  zero false negatives are reproduced exactly by a system that accepts every
+  claim, so reported alone they do not separate this system from a null one. The
+  figures that do — specificity 0.600 dev / 0.400 held-out against a null 0.000,
+  and 6/8 and 2/6 true-but-unsupported refused against 0/8 and 0/6 — were already
+  measured and were not being shown. No figure changed; the comparison that makes
+  them judgeable was added.
+
+  Recall 1.000 is kept and qualified: it means no genuinely supported claim in
+  either corpus was refused, which is a property of these corpora rather than a
+  guarantee.
+
+- **A documented false negative.** The numeric rule is set-subset over
+  canonicalised numeric literals, so a supported claim restating its span's own
+  figure in equivalent notation is refused — `$5,000 million` against a span
+  reading `$5.0 billion`. The README carries it beside the three examples of what
+  the check wrongly *accepts*, and `backend/tests/test_consistency.py` pins it so
+  it cannot silently stop being true if canonicalisation changes.
+
+- **Shape enforcement on the translation path.** `SYSTEM_PROMPT` already required
+  preserved citation markers and a sections array of the same length and order;
+  nothing verified any of it. A translation that dropped both markers, dropped a
+  section and asserted a gross margin the English draft never mentioned was
+  parsed, schema-validated and returned normally with the review state untouched.
+
+  Three mechanical checks now run — section count, citation markers per section
+  position, and no numeric literal absent from the source — and a failure sets
+  `requires_review` with the failed rule names. The translation is still
+  returned: marked, not withheld. Each check was verified to fire on a distinct
+  defect.
+
+  These are shape guarantees and not a translation evaluation. The fidelity of
+  the non-English output remains unmeasured and the README still says so.
+
+- [`docs/finding_gitignore_injected_into_sdist.md`](docs/finding_gitignore_injected_into_sdist.md)
+  — hatchling packages the repository-root `.gitignore`, a file from outside the
+  package root that an allowlist scoped to that root cannot exclude. Records that
+  this project reached the defect class by a different route than the sibling
+  projects did, and that the sibling's stated mechanism does not reproduce here.
+
 - An **sdist allowlist** in `backend/pyproject.toml`, with
   `backend/tests/test_sdist_contents.py` enforcing it. The strongest of its seven
   assertions builds the source distribution and requires every member to be
