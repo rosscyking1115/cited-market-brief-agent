@@ -80,7 +80,8 @@ def get_market_radar() -> MorningRadarOut:
 
 def prewarm_news() -> None:
     """Populate the news cache off the request path (called at app startup), so the
-    first page render shows live news instead of the demo fallback on a cold start."""
+    first page render shows live news instead of the demo fallback on a cold start.
+    """
     try:
         _cached_news(now=datetime.now(UTC))
     except Exception as exc:  # noqa: BLE001 - startup warmup must never crash the app.
@@ -94,7 +95,8 @@ def _cached_news(*, now: datetime) -> tuple[list[PopularNewsItem], tuple[str | N
     tens of seconds — far longer than the frontend server-render timeout. So once the
     cache is warm we serve it instantly and, when it goes stale, refresh in the
     background (stale-while-revalidate) instead of blocking the request. Only a true
-    cold start (before prewarm finishes) rebuilds synchronously."""
+    cold start (before prewarm finishes) rebuilds synchronously.
+    """
     global _NEWS_REFRESHING
     ttl = timedelta(seconds=max(settings.news_cache_ttl_seconds, 0))
     cache = _NEWS_CACHE
@@ -114,7 +116,8 @@ def _cached_news(*, now: datetime) -> tuple[list[PopularNewsItem], tuple[str | N
 
 def _rebuild_news_cache(*, now: datetime) -> tuple[list[PopularNewsItem], tuple[str | None, str | None, str | None]]:
     """Fetch + translate news and (re)generate the day/week/month overviews, updating
-    the module cache. Returns the last good set if the live fetch comes back empty."""
+    the module cache. Returns the last good set if the live fetch comes back empty.
+    """
     global _NEWS_CACHE
     fetched = _fetch_popular_news()
     if not fetched:

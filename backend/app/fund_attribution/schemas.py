@@ -1,3 +1,10 @@
+"""Wire types for Taiwan ETF holdings and benchmark attribution.
+
+`HoldingInput` is the untrusted edge: these models validate operator-supplied
+holdings before anything downstream treats them as numbers. Constraints here are
+load-bearing rather than decorative.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -55,7 +62,8 @@ class SectorWeight(BaseModel):
 class SectorConfig(BaseModel):
     """Set-once references for sector attribution: the TAIEX's (slowly-changing)
     sector weights, and an optional stock→sector map to fill holdings whose file
-    didn't carry a 產業 column."""
+    didn't carry a 產業 column.
+    """
 
     taiex_weights: list[SectorWeight] = Field(default_factory=list)
     sector_map: dict[str, str] = Field(default_factory=dict)  # symbol -> sector
@@ -86,7 +94,8 @@ class SectorAttributionOut(BaseModel):
 
 class FundConfig(BaseModel):
     """Saved holdings + fund metadata so the daily job can recompute without an
-    upload. Holdings carry weights; returns are refilled from TWSE each run."""
+    upload. Holdings carry weights; returns are refilled from TWSE each run.
+    """
 
     fund_name: str = Field(min_length=1)
     fund_symbol: str | None = None

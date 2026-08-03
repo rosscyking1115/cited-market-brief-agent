@@ -74,7 +74,8 @@ def save_sector_config(config: SectorConfig) -> None:
 
 def load_sector_config() -> SectorConfig:
     """Saved sector config, or sensible defaults: ship approximate TAIEX weights so
-    the comparison renders before the user calibrates them in the editor."""
+    the comparison renders before the user calibrates them in the editor.
+    """
     path = _store_dir() / "sector_config.json"
     if not path.exists():
         return SectorConfig(taiex_weights=list(DEFAULT_TAIEX_WEIGHTS))

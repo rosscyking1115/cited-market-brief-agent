@@ -65,7 +65,8 @@ class EvalReport:
     def citation_recall(self) -> float:
         """Supported claims over claims eligible for support — policy-quarantined
         claims are excluded from the denominator (quarantine is the correct outcome
-        for advice-bearing content, not a citation-coverage failure)."""
+        for advice-bearing content, not a citation-coverage failure).
+        """
         total = sum(r.claims - r.quarantined for r in self.results)
         return (sum(r.supported for r in self.results) / total) if total else 1.0
 

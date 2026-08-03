@@ -65,7 +65,8 @@ def diff_section(
     similarity_floor: float = 0.6,
 ) -> SectionDiff:
     """Paragraph-aligned diff. 'modified' pairs paragraphs with similarity >= floor;
-    below the floor a replace decomposes into removed + added."""
+    below the floor a replace decomposes into removed + added.
+    """
     old_paras = _paragraphs_with_offsets(old_text, 0)
     new_paras = _paragraphs_with_offsets(new_text, new_base_offset)
 
@@ -150,7 +151,8 @@ def blocks_to_chunk_ids(
     chunk_spans: list[tuple[str, int | None, int | None]],
 ) -> list[str]:
     """Map changed blocks to stored chunk ids by span overlap in the new document.
-    chunk_spans: [(chunk_id, span_start, span_end)]."""
+    chunk_spans: [(chunk_id, span_start, span_end)].
+    """
     ids: list[str] = []
     for block in blocks:
         if block.new_span is None:

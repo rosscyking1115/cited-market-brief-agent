@@ -54,7 +54,8 @@ def generate_rls_ddl() -> str:
 
 def set_org_context(db: Session, org_id: str) -> None:
     """Activate tenant scope for this session/transaction. Called per request once
-    auth resolves the org (app/db/base.get_db); RLS policies key off this GUC."""
+    auth resolves the org (app/db/base.get_db); RLS policies key off this GUC.
+    """
     db.execute(
         text("SELECT set_config('app.current_org_id', :org_id, false)"),
         {"org_id": str(org_id)},

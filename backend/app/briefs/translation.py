@@ -2,15 +2,24 @@
 
 Translations are a sidecar convenience layer. The English generated draft remains
 the canonical cited artifact for audit, review, and exports.
+
+Their **fidelity is unevaluated**: nothing here or anywhere measures whether a
+translation says what the English said, or whether a citation still supports its
+claim once both are read in the target language. `check_translation_shape` below
+enforces the structural part of the contract `SYSTEM_PROMPT` states — section
+count and order, citation markers, no invented numerals — and that is all it
+does. A translation that passes every check may still be wrong.
 """
 
 import json
 import logging
+import re
 from collections.abc import Iterable
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.briefs.consistency import period_ordinals, span_numbers
 from app.briefs.generator import _json_payload
 from app.core.config import settings
 
@@ -34,6 +43,14 @@ class BriefTranslation(BaseModel):
     disclaimer: str = Field(description="Short note explaining that English remains the source of record.")
     sections: list[TranslatedSection] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
+    requires_review: bool = Field(
+        default=False,
+        description="True when a shape check failed. The translation is still returned; it is marked, not withheld.",
+    )
+    review_flags: list[str] = Field(
+        default_factory=list,
+        description="Names of the shape rules this translation failed, with detail. Empty when it passed.",
+    )
 
 
 SYSTEM_PROMPT = """You translate audit-ready investment research briefs for family readers.
@@ -45,6 +62,87 @@ Rules:
 - Do not add new facts, opinions, recommendations, or investment advice.
 - Do not translate inside citation markers.
 - Output ONLY valid JSON matching the requested schema."""
+
+
+# --------------------------------------------------------------------------
+# Enforcing the contract the prompt above already states
+#
+# The prompt demands preserved citation markers and a sections array of the same
+# length and order. Until these checks existed nothing verified any of it: a
+# translation that dropped both markers, dropped a section and asserted a margin
+# the English draft never mentioned was parsed, validated against the schema and
+# returned normally, with the brief's review state untouched.
+#
+# That is attestation, not enforcement, in a project whose entire subject is
+# whether a stated thing is actually supported.
+#
+# These are SHAPE checks and nothing more. They do not read meaning, so they are
+# not a translation evaluation and must never be described as one — the fidelity
+# of the non-English output remains unmeasured. Conflating a shape guarantee with
+# an evaluation would be precisely the defect this repository exists to name.
+# --------------------------------------------------------------------------
+
+#: Both marker forms the prompt names: `[#0]` in draft sections, `[C-000]` once
+#: the markdown export has renumbered them. Canonicalised to the bare index so
+#: either form compares equal to the other.
+_CITATION_MARKER = re.compile(r"\[#(\d+)\]|\[C-(\d+)\]")
+
+
+def citation_markers(text: str) -> list[str]:
+    """Claim indices referenced by `text`, in order of appearance."""
+    return [str(int(m.group(1) or m.group(2))) for m in _CITATION_MARKER.finditer(text)]
+
+
+def _source_sections(draft: dict) -> list[dict]:
+    sections = draft.get("brief_sections", [])
+    return [s for s in sections if isinstance(s, dict)]
+
+
+def check_translation_shape(draft: dict, translation: BriefTranslation) -> list[str]:
+    """Return the names of the shape rules this translation failed.
+
+    Three rules, one per clause of the prompt's contract:
+
+    1. `section_count` — the translation has as many sections as the source.
+    2. `citation_markers` — every marker in source section *i* appears in
+       translated section *i*. Checking position rather than the document as a
+       whole is what makes this an order check as well as a presence check.
+    3. `numeric_literals` — the translation states no number the source did not,
+       allowing the ordinals of periods the source names, because Traditional
+       Chinese and Korean render "May 2026" with a digit where English does not.
+       See `consistency.period_ordinals`.
+
+    Empty list means the translation kept its shape. It says nothing whatever
+    about whether the translation is accurate.
+    """
+    failures: list[str] = []
+    source = _source_sections(draft)
+
+    if len(translation.sections) != len(source):
+        failures.append(
+            f"section_count: source has {len(source)} sections, translation has {len(translation.sections)}"
+        )
+
+    for index, (src, out) in enumerate(zip(source, translation.sections, strict=False)):
+        expected = citation_markers(str(src.get("content_markdown", "")))
+        present = set(citation_markers(out.content_markdown))
+        missing = [marker for marker in dict.fromkeys(expected) if marker not in present]
+        if missing:
+            failures.append(f"citation_markers: section {index} lost {', '.join('[#' + m + ']' for m in missing)}")
+
+    source_text = " ".join(f"{s.get('title', '')} {s.get('content_markdown', '')}" for s in source) + " ".join(
+        str(q) for q in draft.get("open_questions", [])
+    )
+    translated_text = " ".join(f"{s.title} {s.content_markdown}" for s in translation.sections) + " ".join(
+        translation.open_questions
+    )
+
+    licensed = span_numbers(source_text) | period_ordinals(source_text)
+    invented = sorted(span_numbers(translated_text) - licensed)
+    if invented:
+        failures.append(f"numeric_literals: translation states {', '.join(invented)}, absent from the source")
+
+    return failures
 
 
 def translation_model() -> str:
@@ -104,7 +202,16 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
     translated_payload = _loads_translation_payload(raw)
     translated_payload["locale"] = locale
     translated_payload["label"] = label
-    return BriefTranslation.model_validate(translated_payload)
+    translation = BriefTranslation.model_validate(translated_payload)
+
+    # Shape enforcement. A failure marks the translation rather than discarding
+    # it: the reader is better served by flagged text than by a silent gap, and
+    # raising here would turn a reader-mode convenience into an outage. What it
+    # must never do is return looking clean.
+    flags = check_translation_shape(draft, translation)
+    if flags:
+        logger.warning("Translation shape check failed for %s: %s", locale, "; ".join(flags))
+    return translation.model_copy(update={"requires_review": bool(flags), "review_flags": flags})
 
 
 def cached_translation(draft: dict, locale: str) -> dict | None:

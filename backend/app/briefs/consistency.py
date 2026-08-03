@@ -135,7 +135,7 @@ _MONTH_NUMBER = {
 
 
 def _canonical(raw: str) -> str:
-    """1,234.50 -> 1234.5 ; 04 -> 4 ; 0.50 -> 0.5"""
+    """Canonicalise a numeric literal: 1,234.50 -> 1234.5; 04 -> 4; 0.50 -> 0.5."""
     value = raw.replace(",", "")
     if "." in value:
         value = value.rstrip("0").rstrip(".")
@@ -165,7 +165,8 @@ def claim_numbers(text: str) -> set[str]:
 
 def span_numbers(text: str) -> set[str]:
     """Numbers available in the evidence. Read permissively: every numeric
-    literal anywhere in the span counts, identifiers included."""
+    literal anywhere in the span counts, identifiers included.
+    """
     return {_canonical(m.group()) for m in _NUMBER.finditer(text)}
 
 
@@ -187,6 +188,33 @@ def claim_periods(text: str) -> set[str]:
         month = next(group for group in match.groups() if group)
         periods.add(month.lower())
     return periods
+
+
+#: Quarter words in the order their ordinals imply.
+_QUARTER_ORDINAL = {"first": "1", "second": "2", "third": "3", "fourth": "4"}
+
+
+def period_ordinals(text: str) -> set[str]:
+    """Numerals a period reference licenses when the text is rendered elsewhere.
+
+    "May 2026" licenses 5; "first quarter" licenses 1. Nothing else here reads
+    these, but the translation shape checks do: Traditional Chinese and Korean
+    write dates numerically, so a faithful translation of "May 3, 2026" contains
+    a 5 that the English source never spelled as a digit. Licensing the ordinal
+    of a period the source actually names is structural — it derives from the
+    source text rather than enumerating which numerals are acceptable.
+
+    Returns canonicalised numerals, so "05" comes back as "5".
+    """
+    out: set[str] = set()
+    for period in claim_periods(text):
+        month_number = _MONTH_NUMBER.get(period)
+        if month_number:
+            out.add(_canonical(month_number))
+        quarter = _QUARTER_ORDINAL.get(period)
+        if quarter:
+            out.add(quarter)
+    return out
 
 
 def _period_present(period: str, span: str) -> bool:

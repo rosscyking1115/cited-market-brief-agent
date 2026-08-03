@@ -1,3 +1,13 @@
+"""Wire types for the Morning Market Radar.
+
+`MarketId` is the seven exchanges the radar schedules, as a closed literal rather
+than a list — adding one is a type change that the schedule, the catalogue and
+the browser matrix all have to agree with, which is the point.
+
+`MarketStatus` includes `lunch` because several Asian exchanges close mid-session;
+treating that as `closed` would misreport them for two hours a day.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field

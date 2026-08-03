@@ -166,7 +166,8 @@ def list_briefs(watchlist_id: uuid.UUID, db: Session = Depends(get_db)) -> list[
 def get_brief_evidence(brief_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
     """Full evidence-ledger payload: stored claims -> citations -> exact chunk text,
     span, source URL, retrieval timestamp, checksum, validator status. This is the
-    'click a claim, see the proof' endpoint (plan §14 demo moment)."""
+    'click a claim, see the proof' endpoint (plan §14 demo moment).
+    """
     brief = db.get(Brief, brief_id)
     if brief is None:
         raise HTTPException(status_code=404, detail="Brief not found")

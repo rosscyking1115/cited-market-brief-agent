@@ -29,7 +29,8 @@ def test_scan_detects_injection_artifacts() -> None:
 
 def test_cited_advice_is_still_flagged() -> None:
     """A perfectly-cited recommendation is a policy violation: guardrails outrank
-    citation status (the prompt-injection defense in depth)."""
+    citation status (the prompt-injection defense in depth).
+    """
     claim = GeneratedClaim(
         text="The filing says: we recommend buying this stock with a price target of $500.",
         citations=["span-1"],

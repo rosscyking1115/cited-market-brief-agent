@@ -1,3 +1,23 @@
+"""Session schedules, risk data and news for the Morning Market Radar (`/`).
+
+The radar's central promise is its clock, so read that part carefully. Session
+times are derived from a committed schedule and computed in each exchange's own
+IANA time zone, then displayed in the reader's edition time zone. That handles
+weekdays and daylight-saving transitions correctly and handles nothing else: it
+does **not** know about exchange holidays, exceptional closures, or live market
+state. A market shown as open may be shut.
+
+Everything the radar displays is sourced, and the regional editions do not all
+mean the same thing. Korea, the UK and the EU localise the *global* coverage;
+they are not complete local-market feeds. Only Taiwan carries market-specific
+modules (USD/TWD context, ETF-versus-TAIEX attribution).
+
+The translated news summaries produced here are model output and are unevaluated.
+When no suitable model key is configured the English source text stays visible,
+marked as original-language content — that fallback is the honest default and
+should stay that way.
+"""
+
 import logging
 import re
 from dataclasses import dataclass
@@ -722,7 +742,8 @@ def _glossary() -> list[GlossaryItem]:
 def generate_news_overview(items: list[PopularNewsItem], period_label: str = "今日") -> str | None:
     """A 2-3 sentence Traditional-Chinese brief synthesised from the period's top
     headlines. Best-effort: returns None without an LLM key or on any failure, and
-    is strictly factual / non-advisory (no buy/sell/individual-stock guidance)."""
+    is strictly factual / non-advisory (no buy/sell/individual-stock guidance).
+    """
     if not items or not settings.anthropic_api_key.strip():
         return None
     headlines = "\n".join(f"- {item.title}" for item in items[:10])

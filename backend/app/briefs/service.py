@@ -44,7 +44,8 @@ def _doc_label(chunk: RetrievedChunk, publisher: str) -> str:
 
 def _priority_chunks(db: Session, watchlist: Watchlist, ids: list[str]) -> dict[str, RetrievedChunk]:
     """Load change-detected chunks directly (they outrank retrieval — the brief is
-    'what changed', so changed spans lead the evidence pack)."""
+    'what changed', so changed spans lead the evidence pack).
+    """
     from app.db.models import Chunk, Document
 
     out: dict[str, RetrievedChunk] = {}
@@ -216,7 +217,8 @@ def _stored_spans(
     db: Session, generated_claims: list, org_id: uuid.UUID
 ) -> tuple[dict[str, str], dict[str, str], dict[str, dict]]:
     """Resolve span_ids referenced by the stored draft directly from the chunks table
-    (never re-retrieve at export time — the audit artifact must match what was cited)."""
+    (never re-retrieve at export time — the audit artifact must match what was cited).
+    """
     from app.db.models import Chunk, Document
 
     span_ids: set[uuid.UUID] = set()

@@ -45,7 +45,8 @@ def get_db(request: Request) -> Generator[Session]:
 
     When auth resolved a tenant (require_auth sets request.state.org_id), the RLS
     GUC is set on this session BEFORE any query — Postgres policies then scope
-    every read/write, including vector and FTS queries, to the tenant."""
+    every read/write, including vector and FTS queries, to the tenant.
+    """
     db = get_sessionmaker()()
     try:
         org_id = getattr(request.state, "org_id", None)
