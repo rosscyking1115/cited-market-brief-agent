@@ -6,6 +6,50 @@ trustworthy, a silent edit reads as nothing until someone finds the diff.
 
 ## Unreleased
 
+### Changed — the copy now says what the checks establish
+
+The interface described the translated brief as a "reading aid", which implies a
+verified relationship to the English source that nothing measured. The first fix
+for that was the word "unevaluated", and in a user interface it went too far the
+other way: the shape checks *do* run, and telling a reader nothing is checked is
+its own inaccuracy.
+
+Every surface now states what is established and what is not — structure and
+citations checked automatically, wording not evaluated, review and approval tied
+to the English original — fitted to the space each surface has. A button tooltip
+carries only the limit; a panel carries all three clauses. No surface carries the
+reassurance alone.
+
+**The radar is not the brief, and the copy no longer pretends otherwise.**
+`check_translation_shape` is reached only from `translate_brief_payload`;
+`translate_news_items` calls nothing. Radar news translations therefore have no
+automatic checks at all, and the radar footer, the Taiwan onboarding step and
+`docs/MARKET_RADAR.md` say so plainly. `MARKET_RADAR.md` had the comparison
+backwards — it said the caveat applied "more seriously" to the brief, when the
+brief is now the better-guarded of the two.
+
+Fifteen occurrences were found, not the five in the product code. The extra ten
+included a Traditional Chinese string in the onboarding guide that an
+English-language search cannot match, and claim 9 in the public claim ledger,
+which quoted README wording that no longer existed and marked it Supported. Claim
+9 is rewritten and claim 9a added for the radar's weaker position.
+
+`docs/adr/0001-two-workspace-routes.md` keeps its Decision text unedited, because
+an ADR records what was decided at the time. A note below it marks the superseded
+phrase and points at the ledger.
+
+### Removed
+
+- `docs/screenshots/evidence-ledger.png` and `docs/screenshots/etf-attribution.png`.
+  Both were referenced by nothing — not the README, not any document — and both
+  rendered a single-shell interface from before the two-route split the README now
+  leads with. Unreferenced is not unreachable: they are browsable in the
+  repository, so a reader could meet an interface that no longer exists with
+  nothing marking it historical. **An unreferenced stale screenshot is a claim
+  nobody chose to make.** `docs/screenshots/brief-workspace.png` was re-captured
+  against the new copy and verified by reading the image, not by trusting that
+  the file changed.
+
 ### Corrected
 
 - **The README claimed a backend suite of "122 backend tests". The real figure was

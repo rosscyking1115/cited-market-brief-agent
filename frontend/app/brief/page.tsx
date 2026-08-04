@@ -39,7 +39,8 @@ export default async function BriefPage() {
             </h1>
             <p className="reader-body mt-2 max-w-3xl text-[14px] leading-relaxed text-neutral-70">
               SEC filing changes and macro deltas, checked claim by claim against stored source spans.
-              Traditional Chinese and Korean are labelled reading aids; review and approval stay tied to the English original.
+              In the Traditional Chinese and Korean editions, structure and citations are checked automatically and the
+              wording itself is not evaluated; review and approval stay tied to the English original.
             </p>
           </div>
           <span className={`w-fit rounded-(--radius-ctl) border px-2 py-1 font-mono text-[10px] ${isLive ? "border-up/60 text-up" : "border-elevated text-neutral-90"}`}>

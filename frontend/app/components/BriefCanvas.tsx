@@ -16,10 +16,14 @@ const ACTIONS = [
   { action: "needs_source", label: "⚑ Needs source", cls: "border-flag/60 text-flag" },
 ] as const;
 
+// `helper` is a button tooltip — the shortest surface here, so it carries only
+// the limit and never only the reassurance. The full statement (structure and
+// citations checked, wording not evaluated, review tied to English) is on the
+// reader-edition panel below, where there is room for all three clauses.
 const LOCALES: { locale: BriefLocale; label: string; helper: string }[] = [
   { locale: "original", label: "Original", helper: "English source of record" },
-  { locale: "zh-Hant", label: "繁中", helper: "Traditional Chinese reading aid" },
-  { locale: "ko", label: "한국어", helper: "Korean reading aid" },
+  { locale: "zh-Hant", label: "繁中", helper: "Traditional Chinese — wording not evaluated" },
+  { locale: "ko", label: "한국어", helper: "Korean — wording not evaluated" },
 ];
 
 const TRANSLATION_TIMEOUT_MS = 95000;
@@ -470,7 +474,9 @@ export default function BriefCanvas({
           <div>
             <p className="th-label">Reader edition · source of record</p>
             <p className="reader-body mt-1 text-[12px] leading-relaxed text-neutral-70">
-              English opens by default as the audited source. Traditional Chinese and Korean are labelled reading aids.
+              English opens by default as the audited source. In the Traditional Chinese and Korean editions, structure
+              and citations are checked automatically and the wording itself is not evaluated; review and approval stay
+              tied to the English original.
             </p>
           </div>
           <div className="grid w-full grid-cols-3 gap-1 rounded-(--radius-ctl) border border-elevated p-1 sm:w-auto sm:min-w-80">
@@ -630,7 +636,7 @@ export default function BriefCanvas({
                 {activeTranslation?.sections[i] && (
                   <div className="reader-translation mt-3 rounded-(--radius-ctl) border border-hairline bg-page/70 px-3 py-3 sm:px-4">
                     <p className="th-label mb-1">
-                      {activeTranslation.label} reading aid
+                      {activeTranslation.label} · wording not evaluated
                     </p>
                     <h4 className="text-[14px] font-semibold text-neutral-40">
                       {activeTranslation.sections[i].title}

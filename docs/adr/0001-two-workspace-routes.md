@@ -20,3 +20,18 @@ Serve the Morning Market Radar at `/` and the evidence-backed company research w
 ## Consequences
 
 Each route has one job and can be linked, tested and documented independently. Demo fixtures live outside route files. Public copy must describe one workbench with two routes, not two modules on one page.
+
+## Note on later wording (does not amend the decision)
+
+The Decision above is left as it was recorded, because an ADR is a record of what
+was decided and when. One phrase in it has since been superseded and would
+mislead a reader who met it on its own.
+
+“Labelled reading aids” implied a verified relationship to the English source
+that nothing measured. Automatic structure and citation checks on the translated
+brief were added later, so the accurate statement is now: structure and citations
+are checked automatically, the wording itself is not evaluated, and review and
+approval stay tied to the English original. Radar news translations carry no such
+checks. See claims 9 and 9a in [`docs/claims/claim-ledger.md`](../claims/claim-ledger.md).
+
+The routing decision this ADR records is unaffected.

@@ -15,7 +15,7 @@ const STEPS: Record<UserRegion, { title: string; body: string }[]> = {
     },
     {
       title: "語言已自動選好",
-      body: "有快取翻譯時會顯示繁體中文閱讀輔助；否則清楚標示來源語言原文，並保留原始連結。",
+      body: "有快取翻譯時會顯示繁體中文譯文（未經評估）；否則清楚標示來源語言原文，並保留原始連結。",
     },
     {
       title: "基金歸因可以上傳檔案",
