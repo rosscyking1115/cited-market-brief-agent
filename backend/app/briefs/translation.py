@@ -6,9 +6,13 @@ the canonical cited artifact for audit, review, and exports.
 Their **fidelity is unevaluated**: nothing here or anywhere measures whether a
 translation says what the English said, or whether a citation still supports its
 claim once both are read in the target language. `check_translation_shape` below
-enforces the structural part of the contract `SYSTEM_PROMPT` states — section
+inspects the structural part of the contract `SYSTEM_PROMPT` states — section
 count and order, citation markers, no invented numerals — and that is all it
 does. A translation that passes every check may still be wrong.
+
+It **records rather than blocks**. A failure sets `requires_review`, which
+nothing reads: the translation is served regardless. Call these checks
+instrumentation, not enforcement, and keep the public copy matching that.
 """
 
 import json
@@ -65,7 +69,7 @@ Rules:
 
 
 # --------------------------------------------------------------------------
-# Enforcing the contract the prompt above already states
+# Checking the contract the prompt above already states
 #
 # The prompt demands preserved citation markers and a sections array of the same
 # length and order. Until these checks existed nothing verified any of it: a
@@ -73,8 +77,10 @@ Rules:
 # the English draft never mentioned was parsed, validated against the schema and
 # returned normally, with the brief's review state untouched.
 #
-# That is attestation, not enforcement, in a project whose entire subject is
-# whether a stated thing is actually supported.
+# These checks OBSERVE that. They do not stop it — see the note at the call site:
+# the flag they set is read nowhere, so a failing translation is still served.
+# That is a real improvement over not looking, and it is not a gate, and the
+# public copy says the second part as plainly as the first.
 #
 # These are SHAPE checks and nothing more. They do not read meaning, so they are
 # not a translation evaluation and must never be described as one — the fidelity
@@ -204,10 +210,16 @@ def translate_brief_payload(locale: Locale, draft: dict) -> BriefTranslation:
     translated_payload["label"] = label
     translation = BriefTranslation.model_validate(translated_payload)
 
-    # Shape enforcement. A failure marks the translation rather than discarding
-    # it: the reader is better served by flagged text than by a silent gap, and
-    # raising here would turn a reader-mode convenience into an outage. What it
-    # must never do is return looking clean.
+    # Shape checks. A failure MARKS the translation rather than discarding it:
+    # the reader is better served by flagged text than by a silent gap, and
+    # raising here would turn a reader-mode convenience into an outage.
+    #
+    # Be precise about what that buys, because the public copy has to match it:
+    # `requires_review` is set here and READ NOWHERE. No route refuses a flagged
+    # translation, falls back to English or withholds a locale, and
+    # get_brief_translation returns a cached one before this function is even
+    # reached. These checks are instrumentation, not a gate. Adding a consumer
+    # would make them a gate; until then, no surface may imply one.
     flags = check_translation_shape(draft, translation)
     if flags:
         logger.warning("Translation shape check failed for %s: %s", locale, "; ".join(flags))

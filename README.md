@@ -111,11 +111,15 @@ count.
 
 ## The English brief is the only thing measured
 
-Traditional Chinese and Korean versions of the brief exist. Their **structure and
-citations are checked automatically** — section count and order, every citation
-marker still in its own section, and no figure the English draft never stated. A
-translation failing any of those is returned marked for review rather than
-silently.
+Traditional Chinese and Korean versions of the brief exist. Their structure and
+citations are checked automatically — section count and order, every citation
+marker still in its own section, and no figure the English draft never stated.
+
+**That result is recorded, not enforced.** A translation failing a check is
+flagged on the payload and served anyway; nothing refuses it, falls back to
+English, or shows the flag in the interface. Treat the checks as instrumentation
+rather than a gate, because from a reader's position that is what they currently
+are.
 
 **Their wording is not evaluated.** Nothing measures whether a translation says
 what the English said, or whether a citation still supports its claim once both
