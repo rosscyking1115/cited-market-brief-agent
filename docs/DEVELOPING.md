@@ -62,7 +62,7 @@ The full list is in [`.env.example`](../.env.example). The main controls:
 | `BBC_RSS_ENABLED`, `GDELT_ENABLED` | Latest-headline and coverage-discovery sources. |
 | `ALPHA_VANTAGE_ENABLED`, `ALPHA_VANTAGE_API_KEY` | Optional market-data pilot, including Taiwan FX context. |
 | `GENERATION_MODEL` | LiteLLM model identifier for brief generation and summaries. |
-| `TRANSLATION_MODEL` | LiteLLM model identifier for the Traditional Chinese and Korean reading aids. |
+| `TRANSLATION_MODEL` | LiteLLM model identifier for the Traditional Chinese and Korean editions. |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | Provider keys selected according to the configured model. OpenAI also supports optional embeddings. |
 | `DATABASE_URL`, `VALKEY_URL`, `S3_*` | Database, cache and raw-source storage. |
 | `NEXT_PUBLIC_DEMO_MODE=1` | Builds the deterministic, backend-free frontend demo. |
@@ -132,7 +132,7 @@ frontend/
   e2e/                     regional, route and accessibility matrix
 
 backend/app/
-  briefs/                  generation, validation, review and reading aids
+  briefs/                  generation, validation, review and translation
   evals/                   grounded corpora, negative controls, scoring
   market_radar/            session schedules, risk data, news and translations
   connectors/              SEC, FRED, news, TWSE and optional market data

@@ -111,14 +111,22 @@ count.
 
 ## The English brief is the only thing measured
 
-Traditional Chinese and Korean versions of the brief exist and are offered as
-reading aids. They are **unevaluated**. Nothing measures their fidelity to the
-English source, whether every claim survives translation, or whether a citation
-still supports its claim once both are read in the target language — and that
-last failure mode is real, because the check that gives a claim its support is
-performed on the English text only. Treat the English brief as the source of
-record in the strict sense: it is the only version any number on this page
-describes.
+Traditional Chinese and Korean versions of the brief exist. Their **structure and
+citations are checked automatically** — section count and order, every citation
+marker still in its own section, and no figure the English draft never stated. A
+translation failing any of those is returned marked for review rather than
+silently.
+
+**Their wording is not evaluated.** Nothing measures whether a translation says
+what the English said, or whether a citation still supports its claim once both
+are read in the target language — and that last failure mode is real, because the
+check that gives a claim its support is performed on the English text only. The
+shape checks cannot see it: they count markers and compare numerals, which is
+worth having and is not a reading of meaning.
+
+Radar news translations are a step behind that again: **no checks run on them at
+all.** Treat the English brief as the source of record in the strict sense — it
+is the only version any number on this page describes.
 
 ## Getting started
 

@@ -52,11 +52,20 @@ documentation. The exact sources, public wording and retained tests are in the
 The Traditional Chinese and Korean interface strings are a typed catalogue —
 written, reviewed and committed, not generated at runtime.
 
-The translated **news summaries** are different: they are model output, and they
-are **unevaluated**. No measurement exists of their fidelity to the English
-source. The same caveat applies, more seriously, to the translated company brief
-— see the README's note on that, because a translated claim can lose the support
-its citation gave it in English.
+The translated **news summaries** are different: they are model output, and
+**nothing checks them at all.** No measurement exists of their fidelity to the
+English source, and none of the automatic checks described below run on them.
+
+This is the weaker of the project's two translation paths, and the gap is worth
+stating plainly. The translated **company brief** does get automatic structure
+and citation checks — section count and order, every citation marker still in its
+own section, no figure the English draft never stated — and a translation that
+fails one is marked for review. Those checks are reached only from the brief
+path; `translate_news_items` here calls none of them.
+
+Neither path evaluates wording, on the brief or on the radar. Structure is not
+meaning, and a translated claim can still lose the support its citation gave it
+in English.
 
 ## Captures
 

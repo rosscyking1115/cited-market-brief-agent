@@ -16,7 +16,7 @@
   <g font-size="15" fill="#3c4a5a">
     <circle cx="82" cy="214" r="3" fill="#4e9bd6"/><text x="96" y="219">Seven scheduled exchange sessions in their own time zones</text>
     <circle cx="82" cy="244" r="3" fill="#4e9bd6"/><text x="96" y="249">Source-linked finance news — day / week / month</text>
-    <circle cx="82" cy="274" r="3" fill="#4e9bd6"/><text x="96" y="279">Traditional Chinese / Korean cached reading aids</text>
+    <circle cx="82" cy="274" r="3" fill="#4e9bd6"/><text x="96" y="279">Traditional Chinese / Korean cached translations — not evaluated</text>
     <circle cx="82" cy="304" r="3" fill="#4e9bd6"/><text x="96" y="309">Taiwan-only FX context + ETF-vs-TAIEX attribution</text>
   </g>
 
@@ -28,7 +28,7 @@
   <g font-size="15" fill="#3c4a5a">
     <circle cx="650" cy="214" r="3" fill="#7e8d9e"/><text x="664" y="219">SEC filing diffs + vintage-aware macro deltas</text>
     <circle cx="650" cy="244" r="3" fill="#7e8d9e"/><text x="664" y="249">Every claim checked; unsupported claims are flagged</text>
-    <circle cx="650" cy="274" r="3" fill="#7e8d9e"/><text x="664" y="279">English source of record + labelled reading aids</text>
+    <circle cx="650" cy="274" r="3" fill="#7e8d9e"/><text x="664" y="279">English source of record; translations not evaluated</text>
     <circle cx="650" cy="304" r="3" fill="#7e8d9e"/><text x="664" y="309">Markdown / PDF / PPTX / XLSX exports</text>
   </g>
 
