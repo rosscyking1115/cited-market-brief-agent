@@ -29,9 +29,11 @@ mislead a reader who met it on its own.
 
 “Labelled reading aids” implied a verified relationship to the English source
 that nothing measured. Automatic structure and citation checks on the translated
-brief were added later, so the accurate statement is now: structure and citations
-are checked automatically, the wording itself is not evaluated, and review and
-approval stay tied to the English original. Radar news translations carry no such
-checks. See claims 9 and 9a in [`docs/claims/claim-ledger.md`](../claims/claim-ledger.md).
+brief were added later, so the accurate statement is now: **structure and
+citation problems are recorded automatically but not blocked**, the wording
+itself is not evaluated, and review and approval stay tied to the English
+original. The checks set a flag that nothing reads, so they are instrumentation
+rather than a gate. Radar news translations carry no checks at all. See claims 9,
+9a and 9b in [`docs/claims/claim-ledger.md`](../claims/claim-ledger.md).
 
 The routing decision this ADR records is unaffected.
