@@ -6,6 +6,31 @@ trustworthy, a silent edit reads as nothing until someone finds the diff.
 
 ## Unreleased
 
+### Corrected — "checked automatically" implied a consequence there is none of
+
+Tracing the flag one layer down settled it: `check_translation_shape` sets
+`requires_review`, and **nothing in the backend reads it.** No route refuses a
+flagged translation, falls back to English or withholds a locale, and
+`get_brief_translation` returns a cached translation before the check is reached
+at all. The audit event records the locale, not the flags.
+
+So the checks are instrumentation, not a gate. The previous wording — "structure
+and citations are checked automatically", and in the README "returned marked for
+review rather than silently" — implied an enforcement that does not exist. From a
+reader's position a check whose failure is both invisible and non-blocking is
+hard to tell apart from no check, which is close enough to this project's own
+subject to be worth correcting rather than leaving.
+
+Every surface that implied the consequence now says what is true instead:
+**structure and citation problems are recorded automatically but not blocked.**
+The surfaces that only ever stated the limit — the language-toggle tooltips, the
+translated-section label, the architecture diagram, and both radar surfaces —
+claimed no consequence and are unchanged.
+
+The reasoning is recorded next to the copy and at the call site, so the word
+"enforce" does not drift back in. Surfacing `review_flags` in the interface would
+make the stronger wording true; that is a product decision and is not taken here.
+
 ### Changed — the copy now says what the checks establish
 
 The interface described the translated brief as a "reading aid", which implies a

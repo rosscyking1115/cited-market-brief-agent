@@ -474,9 +474,14 @@ export default function BriefCanvas({
           <div>
             <p className="th-label">Reader edition · source of record</p>
             <p className="reader-body mt-1 text-[12px] leading-relaxed text-neutral-70">
+              {/* "recorded ... but not blocked" is deliberate and was measured, not assumed:
+                  check_translation_shape sets requires_review, and nothing in the backend
+                  reads it — no route refuses, falls back to English or withholds a locale.
+                  Saying "checked automatically" implied a consequence there is none of.
+                  If a gate is ever added, this line should get stronger, not before. */}
               English opens by default as the audited source. In the Traditional Chinese and Korean editions, structure
-              and citations are checked automatically and the wording itself is not evaluated; review and approval stay
-              tied to the English original.
+              and citation problems are recorded automatically but not blocked, and the wording itself is not
+              evaluated; review and approval stay tied to the English original.
             </p>
           </div>
           <div className="grid w-full grid-cols-3 gap-1 rounded-(--radius-ctl) border border-elevated p-1 sm:w-auto sm:min-w-80">

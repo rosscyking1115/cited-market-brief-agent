@@ -57,11 +57,15 @@ The translated **news summaries** are different: they are model output, and
 English source, and none of the automatic checks described below run on them.
 
 This is the weaker of the project's two translation paths, and the gap is worth
-stating plainly. The translated **company brief** does get automatic structure
-and citation checks — section count and order, every citation marker still in its
-own section, no figure the English draft never stated — and a translation that
-fails one is marked for review. Those checks are reached only from the brief
-path; `translate_news_items` here calls none of them.
+stating plainly — though it is narrower than it sounds. The translated **company
+brief** does get automatic structure and citation checks — section count and
+order, every citation marker still in its own section, no figure the English
+draft never stated — and those checks are reached only from the brief path;
+`translate_news_items` here calls none of them.
+
+But the brief's checks **record rather than block**: a failing translation is
+flagged and served anyway. So the honest comparison is instrumentation on one
+path and none on the other, not a gate on one path and none on the other.
 
 Neither path evaluates wording, on the brief or on the radar. Structure is not
 meaning, and a translated claim can still lose the support its citation gave it
